@@ -80,7 +80,7 @@ const today = () => {
 };
 
 /* ================================================================ */
-const SmartFormPanel = ({ transcript }: SmartFormPanelProps) => {
+const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
   const [form, setForm] = useState<FormData>({});
   const [filling, setFilling] = useState(false);
   const [openSections, setOpenSections] = useState<string[]>([]);
