@@ -19,7 +19,7 @@ const ListenerPanel = ({ onTranscriptUpdate }: ListenerPanelProps) => {
   const [interimText, setInterimText] = useState("");
   const [lang, setLang] = useState<Lang>("en-US");
   const [supported, setSupported] = useState(true);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Check browser support
