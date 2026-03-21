@@ -96,10 +96,17 @@ const ListenerPanel = ({ onTranscriptUpdate }: ListenerPanelProps) => {
     }
   }, [isRecording, stopRecognition, startRecognition]);
 
+  const fullText = lines.join(" ");
+
   // Update parent with full transcript
   useEffect(() => {
-    onTranscriptUpdate(lines.join(" "));
-  }, [lines, onTranscriptUpdate]);
+    onTranscriptUpdate(fullText);
+  }, [fullText, onTranscriptUpdate]);
+
+  const handleManualEdit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newText = e.target.value;
+    setLines(newText ? newText.split(/(?<=\.)\s+|(?<=\n)/).filter(Boolean) : []);
+  };
 
   // Auto-scroll
   useEffect(() => {
