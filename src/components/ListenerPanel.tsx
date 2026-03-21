@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Mic, MicOff, Globe } from "lucide-react";
-import { Globe } from "lucide-react";
 
 interface ListenerPanelProps {
   onTranscriptUpdate: (text: string) => void;
