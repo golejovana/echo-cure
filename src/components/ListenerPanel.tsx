@@ -5,12 +5,16 @@ import { motion, AnimatePresence } from "framer-motion";
 const SAMPLE_TRANSCRIPT = [
   "Patient is a 52-year-old male presenting with persistent chest pain.",
   "Pain started approximately three days ago, radiating to the left arm.",
+  "Patient denies shortness of breath but reports mild dizziness.",
+  "Blood pressure measured at 145 over 92. Heart rate 88 bpm.",
   "Patient reports a history of hypertension and type 2 diabetes.",
   "Current medications include Metformin 500mg twice daily and Lisinopril 10mg.",
-  "Blood pressure measured at 145 over 92.",
-  "Heart rate 88 beats per minute. Temperature 98.6°F.",
-  "Oxygen saturation at 97 percent.",
-  "Patient denies shortness of breath but reports mild dizziness.",
+  "Temperature 98.6°F. Oxygen saturation at 97 percent.",
+  "No gastrointestinal complaints. Appetite and bowel habits are normal.",
+  "No urinary symptoms or flank pain reported.",
+  "Patient denies joint pain, vision or hearing changes.",
+  "No known drug allergies. Family history of coronary artery disease.",
+  "Patient is a non-smoker but reports occasional alcohol use.",
 ];
 
 interface ListenerPanelProps {
