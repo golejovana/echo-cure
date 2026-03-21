@@ -7,14 +7,15 @@ const corsHeaders = {
 };
 
 const FIELDS = [
-  "chiefComplaints",
-  "presentIllness",
+  "patientName", "patientAge", "patientOccupation", "patientSocialStatus",
+  "chiefComplaints", "presentIllness", "clinicalTimeline",
   "diagnosisCodes",
-  "chestPain","swelling","pressure","veins",
-  "appetite","nausea","swallowing","bloating","stool",
-  "urination","flankPain",
-  "jointPain","visionHearing","dizziness","headaches",
-  "allergies","chronicDiseases","smokingAlcohol",
+  "chestPain", "swelling", "pressure", "veins",
+  "appetite", "nausea", "swallowing", "bloating", "stool",
+  "urination", "flankPain",
+  "jointPain", "visionHearing", "dizziness", "headaches",
+  "allergies", "chronicDiseases", "smokingAlcohol",
+  "bloodPressure", "pulse", "lungSounds", "heartSounds", "abdominalExam", "meningealSigns", "otherFindings",
 ];
 
 serve(async (req) => {
@@ -24,8 +25,7 @@ serve(async (req) => {
     const { transcript } = await req.json();
     if (!transcript?.trim()) {
       return new Response(JSON.stringify({ error: "No transcript provided" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -39,73 +39,60 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "system",
-            content: `You are a senior medical transcript analyzer at the University Clinical Center of Serbia (Univerzitetski Klinički Centar Srbije). You analyze patient consultation transcripts and produce structured clinical data.
+            content: `You are a senior clinical information extractor. You receive a raw voice transcript from a doctor describing a patient case — possibly in Serbian, English, or a mix. Your job is to extract ALL available information and map it into a structured medical report. Do NOT invent or hallucinate data. Only extract what is explicitly stated or clearly implied.
 
-Your job:
-1. Extract "Chief Complaints" (Glavne tegobe) — the patient's primary reason for visit in 1-2 sentences.
-2. Extract "Present Illness" (Sadašnja bolest) — a narrative summary of the current illness, timeline, and progression.
-3. Identify any ICD-10 diagnosis codes mentioned or strongly implied. Format each as "CODE - Description" (e.g. "I10 - Hypertension", "N18.4 - Chronic kidney disease, stage 4"). List multiple codes separated by newlines. If none can be determined, set to "Not reported".
-4. Categorize symptoms into the systematic review fields below. For each, provide a concise clinical summary. If not mentioned, set to exactly "Not reported".
-
-Systematic review fields:
-- chestPain: Chest Pain (Bol u grudima)
-- swelling: Swelling / Edema (Otoci)
-- pressure: Blood Pressure / Pressure Sensation (Krvni pritisak)
-- veins: Veins / Vascular (Vene / Vaskularno)
-- appetite: Appetite (Apetit)
-- nausea: Nausea / Vomiting (Mučnina / Povraćanje)
-- swallowing: Swallowing (Gutanje)
-- bloating: Bloating / Abdominal Pain (Nadutost / Bol u stomaku)
-- stool: Stool / Bowel Habits (Stolica)
-- urination: Urination Details (Mokrenje)
-- flankPain: Flank Pain (Bol u slabinama)
-- jointPain: Joint Pain / Mobility (Bol u zglobovima)
-- visionHearing: Vision / Hearing (Vid / Sluh)
-- dizziness: Dizziness / Vertigo (Vrtoglavica)
-- headaches: Headaches (Glavobolje)
-- allergies: Allergies (Alergije)
-- chronicDiseases: Chronic Diseases & Medications (Hronične bolesti i terapija)
-- smokingAlcohol: Smoking / Alcohol (Pušenje / Alkohol)`,
+RULES:
+1. PATIENT IDENTITY: Extract name, age, occupation, social status ONLY if mentioned. If not mentioned, set to "Not mentioned in transcript".
+2. CLINICAL TIMELINE: Extract the history — when illness started, hospitals visited, medications prescribed, procedures done. Write as a coherent narrative. If not mentioned, "Not mentioned in transcript".
+3. CHIEF COMPLAINTS: The patient's primary reason for the visit. Brief, 1-2 sentences.
+4. PRESENT ILLNESS: Full narrative of the current illness, progression, and context.
+5. DIAGNOSIS CODES: If the doctor mentions or implies specific diagnoses, provide ICD-10 codes formatted as "CODE - Description" (e.g. "I10 - Essential hypertension"). One per line. If uncertain, "Not determined from transcript".
+6. SYSTEMS REVIEW: Map symptoms to the correct category. For DENIED symptoms (e.g. "negira bol", "no chest pain", "nema mučnine"), write "Negative / Denied" — do NOT leave blank or say "Not reported". For symptoms not discussed at all, write "Not mentioned in transcript".
+7. STATUS PRAESENS / OBJECTIVE FINDINGS: If clinical examination findings are mentioned (BP, pulse, lung auscultation, heart sounds, abdominal exam, meningeal signs), extract them precisely. Use exact values when given (e.g. "TA 160/100 mmHg"). If not mentioned, "Not examined / Not mentioned".
+8. LANGUAGE: The transcript may be in Serbian. Always output field values in English medical terminology, but keep proper nouns (names, places) in their original form. For Serbian medical terms, translate to standard English equivalents.
+9. FORMATTING: Be concise and clinical. Use standard medical abbreviations where appropriate.`,
           },
           {
             role: "user",
-            content: `Analyze this patient transcript and fill all fields:\n\n${transcript}`,
+            content: `Extract all medical information from this transcript:\n\n${transcript}`,
           },
         ],
         tools: [
           {
             type: "function",
             function: {
-              name: "fill_medical_form",
-              description: "Fill the structured medical report from transcript analysis",
+              name: "fill_medical_report",
+              description: "Fill the structured medical report extracted from the transcript",
               parameters: {
                 type: "object",
                 properties: {
+                  patientName: { type: "string", description: "Patient full name" },
+                  patientAge: { type: "string", description: "Age / date of birth" },
+                  patientOccupation: { type: "string", description: "Occupation" },
+                  patientSocialStatus: { type: "string", description: "Social/marital status, living situation" },
                   chiefComplaints: { type: "string", description: "Chief complaints / Glavne tegobe" },
                   presentIllness: { type: "string", description: "Present illness narrative / Sadašnja bolest" },
-                  diagnosisCodes: { type: "string", description: "ICD-10 codes, one per line, format: CODE - Description" },
-                  chestPain: { type: "string" },
-                  swelling: { type: "string" },
-                  pressure: { type: "string" },
-                  veins: { type: "string" },
-                  appetite: { type: "string" },
-                  nausea: { type: "string" },
-                  swallowing: { type: "string" },
-                  bloating: { type: "string" },
-                  stool: { type: "string" },
-                  urination: { type: "string" },
-                  flankPain: { type: "string" },
-                  jointPain: { type: "string" },
-                  visionHearing: { type: "string" },
-                  dizziness: { type: "string" },
-                  headaches: { type: "string" },
-                  allergies: { type: "string" },
-                  chronicDiseases: { type: "string" },
-                  smokingAlcohol: { type: "string" },
+                  clinicalTimeline: { type: "string", description: "Timeline: onset, hospitals, treatments, procedures" },
+                  diagnosisCodes: { type: "string", description: "ICD-10 codes, one per line: CODE - Description" },
+                  chestPain: { type: "string" }, swelling: { type: "string" },
+                  pressure: { type: "string" }, veins: { type: "string" },
+                  appetite: { type: "string" }, nausea: { type: "string" },
+                  swallowing: { type: "string" }, bloating: { type: "string" }, stool: { type: "string" },
+                  urination: { type: "string" }, flankPain: { type: "string" },
+                  jointPain: { type: "string" }, visionHearing: { type: "string" },
+                  dizziness: { type: "string" }, headaches: { type: "string" },
+                  allergies: { type: "string" }, chronicDiseases: { type: "string" }, smokingAlcohol: { type: "string" },
+                  bloodPressure: { type: "string", description: "Measured BP value" },
+                  pulse: { type: "string", description: "Pulse rate and character" },
+                  lungSounds: { type: "string", description: "Lung auscultation findings" },
+                  heartSounds: { type: "string", description: "Heart auscultation findings" },
+                  abdominalExam: { type: "string", description: "Abdominal examination findings" },
+                  meningealSigns: { type: "string", description: "Meningeal signs assessment" },
+                  otherFindings: { type: "string", description: "Any other objective findings" },
                 },
                 required: FIELDS,
                 additionalProperties: false,
@@ -113,7 +100,7 @@ Systematic review fields:
             },
           },
         ],
-        tool_choice: { type: "function", function: { name: "fill_medical_form" } },
+        tool_choice: { type: "function", function: { name: "fill_medical_report" } },
       }),
     });
 
