@@ -2,10 +2,12 @@ import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import TopNav from "@/components/TopNav";
 import ListenerPanel from "@/components/ListenerPanel";
+import type { Lang } from "@/components/ListenerPanel";
 import SmartFormPanel from "@/components/SmartFormPanel";
 
 const Index = () => {
   const [transcript, setTranscript] = useState("");
+  const [lang, setLang] = useState<Lang>("en-US");
 
   const handleTranscriptUpdate = useCallback((text: string) => {
     setTranscript(text);
@@ -22,14 +24,12 @@ const Index = () => {
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 h-[calc(100vh-88px)]"
         >
-          {/* Left Panel */}
           <div className="glass-card-elevated p-6 overflow-hidden flex flex-col">
-            <ListenerPanel onTranscriptUpdate={handleTranscriptUpdate} />
+            <ListenerPanel onTranscriptUpdate={handleTranscriptUpdate} onLangChange={setLang} />
           </div>
 
-          {/* Right Panel */}
           <div className="glass-card-elevated p-6 overflow-hidden flex flex-col">
-            <SmartFormPanel transcript={transcript} />
+            <SmartFormPanel transcript={transcript} lang={lang} />
           </div>
         </motion.div>
       </main>

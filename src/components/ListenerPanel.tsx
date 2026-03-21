@@ -123,8 +123,11 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
   const toggleLang = () => {
     const wasRecording = isRecording;
     if (wasRecording) stopRecognition();
-    setLang((l) => (l === "en-US" ? "sr-RS" : "en-US"));
-    // If was recording, restart with new lang after state update
+    setLang((l) => {
+      const next = l === "en-US" ? "sr-RS" : "en-US";
+      onLangChange?.(next);
+      return next;
+    });
     if (wasRecording) {
       setTimeout(() => startRecognition(), 100);
     }
