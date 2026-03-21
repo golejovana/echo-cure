@@ -24,7 +24,7 @@ const ListenerPanel = ({ onTranscriptUpdate }: ListenerPanelProps) => {
 
   // Check browser support
   useEffect(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) setSupported(false);
   }, []);
 
