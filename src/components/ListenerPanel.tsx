@@ -1,76 +1,152 @@
-import { useState, useEffect, useCallback } from "react";
-import { Mic, MicOff } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Mic, MicOff, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-const SAMPLE_TRANSCRIPT = [
-  "Patient is a 52-year-old male presenting with persistent chest pain.",
-  "Pain started approximately three days ago, radiating to the left arm.",
-  "Patient denies shortness of breath but reports mild dizziness.",
-  "Blood pressure measured at 145 over 92. Heart rate 88 bpm.",
-  "Patient reports a history of hypertension and type 2 diabetes.",
-  "Current medications include Metformin 500mg twice daily and Lisinopril 10mg.",
-  "Temperature 98.6°F. Oxygen saturation at 97 percent.",
-  "No gastrointestinal complaints. Appetite and bowel habits are normal.",
-  "No urinary symptoms or flank pain reported.",
-  "Patient denies joint pain, vision or hearing changes.",
-  "No known drug allergies. Family history of coronary artery disease.",
-  "Patient is a non-smoker but reports occasional alcohol use.",
-];
 
 interface ListenerPanelProps {
   onTranscriptUpdate: (text: string) => void;
 }
 
+type Lang = "en-US" | "sr-RS";
+
+const LANG_LABELS: Record<Lang, string> = {
+  "en-US": "English",
+  "sr-RS": "Srpski",
+};
+
 const ListenerPanel = ({ onTranscriptUpdate }: ListenerPanelProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [lines, setLines] = useState<string[]>([]);
-  const [currentCharIndex, setCurrentCharIndex] = useState(0);
-  const [currentLineIndex, setCurrentLineIndex] = useState(0);
+  const [interimText, setInterimText] = useState("");
+  const [lang, setLang] = useState<Lang>("en-US");
+  const [supported, setSupported] = useState(true);
+  const recognitionRef = useRef<any>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Check browser support
+  useEffect(() => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) setSupported(false);
+  }, []);
+
+  const stopRecognition = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.onerror = null;
+      recognitionRef.current.onend = null;
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+    setInterimText("");
+  }, []);
+
+  const startRecognition = useCallback(() => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return;
+
+    const recognition = new SR();
+    recognition.lang = lang;
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          setLines((prev) => [...prev, transcript.trim()]);
+          setInterimText("");
+        } else {
+          interim += transcript;
+        }
+      }
+      if (interim) setInterimText(interim);
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error("Speech recognition error:", event.error);
+      if (event.error !== "no-speech") {
+        stopRecognition();
+      }
+    };
+
+    recognition.onend = () => {
+      // Auto-restart if still recording (browser stops after silence)
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.start();
+        } catch {
+          stopRecognition();
+        }
+      }
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
+  }, [lang, stopRecognition]);
 
   const toggleRecording = useCallback(() => {
-    if (!isRecording) {
-      setLines([]);
-      setCurrentCharIndex(0);
-      setCurrentLineIndex(0);
-    }
-    setIsRecording((r) => !r);
-  }, [isRecording]);
-
-  useEffect(() => {
-    if (!isRecording || currentLineIndex >= SAMPLE_TRANSCRIPT.length) {
-      if (currentLineIndex >= SAMPLE_TRANSCRIPT.length) setIsRecording(false);
-      return;
-    }
-
-    const line = SAMPLE_TRANSCRIPT[currentLineIndex];
-    if (currentCharIndex < line.length) {
-      const timer = setTimeout(() => {
-        setLines((prev) => {
-          const copy = [...prev];
-          copy[currentLineIndex] = line.slice(0, currentCharIndex + 1);
-          return copy;
-        });
-        setCurrentCharIndex((c) => c + 1);
-      }, 28 + Math.random() * 22);
-      return () => clearTimeout(timer);
+    if (isRecording) {
+      stopRecognition();
     } else {
-      const timer = setTimeout(() => {
-        setCurrentLineIndex((l) => l + 1);
-        setCurrentCharIndex(0);
-      }, 400);
-      return () => clearTimeout(timer);
+      setLines([]);
+      setInterimText("");
+      startRecognition();
     }
-  }, [isRecording, currentCharIndex, currentLineIndex]);
+  }, [isRecording, stopRecognition, startRecognition]);
 
+  // Update parent with full transcript
   useEffect(() => {
     onTranscriptUpdate(lines.join(" "));
   }, [lines, onTranscriptUpdate]);
 
+  // Auto-scroll
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [lines, interimText]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => stopRecognition();
+  }, [stopRecognition]);
+
+  const toggleLang = () => {
+    const wasRecording = isRecording;
+    if (wasRecording) stopRecognition();
+    setLang((l) => (l === "en-US" ? "sr-RS" : "en-US"));
+    // If was recording, restart with new lang after state update
+    if (wasRecording) {
+      setTimeout(() => startRecognition(), 100);
+    }
+  };
+
+  if (!supported) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center">
+        <p className="text-sm text-destructive">
+          Your browser does not support Speech Recognition. Please use Chrome or Edge.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full">
-      <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-6">
-        Live Transcript
-      </h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+          Live Transcript
+        </h2>
+        <button
+          onClick={toggleLang}
+          className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 active:scale-[0.96] px-2.5 py-1.5 rounded-full bg-muted/40"
+        >
+          <Globe size={13} strokeWidth={1.8} />
+          {LANG_LABELS[lang]}
+        </button>
+      </div>
 
       {/* Record Button */}
       <div className="flex justify-center mb-8">
@@ -101,23 +177,27 @@ const ListenerPanel = ({ onTranscriptUpdate }: ListenerPanelProps) => {
       </p>
 
       {/* Transcript area */}
-      <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 pr-1">
         <AnimatePresence>
           {lines.map((line, i) => (
             <motion.p
-              key={i}
+              key={`${i}-${line.slice(0, 20)}`}
               initial={{ opacity: 0, y: 8, filter: "blur(4px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               className="text-sm leading-relaxed text-foreground/85"
             >
               {line}
-              {i === currentLineIndex && isRecording && (
-                <span className="inline-block w-0.5 h-4 bg-primary ml-0.5 animate-pulse align-text-bottom" />
-              )}
             </motion.p>
           ))}
         </AnimatePresence>
+
+        {interimText && (
+          <p className="text-sm leading-relaxed text-muted-foreground/60 italic">
+            {interimText}
+            <span className="inline-block w-0.5 h-4 bg-primary ml-0.5 animate-pulse align-text-bottom" />
+          </p>
+        )}
 
         {lines.length === 0 && !isRecording && (
           <div className="flex items-center justify-center h-32">
