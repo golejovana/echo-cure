@@ -72,7 +72,7 @@ const OBJECTIVE_FIELDS: CategoryField[] = [
 ];
 
 type FormData = Record<string, string>;
-interface SmartFormPanelProps { transcript: string }
+interface SmartFormPanelProps { transcript: string; lang: string }
 
 const today = () => {
   const d = new Date();
