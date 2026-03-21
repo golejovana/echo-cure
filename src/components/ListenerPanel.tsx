@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Mic, MicOff, Globe } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Globe } from "lucide-react";
 
 interface ListenerPanelProps {
   onTranscriptUpdate: (text: string) => void;
