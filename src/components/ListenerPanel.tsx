@@ -6,9 +6,7 @@ interface ListenerPanelProps {
   onLangChange?: (lang: Lang) => void;
 }
 
-export type Lang = "en-US" | "sr-RS";
-
-type Lang = "en-US" | "sr-RS";
+export type { Lang };
 
 const LANG_LABELS: Record<Lang, string> = {
   "en-US": "English",
