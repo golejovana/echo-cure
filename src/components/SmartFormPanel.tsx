@@ -1,54 +1,144 @@
 import { useState, useCallback } from "react";
-import { Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
+import { Sparkles, Heart, Stethoscope, Droplets, Brain, Users, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
-interface FormData {
-  chiefComplaint: string;
-  duration: string;
-  patientHistory: string;
-  vitalSigns: string;
+interface CategoryField {
+  key: string;
+  label: string;
 }
 
-const EMPTY: FormData = { chiefComplaint: "", duration: "", patientHistory: "", vitalSigns: "" };
+interface MedicalCategory {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  fields: CategoryField[];
+}
 
-const PARSED: FormData = {
-  chiefComplaint: "Persistent chest pain radiating to the left arm. Patient denies shortness of breath but reports mild dizziness.",
-  duration: "Approximately 3 days",
-  patientHistory: "52-year-old male. History of hypertension and type 2 diabetes. Current medications: Metformin 500mg BID, Lisinopril 10mg daily.",
-  vitalSigns: "BP 145/92 mmHg · HR 88 bpm · Temp 98.6°F · SpO₂ 97%",
+const CATEGORIES: MedicalCategory[] = [
+  {
+    id: "cardiovascular",
+    label: "Cardiovascular & Respiratory",
+    icon: Heart,
+    fields: [
+      { key: "chestPain", label: "Chest Pain" },
+      { key: "swelling", label: "Swelling / Edema" },
+      { key: "pressure", label: "Blood Pressure / Pressure Sensation" },
+      { key: "veins", label: "Veins / Vascular" },
+    ],
+  },
+  {
+    id: "gastrointestinal",
+    label: "Gastrointestinal",
+    icon: Stethoscope,
+    fields: [
+      { key: "appetite", label: "Appetite" },
+      { key: "nausea", label: "Nausea / Vomiting" },
+      { key: "swallowing", label: "Swallowing" },
+      { key: "bloating", label: "Bloating / Abdominal Pain" },
+      { key: "stool", label: "Stool / Bowel Habits" },
+    ],
+  },
+  {
+    id: "urogenital",
+    label: "Urogenital",
+    icon: Droplets,
+    fields: [
+      { key: "urination", label: "Urination Details" },
+      { key: "flankPain", label: "Flank Pain" },
+    ],
+  },
+  {
+    id: "locomotor",
+    label: "Locomotor & CNS",
+    icon: Brain,
+    fields: [
+      { key: "jointPain", label: "Joint Pain / Mobility" },
+      { key: "visionHearing", label: "Vision / Hearing" },
+      { key: "dizziness", label: "Dizziness / Vertigo" },
+      { key: "headaches", label: "Headaches" },
+    ],
+  },
+  {
+    id: "personal",
+    label: "Personal & Family History",
+    icon: Users,
+    fields: [
+      { key: "allergies", label: "Allergies" },
+      { key: "chronicDiseases", label: "Chronic Diseases" },
+      { key: "smokingAlcohol", label: "Smoking / Alcohol" },
+    ],
+  },
+];
+
+type FormData = Record<string, string>;
+
+const PARSED_DATA: FormData = {
+  // Cardiovascular & Respiratory
+  chestPain: "Persistent chest pain radiating to the left arm, onset 3 days ago. Patient denies shortness of breath.",
+  swelling: "Not reported",
+  pressure: "BP 145/92 mmHg — elevated. Patient has history of hypertension.",
+  veins: "Not reported",
+  // Gastrointestinal
+  appetite: "Not reported",
+  nausea: "Not reported",
+  swallowing: "Not reported",
+  bloating: "Not reported",
+  stool: "Not reported",
+  // Urogenital
+  urination: "Not reported",
+  flankPain: "Not reported",
+  // Locomotor & CNS
+  jointPain: "Not reported",
+  visionHearing: "Not reported",
+  dizziness: "Mild dizziness reported by patient.",
+  headaches: "Not reported",
+  // Personal & Family
+  allergies: "Not reported",
+  chronicDiseases: "Hypertension, Type 2 Diabetes. Current medications: Metformin 500mg BID, Lisinopril 10mg daily.",
+  smokingAlcohol: "Not reported",
 };
 
 interface SmartFormPanelProps {
   transcript: string;
 }
 
-const sections: { key: keyof FormData; label: string }[] = [
-  { key: "chiefComplaint", label: "Chief Complaint" },
-  { key: "duration", label: "Duration of Symptoms" },
-  { key: "patientHistory", label: "Patient History" },
-  { key: "vitalSigns", label: "Vital Signs" },
-];
-
 const SmartFormPanel = ({ transcript }: SmartFormPanelProps) => {
-  const [form, setForm] = useState<FormData>(EMPTY);
+  const [form, setForm] = useState<FormData>({});
   const [filling, setFilling] = useState(false);
+  const [openSections, setOpenSections] = useState<string[]>([CATEGORIES[0].id]);
+
+  const toggleSection = (id: string) => {
+    setOpenSections((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+    );
+  };
 
   const handleAutoFill = useCallback(() => {
     if (!transcript.trim() || filling) return;
     setFilling(true);
 
-    // Stagger fill each field
-    sections.forEach((section, i) => {
+    // Open all sections during fill
+    setOpenSections(CATEGORIES.map((c) => c.id));
+
+    const allFields = CATEGORIES.flatMap((cat) => cat.fields);
+    allFields.forEach((field, i) => {
       setTimeout(() => {
-        setForm((prev) => ({ ...prev, [section.key]: PARSED[section.key] }));
-        if (i === sections.length - 1) setFilling(false);
-      }, 300 + i * 350);
+        setForm((prev) => ({
+          ...prev,
+          [field.key]: PARSED_DATA[field.key] || "Not reported",
+        }));
+        if (i === allFields.length - 1) setFilling(false);
+      }, 200 + i * 120);
     });
   }, [transcript, filling]);
 
-  const handleChange = (key: keyof FormData, value: string) => {
+  const handleChange = (key: string, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
+
+  const filledCount = (cat: MedicalCategory) =>
+    cat.fields.filter((f) => form[f.key] && form[f.key] !== "Not reported").length;
 
   return (
     <div className="flex flex-col h-full">
@@ -66,37 +156,93 @@ const SmartFormPanel = ({ transcript }: SmartFormPanelProps) => {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-        {sections.map((section, i) => (
-          <motion.div
-            key={section.key}
-            initial={false}
-            animate={form[section.key] ? { scale: [1, 1.008, 1] } : {}}
-            transition={{ duration: 0.35, ease: "easeOut" }}
-            className="glass-card p-5"
-          >
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
-              {section.label}
-            </label>
-            <textarea
-              value={form[section.key]}
-              onChange={(e) => handleChange(section.key, e.target.value)}
-              rows={section.key === "vitalSigns" ? 2 : 3}
-              placeholder={`Enter ${section.label.toLowerCase()}…`}
-              className="w-full bg-transparent text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none overflow-wrap-break-word"
-              style={{ overflowWrap: "break-word" }}
-            />
-            {filling && !form[section.key] && (
-              <div
-                className="h-1 mt-2 rounded-full bg-gradient-to-r from-primary/30 via-primary/60 to-primary/30"
-                style={{
-                  backgroundSize: "200% 100%",
-                  animation: "shimmer 1.2s linear infinite",
-                }}
-              />
-            )}
-          </motion.div>
-        ))}
+      <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+        {CATEGORIES.map((cat) => {
+          const isOpen = openSections.includes(cat.id);
+          const Icon = cat.icon;
+          const filled = filledCount(cat);
+
+          return (
+            <div key={cat.id} className="glass-card overflow-hidden">
+              {/* Accordion Header */}
+              <button
+                onClick={() => toggleSection(cat.id)}
+                className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-muted/30 transition-colors duration-200 active:scale-[0.995]"
+              >
+                <Icon size={18} strokeWidth={1.5} className="text-muted-foreground shrink-0" />
+                <span className="flex-1 text-sm font-semibold text-foreground tracking-wide">
+                  {cat.label}
+                </span>
+                {filled > 0 && (
+                  <span className="text-[10px] font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full">
+                    {filled}/{cat.fields.length}
+                  </span>
+                )}
+                <ChevronDown
+                  size={16}
+                  strokeWidth={1.8}
+                  className={cn(
+                    "text-muted-foreground transition-transform duration-300",
+                    isOpen && "rotate-180"
+                  )}
+                />
+              </button>
+
+              {/* Accordion Content */}
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    key="content"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-5 pb-5 space-y-3 border-t border-border/50 pt-4">
+                      {cat.fields.map((field) => (
+                        <motion.div
+                          key={field.key}
+                          initial={false}
+                          animate={
+                            form[field.key]
+                              ? { scale: [1, 1.006, 1] }
+                              : {}
+                          }
+                          transition={{ duration: 0.3, ease: "easeOut" }}
+                        >
+                          <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                            {field.label}
+                          </label>
+                          <textarea
+                            value={form[field.key] || ""}
+                            onChange={(e) => handleChange(field.key, e.target.value)}
+                            rows={2}
+                            placeholder={`Enter ${field.label.toLowerCase()}…`}
+                            className={cn(
+                              "w-full bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-200",
+                              form[field.key] === "Not reported" && "text-muted-foreground/60 italic"
+                            )}
+                            style={{ overflowWrap: "break-word" }}
+                          />
+                          {filling && !form[field.key] && (
+                            <div
+                              className="h-0.5 mt-1.5 rounded-full bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20"
+                              style={{
+                                backgroundSize: "200% 100%",
+                                animation: "shimmer 1.2s linear infinite",
+                              }}
+                            />
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
