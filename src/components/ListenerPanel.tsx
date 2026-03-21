@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Mic, MicOff, Globe } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface ListenerPanelProps {
   onTranscriptUpdate: (text: string) => void;
@@ -96,10 +95,17 @@ const ListenerPanel = ({ onTranscriptUpdate }: ListenerPanelProps) => {
     }
   }, [isRecording, stopRecognition, startRecognition]);
 
+  const fullText = lines.join(" ");
+
   // Update parent with full transcript
   useEffect(() => {
-    onTranscriptUpdate(lines.join(" "));
-  }, [lines, onTranscriptUpdate]);
+    onTranscriptUpdate(fullText);
+  }, [fullText, onTranscriptUpdate]);
+
+  const handleManualEdit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newText = e.target.value;
+    setLines(newText ? newText.split(/(?<=\.)\s+|(?<=\n)/).filter(Boolean) : []);
+  };
 
   // Auto-scroll
   useEffect(() => {
@@ -176,36 +182,15 @@ const ListenerPanel = ({ onTranscriptUpdate }: ListenerPanelProps) => {
         {isRecording ? "Listening…" : "Tap to begin recording"}
       </p>
 
-      {/* Transcript area */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 pr-1">
-        <AnimatePresence>
-          {lines.map((line, i) => (
-            <motion.p
-              key={`${i}-${line.slice(0, 20)}`}
-              initial={{ opacity: 0, y: 8, filter: "blur(4px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="text-sm leading-relaxed text-foreground/85"
-            >
-              {line}
-            </motion.p>
-          ))}
-        </AnimatePresence>
-
-        {interimText && (
-          <p className="text-sm leading-relaxed text-muted-foreground/60 italic">
-            {interimText}
-            <span className="inline-block w-0.5 h-4 bg-primary ml-0.5 animate-pulse align-text-bottom" />
-          </p>
-        )}
-
-        {lines.length === 0 && !isRecording && (
-          <div className="flex items-center justify-center h-32">
-            <p className="text-sm text-muted-foreground/60 italic">
-              Transcript will appear here…
-            </p>
-          </div>
-        )}
+      {/* Transcript area - editable */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto pr-1">
+        <textarea
+          value={fullText + (interimText ? (fullText ? " " : "") + interimText : "")}
+          onChange={handleManualEdit}
+          placeholder="Transcript will appear here… You can also type or edit directly."
+          className="w-full h-full min-h-[120px] bg-transparent text-sm leading-relaxed text-foreground/85 placeholder:text-muted-foreground/50 placeholder:italic resize-none focus:outline-none"
+          style={{ overflowWrap: "break-word" }}
+        />
       </div>
     </div>
   );
