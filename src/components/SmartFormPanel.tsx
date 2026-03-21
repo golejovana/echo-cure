@@ -98,7 +98,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
     // Reset form for a fresh extraction
     setForm({});
     try {
-      const { data, error } = await supabase.functions.invoke("parse-transcript", { body: { transcript } });
+      const { data, error } = await supabase.functions.invoke("parse-transcript", { body: { transcript, lang } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const fd = data.formData as FormData;
