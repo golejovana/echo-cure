@@ -3,7 +3,10 @@ import { Mic, MicOff, Globe } from "lucide-react";
 
 interface ListenerPanelProps {
   onTranscriptUpdate: (text: string) => void;
+  onLangChange?: (lang: Lang) => void;
 }
+
+export type Lang = "en-US" | "sr-RS";
 
 type Lang = "en-US" | "sr-RS";
 
