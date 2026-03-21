@@ -7,6 +7,9 @@ const corsHeaders = {
 };
 
 const FIELDS = [
+  "chiefComplaints",
+  "presentIllness",
+  "diagnosisCodes",
   "chestPain","swelling","pressure","veins",
   "appetite","nausea","swallowing","bloating","stool",
   "urination","flankPain",
@@ -40,31 +43,37 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a medical transcript analyzer. You will receive a patient consultation transcript. Your job is to extract and categorize the medical information into the following fields. For each field, provide a concise clinical summary. If information is not mentioned, set value to exactly "Not reported".
+            content: `You are a senior medical transcript analyzer at the University Clinical Center of Serbia (Univerzitetski Klinički Centar Srbije). You analyze patient consultation transcripts and produce structured clinical data.
 
-Fields:
-- chestPain: Chest Pain details
-- swelling: Swelling / Edema
-- pressure: Blood Pressure / Pressure Sensation
-- veins: Veins / Vascular
-- appetite: Appetite
-- nausea: Nausea / Vomiting
-- swallowing: Swallowing
-- bloating: Bloating / Abdominal Pain
-- stool: Stool / Bowel Habits
-- urination: Urination Details
-- flankPain: Flank Pain
-- jointPain: Joint Pain / Mobility
-- visionHearing: Vision / Hearing
-- dizziness: Dizziness / Vertigo
-- headaches: Headaches
-- allergies: Allergies
-- chronicDiseases: Chronic Diseases (include medications)
-- smokingAlcohol: Smoking / Alcohol`,
+Your job:
+1. Extract "Chief Complaints" (Glavne tegobe) — the patient's primary reason for visit in 1-2 sentences.
+2. Extract "Present Illness" (Sadašnja bolest) — a narrative summary of the current illness, timeline, and progression.
+3. Identify any ICD-10 diagnosis codes mentioned or strongly implied. Format each as "CODE - Description" (e.g. "I10 - Hypertension", "N18.4 - Chronic kidney disease, stage 4"). List multiple codes separated by newlines. If none can be determined, set to "Not reported".
+4. Categorize symptoms into the systematic review fields below. For each, provide a concise clinical summary. If not mentioned, set to exactly "Not reported".
+
+Systematic review fields:
+- chestPain: Chest Pain (Bol u grudima)
+- swelling: Swelling / Edema (Otoci)
+- pressure: Blood Pressure / Pressure Sensation (Krvni pritisak)
+- veins: Veins / Vascular (Vene / Vaskularno)
+- appetite: Appetite (Apetit)
+- nausea: Nausea / Vomiting (Mučnina / Povraćanje)
+- swallowing: Swallowing (Gutanje)
+- bloating: Bloating / Abdominal Pain (Nadutost / Bol u stomaku)
+- stool: Stool / Bowel Habits (Stolica)
+- urination: Urination Details (Mokrenje)
+- flankPain: Flank Pain (Bol u slabinama)
+- jointPain: Joint Pain / Mobility (Bol u zglobovima)
+- visionHearing: Vision / Hearing (Vid / Sluh)
+- dizziness: Dizziness / Vertigo (Vrtoglavica)
+- headaches: Headaches (Glavobolje)
+- allergies: Allergies (Alergije)
+- chronicDiseases: Chronic Diseases & Medications (Hronične bolesti i terapija)
+- smokingAlcohol: Smoking / Alcohol (Pušenje / Alkohol)`,
           },
           {
             role: "user",
-            content: `Analyze this transcript and return the structured data:\n\n${transcript}`,
+            content: `Analyze this patient transcript and fill all fields:\n\n${transcript}`,
           },
         ],
         tools: [
@@ -72,12 +81,32 @@ Fields:
             type: "function",
             function: {
               name: "fill_medical_form",
-              description: "Fill the structured medical intake form from transcript analysis",
+              description: "Fill the structured medical report from transcript analysis",
               parameters: {
                 type: "object",
-                properties: Object.fromEntries(
-                  FIELDS.map((f) => [f, { type: "string" }])
-                ),
+                properties: {
+                  chiefComplaints: { type: "string", description: "Chief complaints / Glavne tegobe" },
+                  presentIllness: { type: "string", description: "Present illness narrative / Sadašnja bolest" },
+                  diagnosisCodes: { type: "string", description: "ICD-10 codes, one per line, format: CODE - Description" },
+                  chestPain: { type: "string" },
+                  swelling: { type: "string" },
+                  pressure: { type: "string" },
+                  veins: { type: "string" },
+                  appetite: { type: "string" },
+                  nausea: { type: "string" },
+                  swallowing: { type: "string" },
+                  bloating: { type: "string" },
+                  stool: { type: "string" },
+                  urination: { type: "string" },
+                  flankPain: { type: "string" },
+                  jointPain: { type: "string" },
+                  visionHearing: { type: "string" },
+                  dizziness: { type: "string" },
+                  headaches: { type: "string" },
+                  allergies: { type: "string" },
+                  chronicDiseases: { type: "string" },
+                  smokingAlcohol: { type: "string" },
+                },
                 required: FIELDS,
                 additionalProperties: false,
               },
