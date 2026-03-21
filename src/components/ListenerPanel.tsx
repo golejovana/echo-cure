@@ -41,7 +41,7 @@ const ListenerPanel = ({ onTranscriptUpdate }: ListenerPanelProps) => {
   }, []);
 
   const startRecognition = useCallback(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return;
 
     const recognition = new SR();
