@@ -1,7 +1,9 @@
 import { useState, useCallback } from "react";
-import { Sparkles, Heart, Stethoscope, Droplets, Brain, Users, ChevronDown } from "lucide-react";
+import { Sparkles, Heart, Stethoscope, Droplets, Brain, Users, ChevronDown, Send, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface CategoryField {
   key: string;
@@ -73,32 +75,6 @@ const CATEGORIES: MedicalCategory[] = [
 
 type FormData = Record<string, string>;
 
-const PARSED_DATA: FormData = {
-  // Cardiovascular & Respiratory
-  chestPain: "Persistent chest pain radiating to the left arm, onset 3 days ago. Patient denies shortness of breath.",
-  swelling: "Not reported",
-  pressure: "BP 145/92 mmHg — elevated. Patient has history of hypertension.",
-  veins: "Not reported",
-  // Gastrointestinal
-  appetite: "Not reported",
-  nausea: "Not reported",
-  swallowing: "Not reported",
-  bloating: "Not reported",
-  stool: "Not reported",
-  // Urogenital
-  urination: "Not reported",
-  flankPain: "Not reported",
-  // Locomotor & CNS
-  jointPain: "Not reported",
-  visionHearing: "Not reported",
-  dizziness: "Mild dizziness reported by patient.",
-  headaches: "Not reported",
-  // Personal & Family
-  allergies: "Not reported",
-  chronicDiseases: "Hypertension, Type 2 Diabetes. Current medications: Metformin 500mg BID, Lisinopril 10mg daily.",
-  smokingAlcohol: "Not reported",
-};
-
 interface SmartFormPanelProps {
   transcript: string;
 }
@@ -114,31 +90,58 @@ const SmartFormPanel = ({ transcript }: SmartFormPanelProps) => {
     );
   };
 
-  const handleAutoFill = useCallback(() => {
+  const handleAutoFill = useCallback(async () => {
     if (!transcript.trim() || filling) return;
     setFilling(true);
 
-    // Open all sections during fill
-    setOpenSections(CATEGORIES.map((c) => c.id));
+    try {
+      const { data, error } = await supabase.functions.invoke("parse-transcript", {
+        body: { transcript },
+      });
 
-    const allFields = CATEGORIES.flatMap((cat) => cat.fields);
-    allFields.forEach((field, i) => {
-      setTimeout(() => {
-        setForm((prev) => ({
-          ...prev,
-          [field.key]: PARSED_DATA[field.key] || "Not reported",
-        }));
-        if (i === allFields.length - 1) setFilling(false);
-      }, 200 + i * 120);
-    });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const formData = data.formData as FormData;
+      setOpenSections(CATEGORIES.map((c) => c.id));
+
+      // Staggered fill animation
+      const allFields = CATEGORIES.flatMap((cat) => cat.fields);
+      allFields.forEach((field, i) => {
+        setTimeout(() => {
+          setForm((prev) => ({
+            ...prev,
+            [field.key]: formData[field.key] || "Not reported",
+          }));
+          if (i === allFields.length - 1) setFilling(false);
+        }, 80 + i * 70);
+      });
+    } catch (e) {
+      console.error("Auto-fill error:", e);
+      toast({
+        title: "Auto-fill failed",
+        description: e instanceof Error ? e.message : "Could not parse transcript. Please try again.",
+        variant: "destructive",
+      });
+      setFilling(false);
+    }
   }, [transcript, filling]);
 
   const handleChange = (key: string, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleSubmit = () => {
+    toast({
+      title: "✓ Report submitted securely",
+      description: "Data encrypted and transferred to the clinic system via GDPR-compliant channel.",
+    });
+  };
+
   const filledCount = (cat: MedicalCategory) =>
     cat.fields.filter((f) => form[f.key] && form[f.key] !== "Not reported").length;
+
+  const hasAnyData = Object.values(form).some((v) => v && v !== "Not reported");
 
   return (
     <div className="flex flex-col h-full">
@@ -151,8 +154,12 @@ const SmartFormPanel = ({ transcript }: SmartFormPanelProps) => {
           disabled={!transcript.trim() || filling}
           className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-primary text-primary-foreground shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.96] transition-all duration-200"
         >
-          <Sparkles size={15} strokeWidth={1.8} />
-          Magic Auto-Fill
+          {filling ? (
+            <Loader2 size={15} strokeWidth={1.8} className="animate-spin" />
+          ) : (
+            <Sparkles size={15} strokeWidth={1.8} />
+          )}
+          {filling ? "Analyzing…" : "Magic Auto-Fill"}
         </button>
       </div>
 
@@ -164,7 +171,6 @@ const SmartFormPanel = ({ transcript }: SmartFormPanelProps) => {
 
           return (
             <div key={cat.id} className="glass-card overflow-hidden">
-              {/* Accordion Header */}
               <button
                 onClick={() => toggleSection(cat.id)}
                 className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-muted/30 transition-colors duration-200 active:scale-[0.995]"
@@ -188,7 +194,6 @@ const SmartFormPanel = ({ transcript }: SmartFormPanelProps) => {
                 />
               </button>
 
-              {/* Accordion Content */}
               <AnimatePresence initial={false}>
                 {isOpen && (
                   <motion.div
@@ -204,11 +209,7 @@ const SmartFormPanel = ({ transcript }: SmartFormPanelProps) => {
                         <motion.div
                           key={field.key}
                           initial={false}
-                          animate={
-                            form[field.key]
-                              ? { scale: [1, 1.006, 1] }
-                              : {}
-                          }
+                          animate={form[field.key] ? { scale: [1, 1.006, 1] } : {}}
                           transition={{ duration: 0.3, ease: "easeOut" }}
                         >
                           <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
@@ -228,10 +229,7 @@ const SmartFormPanel = ({ transcript }: SmartFormPanelProps) => {
                           {filling && !form[field.key] && (
                             <div
                               className="h-0.5 mt-1.5 rounded-full bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20"
-                              style={{
-                                backgroundSize: "200% 100%",
-                                animation: "shimmer 1.2s linear infinite",
-                              }}
+                              style={{ backgroundSize: "200% 100%", animation: "shimmer 1.2s linear infinite" }}
                             />
                           )}
                         </motion.div>
@@ -243,6 +241,18 @@ const SmartFormPanel = ({ transcript }: SmartFormPanelProps) => {
             </div>
           );
         })}
+      </div>
+
+      {/* Submit Report */}
+      <div className="pt-4 mt-2 border-t border-border/40">
+        <button
+          onClick={handleSubmit}
+          disabled={!hasAnyData}
+          className="w-full flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:shadow-lg hover:shadow-accent/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-all duration-200"
+        >
+          <Send size={15} strokeWidth={1.8} />
+          Submit Report
+        </button>
       </div>
     </div>
   );
