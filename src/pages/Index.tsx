@@ -1,16 +1,40 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useCallback } from "react";
+import { motion } from "framer-motion";
+import TopNav from "@/components/TopNav";
+import ListenerPanel from "@/components/ListenerPanel";
+import SmartFormPanel from "@/components/SmartFormPanel";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
+  const [transcript, setTranscript] = useState("");
+
+  const handleTranscriptUpdate = useCallback((text: string) => {
+    setTranscript(text);
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="min-h-screen flex flex-col">
+      <TopNav />
+
+      <main className="flex-1 px-6 pb-6 lg:px-8 lg:pb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 h-[calc(100vh-88px)]"
+        >
+          {/* Left Panel */}
+          <div className="glass-card-elevated p-6 overflow-hidden flex flex-col">
+            <ListenerPanel onTranscriptUpdate={handleTranscriptUpdate} />
+          </div>
+
+          {/* Right Panel */}
+          <div className="glass-card-elevated p-6 overflow-hidden flex flex-col">
+            <SmartFormPanel transcript={transcript} />
+          </div>
+        </motion.div>
+      </main>
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
