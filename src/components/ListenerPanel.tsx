@@ -13,7 +13,7 @@ const LANG_LABELS: Record<Lang, string> = {
   "sr-RS": "Srpski",
 };
 
-const ListenerPanel = ({ onTranscriptUpdate }: ListenerPanelProps) => {
+const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [lines, setLines] = useState<string[]>([]);
   const [interimText, setInterimText] = useState("");
