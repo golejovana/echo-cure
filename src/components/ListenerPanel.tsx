@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Mic, MicOff, Globe } from "lucide-react";
 
+export type Lang = "en-US" | "sr-RS";
+
 interface ListenerPanelProps {
   onTranscriptUpdate: (text: string) => void;
   onLangChange?: (lang: Lang) => void;
 }
-
-export type { Lang };
 
 const LANG_LABELS: Record<Lang, string> = {
   "en-US": "English",
