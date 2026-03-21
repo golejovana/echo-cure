@@ -72,7 +72,7 @@ const OBJECTIVE_FIELDS: CategoryField[] = [
 ];
 
 type FormData = Record<string, string>;
-interface SmartFormPanelProps { transcript: string }
+interface SmartFormPanelProps { transcript: string; lang: string }
 
 const today = () => {
   const d = new Date();
@@ -80,7 +80,7 @@ const today = () => {
 };
 
 /* ================================================================ */
-const SmartFormPanel = ({ transcript }: SmartFormPanelProps) => {
+const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
   const [form, setForm] = useState<FormData>({});
   const [filling, setFilling] = useState(false);
   const [openSections, setOpenSections] = useState<string[]>([]);
@@ -98,7 +98,7 @@ const SmartFormPanel = ({ transcript }: SmartFormPanelProps) => {
     // Reset form for a fresh extraction
     setForm({});
     try {
-      const { data, error } = await supabase.functions.invoke("parse-transcript", { body: { transcript } });
+      const { data, error } = await supabase.functions.invoke("parse-transcript", { body: { transcript, lang } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const fd = data.formData as FormData;

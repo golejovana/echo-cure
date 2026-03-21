@@ -1,18 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Mic, MicOff, Globe } from "lucide-react";
 
+export type Lang = "en-US" | "sr-RS";
+
 interface ListenerPanelProps {
   onTranscriptUpdate: (text: string) => void;
+  onLangChange?: (lang: Lang) => void;
 }
-
-type Lang = "en-US" | "sr-RS";
 
 const LANG_LABELS: Record<Lang, string> = {
   "en-US": "English",
   "sr-RS": "Srpski",
 };
 
-const ListenerPanel = ({ onTranscriptUpdate }: ListenerPanelProps) => {
+const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [lines, setLines] = useState<string[]>([]);
   const [interimText, setInterimText] = useState("");
@@ -122,8 +123,11 @@ const ListenerPanel = ({ onTranscriptUpdate }: ListenerPanelProps) => {
   const toggleLang = () => {
     const wasRecording = isRecording;
     if (wasRecording) stopRecognition();
-    setLang((l) => (l === "en-US" ? "sr-RS" : "en-US"));
-    // If was recording, restart with new lang after state update
+    setLang((l) => {
+      const next = l === "en-US" ? "sr-RS" : "en-US";
+      onLangChange?.(next);
+      return next;
+    });
     if (wasRecording) {
       setTimeout(() => startRecognition(), 100);
     }
