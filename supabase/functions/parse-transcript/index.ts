@@ -54,7 +54,7 @@ RULES:
 5. DIAGNOSIS CODES: If the doctor mentions or implies specific diagnoses, provide ICD-10 codes formatted as "CODE - Description" (e.g. "I10 - Essential hypertension"). One per line. If uncertain, "Not determined from transcript".
 6. SYSTEMS REVIEW: Map symptoms to the correct category. For DENIED symptoms (e.g. "negira bol", "no chest pain", "nema mučnine"), write "Negative / Denied" — do NOT leave blank or say "Not reported". For symptoms not discussed at all, write "Not mentioned in transcript".
 7. STATUS PRAESENS / OBJECTIVE FINDINGS: If clinical examination findings are mentioned (BP, pulse, lung auscultation, heart sounds, abdominal exam, meningeal signs), extract them precisely. Use exact values when given (e.g. "TA 160/100 mmHg"). If not mentioned, "Not examined / Not mentioned".
-8. LANGUAGE: The transcript may be in Serbian. Always output field values in English medical terminology, but keep proper nouns (names, places) in their original form. For Serbian medical terms, translate to standard English equivalents.
+8. OUTPUT LANGUAGE: The user has selected "${outputLang}" as the interface language. You MUST write ALL field values in ${outputLang}. If the transcript is in a different language, translate the extracted data into ${outputLang}. Keep proper nouns (patient names, hospital names, place names) in their original form.
 9. FORMATTING: Be concise and clinical. Use standard medical abbreviations where appropriate.`,
           },
           {
