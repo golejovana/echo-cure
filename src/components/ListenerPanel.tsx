@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Mic, MicOff, Globe } from "lucide-react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { Mic, MicOff, Globe, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Lang = "en-US" | "sr-RS";
 
@@ -13,88 +14,20 @@ const LANG_LABELS: Record<Lang, string> = {
   "sr-RS": "Srpski",
 };
 
+// Interval in ms to send audio chunks to Whisper
+const CHUNK_INTERVAL = 5000;
+
 const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps) => {
   const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [lines, setLines] = useState<string[]>([]);
-  const [interimText, setInterimText] = useState("");
   const [lang, setLang] = useState<Lang>("en-US");
-  const [supported, setSupported] = useState(true);
-  const recognitionRef = useRef<any>(null);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  // Check browser support
-  useEffect(() => {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) setSupported(false);
-  }, []);
-
-  const stopRecognition = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.onresult = null;
-      recognitionRef.current.onerror = null;
-      recognitionRef.current.onend = null;
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-    setIsRecording(false);
-    setInterimText("");
-  }, []);
-
-  const startRecognition = useCallback(() => {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) return;
-
-    const recognition = new SR();
-    recognition.lang = lang;
-    recognition.continuous = true;
-    recognition.interimResults = true;
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let interim = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          setLines((prev) => [...prev, transcript.trim()]);
-          setInterimText("");
-        } else {
-          interim += transcript;
-        }
-      }
-      if (interim) setInterimText(interim);
-    };
-
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error("Speech recognition error:", event.error);
-      if (event.error !== "no-speech") {
-        stopRecognition();
-      }
-    };
-
-    recognition.onend = () => {
-      // Auto-restart if still recording (browser stops after silence)
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.start();
-        } catch {
-          stopRecognition();
-        }
-      }
-    };
-
-    recognitionRef.current = recognition;
-    recognition.start();
-    setIsRecording(true);
-  }, [lang, stopRecognition]);
-
-  const toggleRecording = useCallback(() => {
-    if (isRecording) {
-      stopRecognition();
-    } else {
-      setLines([]);
-      setInterimText("");
-      startRecognition();
-    }
-  }, [isRecording, stopRecognition, startRecognition]);
 
   const fullText = lines.join(" ");
 
@@ -103,45 +36,145 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
     onTranscriptUpdate(fullText);
   }, [fullText, onTranscriptUpdate]);
 
-  const handleManualEdit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newText = e.target.value;
-    setLines(newText ? newText.split(/(?<=\.)\s+|(?<=\n)/).filter(Boolean) : []);
-  };
-
   // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [lines, interimText]);
+  }, [lines]);
+
+  const sendChunkToWhisper = useCallback(async (audioBlob: Blob) => {
+    if (audioBlob.size < 1000) return; // Skip tiny chunks (silence)
+
+    setIsTranscribing(true);
+    try {
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "audio.webm");
+      formData.append("lang", lang);
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const err = await response.json();
+        console.error("Transcription error:", err.error);
+        return;
+      }
+
+      const data = await response.json();
+      if (data.transcript) {
+        setLines((prev) => [...prev, data.transcript]);
+      }
+    } catch (e) {
+      console.error("Failed to transcribe:", e);
+    } finally {
+      setIsTranscribing(false);
+    }
+  }, [lang]);
+
+  const flushChunks = useCallback(() => {
+    if (chunksRef.current.length === 0) return;
+    const blob = new Blob(chunksRef.current, { type: "audio/webm;codecs=opus" });
+    chunksRef.current = [];
+    sendChunkToWhisper(blob);
+  }, [sendChunkToWhisper]);
+
+  const stopRecording = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    // Flush remaining chunks
+    if (chunksRef.current.length > 0) {
+      const blob = new Blob(chunksRef.current, { type: "audio/webm;codecs=opus" });
+      chunksRef.current = [];
+      sendChunkToWhisper(blob);
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    mediaRecorderRef.current = null;
+    setIsRecording(false);
+  }, [sendChunkToWhisper]);
+
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: "audio/webm;codecs=opus",
+      });
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.start(1000); // Collect data every 1s
+      setIsRecording(true);
+
+      // Send chunks to Whisper every CHUNK_INTERVAL ms
+      intervalRef.current = setInterval(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+          // Stop and restart to flush ondataavailable, then send
+          mediaRecorderRef.current.stop();
+          const blob = new Blob(chunksRef.current, { type: "audio/webm;codecs=opus" });
+          chunksRef.current = [];
+          sendChunkToWhisper(blob);
+          mediaRecorderRef.current.start(1000);
+        }
+      }, CHUNK_INTERVAL);
+    } catch (e) {
+      console.error("Microphone access denied:", e);
+    }
+  }, [sendChunkToWhisper]);
+
+  const toggleRecording = useCallback(() => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      setLines([]);
+      startRecording();
+    }
+  }, [isRecording, stopRecording, startRecording]);
+
+  const handleManualEdit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newText = e.target.value;
+    setLines(newText ? newText.split(/(?<=\.)\s+|(?<=\n)/).filter(Boolean) : []);
+  };
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => stopRecognition();
-  }, [stopRecognition]);
+    return () => stopRecording();
+  }, [stopRecording]);
 
   const toggleLang = () => {
     const wasRecording = isRecording;
-    if (wasRecording) stopRecognition();
+    if (wasRecording) stopRecording();
     setLang((l) => {
       const next = l === "en-US" ? "sr-RS" : "en-US";
       onLangChange?.(next);
       return next;
     });
     if (wasRecording) {
-      setTimeout(() => startRecognition(), 100);
+      setTimeout(() => startRecording(), 200);
     }
   };
-
-  if (!supported) {
-    return (
-      <div className="flex flex-col h-full items-center justify-center">
-        <p className="text-sm text-destructive">
-          Your browser does not support Speech Recognition. Please use Chrome or Edge.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col h-full">
@@ -183,13 +216,17 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
       </div>
 
       <p className="text-center text-xs text-muted-foreground mb-6">
-        {isRecording ? "Listening…" : "Tap to begin recording"}
+        {isRecording
+          ? isTranscribing
+            ? "Transcribing…"
+            : "Listening…"
+          : "Tap to begin recording"}
       </p>
 
       {/* Transcript area - editable */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto pr-1">
         <textarea
-          value={fullText + (interimText ? (fullText ? " " : "") + interimText : "")}
+          value={fullText}
           onChange={handleManualEdit}
           placeholder="Transcript will appear here… You can also type or edit directly."
           className="w-full h-full min-h-[120px] bg-transparent text-sm leading-relaxed text-foreground/85 placeholder:text-muted-foreground/50 placeholder:italic resize-none focus:outline-none"
