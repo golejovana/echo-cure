@@ -226,64 +226,92 @@ export default function PatientDashboard() {
       )}
 
       {/* Health Calendar */}
-      <motion.div variants={item} className="glass-card-elevated p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <Calendar size={18} strokeWidth={1.5} className="text-primary" />
-          <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">{t("patient.healthCalendar")}</h3>
-          <span className="text-xs text-muted-foreground ml-auto">{MONTH_NAMES[currentMonth]} {currentYear}</span>
-        </div>
+      <TooltipProvider delayDuration={200}>
+        <motion.div variants={item} className="glass-card-elevated p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <Calendar size={18} strokeWidth={1.5} className="text-primary" />
+            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">{t("patient.healthCalendar")}</h3>
+            <div className="flex items-center gap-2 ml-auto">
+              <button onClick={prevMonth} className="p-1 rounded-lg hover:bg-muted/40 transition-colors"><ChevronLeft size={16} className="text-muted-foreground" /></button>
+              <span className="text-xs text-muted-foreground min-w-[100px] text-center">{MONTH_NAMES[calMonth]} {calYear}</span>
+              <button onClick={nextMonth} className="p-1 rounded-lg hover:bg-muted/40 transition-colors"><ChevronRight size={16} className="text-muted-foreground" /></button>
+            </div>
+          </div>
 
-        <div className="grid grid-cols-7 gap-1.5">
-          {DAY_NAMES.map((d) => (
-            <div key={d} className="text-center text-[10px] font-semibold text-muted-foreground uppercase py-1">{d}</div>
-          ))}
-          {Array.from({ length: firstDayOfWeek }).map((_, i) => <div key={`empty-${i}`} />)}
-          {Array.from({ length: daysInMonth }, (_, i) => {
-            const day = i + 1;
-            const isToday = day === now.getDate();
-            const hasEvent = appointmentDays.has(day);
-            return (
-              <div key={day} className={`relative text-center py-2 rounded-xl text-sm transition-colors duration-200 cursor-default ${
-                isToday ? "bg-primary text-primary-foreground font-semibold" : hasEvent ? "bg-primary/10 text-primary font-medium" : "text-foreground/70 hover:bg-muted/40"
-              }`}>
-                {day}
-                {hasEvent && !isToday && <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-accent" />}
-              </div>
-            );
-          })}
-        </div>
-
-        {appointments.length > 0 && (
-          <div className="space-y-2 pt-2 border-t border-border/40">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("patient.scheduledAppts")}</p>
-            {appointments.filter((a) => new Date(a.appointment_date) >= new Date(now.toISOString().split("T")[0])).slice(0, 5).map((apt) => (
-              <div key={apt.id} className="flex items-center gap-3 py-1.5">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${apt.priority === "high" ? "bg-destructive/10" : "bg-primary/10"}`}>
-                  {apt.priority === "high" ? <AlertTriangle size={12} className="text-destructive" /> : <Clock size={12} className="text-primary" />}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">{apt.title}</p>
-                  <p className="text-[10px] text-muted-foreground">{formatDate(apt.appointment_date)}</p>
-                </div>
-                {apt.priority === "high" && (
-                  <span className="text-[9px] font-semibold uppercase tracking-wider text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">{t("therapy.highPriority")}</span>
-                )}
-              </div>
+          <div className="grid grid-cols-7 gap-1.5">
+            {DAY_NAMES.map((d) => (
+              <div key={d} className="text-center text-[10px] font-semibold text-muted-foreground uppercase py-1">{d}</div>
             ))}
-          </div>
-        )}
+            {Array.from({ length: firstDayOfWeek }).map((_, i) => <div key={`empty-${i}`} />)}
+            {Array.from({ length: daysInMonth }, (_, i) => {
+              const day = i + 1;
+              const isToday = day === now.getDate() && calMonth === now.getMonth() && calYear === now.getFullYear();
+              const dayAppts = appointmentMap.get(day);
+              const hasEvent = !!dayAppts;
+              const hasHigh = dayAppts?.some((a) => a.priority === "high");
 
-        <div className="flex items-center gap-4 pt-2 text-[10px] text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-primary" />
-            {t("patient.today")}
+              const cell = (
+                <div className={`relative text-center py-2 rounded-xl text-sm transition-colors duration-200 ${
+                  isToday ? "bg-primary text-primary-foreground font-semibold" : hasEvent ? (hasHigh ? "bg-destructive/10 text-destructive font-medium" : "bg-primary/10 text-primary font-medium") : "text-foreground/70 hover:bg-muted/40"
+                } ${hasEvent ? "cursor-pointer" : "cursor-default"}`}>
+                  {day}
+                  {hasEvent && !isToday && <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${hasHigh ? "bg-destructive" : "bg-accent"}`} />}
+                </div>
+              );
+
+              if (hasEvent) {
+                return (
+                  <Tooltip key={day}>
+                    <TooltipTrigger asChild>{cell}</TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[200px]">
+                      <div className="space-y-1">
+                        {dayAppts.map((a, idx) => (
+                          <div key={idx} className="flex items-center gap-1.5 text-xs">
+                            {a.priority === "high" ? <AlertTriangle size={10} className="text-destructive shrink-0" /> : <Clock size={10} className="text-primary shrink-0" />}
+                            <span>{a.title}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+              return <div key={day}>{cell}</div>;
+            })}
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-primary/20" />
-            {t("patient.scheduledEvent")}
+
+          {appointments.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-border/40">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("patient.scheduledAppts")}</p>
+              {appointments.filter((a) => new Date(a.appointment_date + "T00:00:00") >= new Date(now.toISOString().split("T")[0])).slice(0, 5).map((apt) => (
+                <div key={apt.id} className="flex items-center gap-3 py-1.5">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${apt.priority === "high" ? "bg-destructive/10" : "bg-primary/10"}`}>
+                    {apt.priority === "high" ? <AlertTriangle size={12} className="text-destructive" /> : <Clock size={12} className="text-primary" />}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">{apt.title}</p>
+                    <p className="text-[10px] text-muted-foreground">{formatDate(apt.appointment_date)}</p>
+                  </div>
+                  {apt.priority === "high" && (
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">{t("therapy.highPriority")}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-4 pt-2 text-[10px] text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-primary" />
+              {t("patient.today")}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-primary/20" />
+              {t("patient.scheduledEvent")}
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </TooltipProvider>
     </motion.div>
   );
 }
