@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import {
   Sparkles, Heart, Stethoscope, Droplets, Brain,
   ChevronDown, Send, Loader2, FileText, ClipboardList, Activity,
-  User, Clock, Thermometer, Shield, Home,
+  User, Clock, Thermometer, Shield, Home, Download,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
