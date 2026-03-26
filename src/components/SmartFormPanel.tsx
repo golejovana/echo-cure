@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { generateAnamnezaPdf } from "@/lib/generateAnamnezaPdf";
 import { useTranslation } from "@/i18n/LanguageContext";
+import TherapyPanel, { Medication, PlannedAppointment } from "@/components/TherapyPanel";
 
 /* ---------- types ---------- */
 interface CategoryField { key: string; labelKey: string }
@@ -83,6 +84,8 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
   const [sending, setSending] = useState(false);
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [objectiveOpen, setObjectiveOpen] = useState(false);
+  const [medications, setMedications] = useState<Medication[]>([]);
+  const [plannedAppointments, setPlannedAppointments] = useState<PlannedAppointment[]>([]);
 
   const toggle = (id: string) =>
     setOpenSections((p) => (p.includes(id) ? p.filter((s) => s !== id) : [...p, id]));
@@ -135,6 +138,12 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error(t("form.notLoggedIn"));
 
+      // Include medications in form_data
+      const enrichedFormData = {
+        ...form,
+        _medications: medications.filter((m) => m.name.trim()),
+      };
+
       const { data: exam, error: examError } = await supabase
         .from("examinations")
         .insert({
@@ -145,8 +154,8 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
           chief_complaints: form.chiefComplaints || null,
           present_illness: form.presentIllness || null,
           clinical_timeline: form.clinicalTimeline || null,
-          form_data: form,
-        })
+          form_data: enrichedFormData as any,
+        } as any)
         .select("id")
         .single();
 
@@ -157,18 +166,32 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
         p_email: patientEmail.trim().toLowerCase(),
       });
 
-      const now = new Date();
-      const appointments = [
-        { title: t("form.followUp"), appointment_date: new Date(now.getTime() + 7 * 86400000).toISOString().split("T")[0] },
-        { title: t("form.labResult"), appointment_date: new Date(now.getTime() + 5 * 86400000).toISOString().split("T")[0] },
-      ];
-
-      for (const apt of appointments) {
-        await supabase.from("appointments").insert({
-          examination_id: exam.id,
-          title: apt.title,
-          appointment_date: apt.appointment_date,
-        });
+      // Create appointments from doctor-specified dates
+      const validAppointments = plannedAppointments.filter((a) => a.title.trim() && a.date);
+      if (validAppointments.length > 0) {
+        for (const apt of validAppointments) {
+          await supabase.from("appointments").insert({
+            examination_id: exam.id,
+            title: apt.title,
+            appointment_date: apt.date!.toISOString().split("T")[0],
+            priority: apt.priority,
+          });
+        }
+      } else {
+        // Fallback default appointments if none specified
+        const now = new Date();
+        const defaults = [
+          { title: t("form.followUp"), appointment_date: new Date(now.getTime() + 7 * 86400000).toISOString().split("T")[0], priority: "normal" },
+          { title: t("form.labResult"), appointment_date: new Date(now.getTime() + 5 * 86400000).toISOString().split("T")[0], priority: "normal" },
+        ];
+        for (const apt of defaults) {
+          await supabase.from("appointments").insert({
+            examination_id: exam.id,
+            title: apt.title,
+            appointment_date: apt.appointment_date,
+            priority: apt.priority,
+          });
+        }
       }
 
       toast({ title: t("form.sendSuccess"), description: `${t("form.sendSuccessDesc")} ${patientEmail}.` });
@@ -178,7 +201,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
     } finally {
       setSending(false);
     }
-  }, [form, t]);
+  }, [form, medications, plannedAppointments, t]);
 
   const filledCount = (cat: MedicalCategory) =>
     cat.fields.filter((f) => form[f.key] && !form[f.key].startsWith("Nije pomenuto") && !form[f.key].startsWith("Not mentioned") && !form[f.key].startsWith("Non mentionné")).length;
@@ -356,6 +379,14 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
             )}
           </AnimatePresence>
         </div>
+
+        {/* ===== THERAPY & FOLLOW-UP ===== */}
+        <TherapyPanel
+          medications={medications}
+          onMedicationsChange={setMedications}
+          appointments={plannedAppointments}
+          onAppointmentsChange={setPlannedAppointments}
+        />
 
         {/* ===== FOOTER ===== */}
         <div className="glass-card p-5">

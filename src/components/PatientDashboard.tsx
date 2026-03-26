@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Sparkles, HeartPulse, Calendar, CheckCircle2,
-  Clock, Bell, FileText, Loader2,
+  Clock, Bell, FileText, Loader2, Pill, AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,7 @@ interface Appointment {
   title: string;
   appointment_date: string;
   examination_id: string;
+  priority: string;
 }
 
 const container = {
@@ -160,6 +161,25 @@ export default function PatientDashboard() {
               <Sparkles size={15} strokeWidth={1.8} />
               {t("patient.viewDetails")}
             </button>
+
+            {/* Medications from latest exam */}
+            {latestExam?.form_data && (latestExam.form_data as any)?._medications?.length > 0 && (
+              <div className="bg-muted/30 rounded-2xl p-4 space-y-2 mt-3">
+                <div className="flex items-center gap-1.5">
+                  <Pill size={13} strokeWidth={1.5} className="text-primary" />
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("therapy.medicationsLabel")}</p>
+                </div>
+                {((latestExam.form_data as any)._medications as any[]).map((med: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-foreground">{med.name} {med.dose}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {med.frequency === "pp" ? t("therapy.asNeeded") : `${med.frequency}${t("therapy.timesDaily")}`}
+                      {med.note ? ` · ${med.note}` : ""}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
 
           <motion.div variants={item} className="glass-card-elevated p-6 space-y-4">
@@ -225,13 +245,16 @@ export default function PatientDashboard() {
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("patient.scheduledAppts")}</p>
             {appointments.filter((a) => new Date(a.appointment_date) >= new Date(now.toISOString().split("T")[0])).slice(0, 5).map((apt) => (
               <div key={apt.id} className="flex items-center gap-3 py-1.5">
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Clock size={12} className="text-primary" />
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${apt.priority === "high" ? "bg-destructive/10" : "bg-primary/10"}`}>
+                  {apt.priority === "high" ? <AlertTriangle size={12} className="text-destructive" /> : <Clock size={12} className="text-primary" />}
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-sm font-medium text-foreground">{apt.title}</p>
                   <p className="text-[10px] text-muted-foreground">{formatDate(apt.appointment_date)}</p>
                 </div>
+                {apt.priority === "high" && (
+                  <span className="text-[9px] font-semibold uppercase tracking-wider text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">{t("therapy.highPriority")}</span>
+                )}
               </div>
             ))}
           </div>
