@@ -380,6 +380,14 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
           </AnimatePresence>
         </div>
 
+        {/* ===== THERAPY & FOLLOW-UP ===== */}
+        <TherapyPanel
+          medications={medications}
+          onMedicationsChange={setMedications}
+          appointments={plannedAppointments}
+          onAppointmentsChange={setPlannedAppointments}
+        />
+
         {/* ===== FOOTER ===== */}
         <div className="glass-card p-5">
           <div className="flex justify-between items-end">
