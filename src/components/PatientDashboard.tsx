@@ -81,19 +81,30 @@ export default function PatientDashboard() {
   };
 
   const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const firstDayOfWeek = (new Date(currentYear, currentMonth, 1).getDay() + 6) % 7;
+  const [calMonth, setCalMonth] = useState(now.getMonth());
+  const [calYear, setCalYear] = useState(now.getFullYear());
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const firstDayOfWeek = (new Date(calYear, calMonth, 1).getDay() + 6) % 7;
 
-  const appointmentDays = new Set(
-    appointments
-      .filter((a) => {
-        const d = new Date(a.appointment_date);
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-      })
-      .map((a) => new Date(a.appointment_date).getDate())
-  );
+  // Build a map: day number → list of appointment titles for the viewed month
+  const appointmentMap = new Map<number, { title: string; priority: string }[]>();
+  appointments.forEach((a) => {
+    const d = new Date(a.appointment_date + "T00:00:00");
+    if (d.getMonth() === calMonth && d.getFullYear() === calYear) {
+      const day = d.getDate();
+      if (!appointmentMap.has(day)) appointmentMap.set(day, []);
+      appointmentMap.get(day)!.push({ title: a.title, priority: a.priority });
+    }
+  });
+
+  const prevMonth = () => {
+    if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); }
+    else setCalMonth(calMonth - 1);
+  };
+  const nextMonth = () => {
+    if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1); }
+    else setCalMonth(calMonth + 1);
+  };
 
   const MONTH_NAMES = tArray("patient.months");
   const DAY_NAMES = tArray("patient.days");
