@@ -4,9 +4,11 @@ import { motion } from "framer-motion";
 import {
   Sparkles, HeartPulse, Calendar, CheckCircle2,
   Clock, Bell, FileText, Loader2, Pill, AlertTriangle,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTranslation } from "@/i18n/LanguageContext";
 
 interface Examination {
