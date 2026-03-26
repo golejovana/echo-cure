@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { generateAnamnezaPdf } from "@/lib/generateAnamnezaPdf";
 
 /* ---------- types ---------- */
 interface CategoryField { key: string; label: string }
