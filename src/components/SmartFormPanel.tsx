@@ -212,6 +212,10 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
         p_email: patientEmail.trim().toLowerCase(),
       });
 
+      // Refresh shared context from DB and clear local preview
+      clearLocalAppointments();
+      await refreshFromDb();
+
       toast({ title: t("form.sendSuccess"), description: `${t("form.sendSuccessDesc")} ${patientEmail}.` });
     } catch (e) {
       console.error("Send error:", e);
