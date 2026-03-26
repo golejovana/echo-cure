@@ -1,21 +1,30 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Sparkles, HeartPulse, Calendar, CheckCircle2,
-  Clock, Pill, FlaskConical, Stethoscope,
+  Clock, Bell, FileText, Loader2,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
-const TREATMENT_PLAN = [
-  { icon: Pill, label: "Terapija započeta", date: "25.03.2026.", done: true },
-  { icon: FlaskConical, label: "Krvna slika — ponedeljak", date: "30.03.2026.", done: false },
-  { icon: Stethoscope, label: "Kontrolni pregled", date: "01.04.2026.", done: false },
-  { icon: HeartPulse, label: "EKG — praćenje", date: "05.04.2026.", done: false },
-];
+interface Examination {
+  id: string;
+  diagnosis_codes: string | null;
+  chief_complaints: string | null;
+  present_illness: string | null;
+  patient_name: string | null;
+  form_data: Record<string, string>;
+  is_read: boolean;
+  created_at: string;
+}
 
-const CALENDAR_DAYS = Array.from({ length: 30 }, (_, i) => {
-  const d = new Date(2026, 2, i + 1);
-  const hasEvent = [5, 10, 15, 20, 25, 30].includes(i + 1);
-  return { day: i + 1, weekday: d.toLocaleDateString("sr-Latn", { weekday: "short" }), hasEvent };
-});
+interface Appointment {
+  id: string;
+  title: string;
+  appointment_date: string;
+  examination_id: string;
+}
 
 const container = {
   hidden: { opacity: 0 },
@@ -27,117 +36,228 @@ const item = {
 };
 
 export default function PatientDashboard() {
+  const navigate = useNavigate();
+  const [examinations, setExaminations] = useState<Examination[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: exams } = await supabase
+        .from("examinations")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      const { data: apts } = await supabase
+        .from("appointments")
+        .select("*")
+        .order("appointment_date", { ascending: true });
+
+      if (exams) {
+        setExaminations(exams as unknown as Examination[]);
+        setUnreadCount(exams.filter((e: any) => !e.is_read).length);
+      }
+      if (apts) setAppointments(apts as unknown as Appointment[]);
+      setLoading(false);
+    };
+    fetchData();
+
+    // Realtime subscription for new examinations
+    const channel = supabase
+      .channel("patient-exams")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "examinations" }, (payload) => {
+        setExaminations((prev) => [payload.new as unknown as Examination, ...prev]);
+        setUnreadCount((c) => c + 1);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const latestExam = examinations[0];
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}.`;
+  };
+
+  // Calendar data from appointments
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const firstDayOfWeek = (new Date(currentYear, currentMonth, 1).getDay() + 6) % 7; // Monday-based
+
+  const appointmentDays = new Set(
+    appointments
+      .filter((a) => {
+        const d = new Date(a.appointment_date);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      })
+      .map((a) => new Date(a.appointment_date).getDate())
+  );
+
+  const MONTH_NAMES = ["Januar", "Februar", "Mart", "April", "Maj", "Jun", "Jul", "Avgust", "Septembar", "Oktobar", "Novembar", "Decembar"];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="animate-spin text-primary" size={24} />
+      </div>
+    );
+  }
+
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-5xl mx-auto">
-      {/* Welcome */}
-      <motion.div variants={item}>
-        <h2 className="text-xl font-semibold text-foreground">Zdravo! 💙</h2>
-        <p className="text-sm text-muted-foreground mt-1">Ovde možete pratiti svoju dijagnozu, plan lečenja i zakazane termine.</p>
+      {/* Welcome + Notification Badge */}
+      <motion.div variants={item} className="flex items-start justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">Zdravo! 💙</h2>
+          <p className="text-sm text-muted-foreground mt-1">Ovde možete pratiti svoju dijagnozu, plan lečenja i zakazane termine.</p>
+        </div>
+        {unreadCount > 0 && (
+          <Badge className="bg-destructive text-destructive-foreground animate-pulse flex items-center gap-1.5 px-3 py-1.5">
+            <Bell size={13} />
+            {unreadCount} Novi nalaz{unreadCount > 1 ? "a" : ""}
+          </Badge>
+        )}
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Latest Diagnosis */}
-        <motion.div variants={item} className="glass-card-elevated p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <HeartPulse size={18} strokeWidth={1.5} className="text-accent" />
-            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">Moja poslednja dijagnoza</h3>
-          </div>
-
-          <div className="bg-muted/30 rounded-2xl p-4 space-y-3">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Dijagnoza</p>
-              <p className="text-sm font-medium text-foreground">I20.0 — Nestabilna angina pektoris</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Rezime</p>
-              <p className="text-sm text-foreground/80 leading-relaxed">
-                Utvrđen je bol u grudima koji se javlja pri fizičkom naporu. Preporučeni su dodatni testovi uključujući EKG i laboratorijske analize.
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Datum pregleda</p>
-              <p className="text-sm text-foreground/80">25.03.2026.</p>
-            </div>
-          </div>
-
-          <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25 active:scale-[0.97] transition-all duration-200">
-            <Sparkles size={15} strokeWidth={1.8} />
-            Objasni mi jednostavno ✨
-          </button>
+      {examinations.length === 0 ? (
+        <motion.div variants={item} className="glass-card-elevated p-8 text-center space-y-3">
+          <HeartPulse size={32} className="text-muted-foreground/40 mx-auto" />
+          <p className="text-sm text-muted-foreground">Nemate još uvek nijedan nalaz. Vaš lekar će vam poslati nalaze nakon pregleda.</p>
         </motion.div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Latest Diagnosis */}
+          <motion.div variants={item} className="glass-card-elevated p-6 space-y-4">
+            <div className="flex items-center gap-2">
+              <HeartPulse size={18} strokeWidth={1.5} className="text-accent" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">Moja poslednja dijagnoza</h3>
+              {latestExam && !latestExam.is_read && (
+                <Badge variant="destructive" className="text-[10px] ml-auto">Novo</Badge>
+              )}
+            </div>
 
-        {/* Treatment Plan */}
-        <motion.div variants={item} className="glass-card-elevated p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <Clock size={18} strokeWidth={1.5} className="text-primary" />
-            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">Plan lečenja</h3>
-          </div>
-
-          <div className="space-y-1">
-            {TREATMENT_PLAN.map((step, i) => {
-              const Icon = step.icon;
-              return (
-                <div key={i} className="flex items-start gap-3 py-2.5">
-                  {/* Timeline line */}
-                  <div className="flex flex-col items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                      step.done
-                        ? "bg-accent/15 text-accent"
-                        : "bg-primary/10 text-primary"
-                    }`}>
-                      {step.done ? <CheckCircle2 size={16} strokeWidth={1.8} /> : <Icon size={14} strokeWidth={1.5} />}
-                    </div>
-                    {i < TREATMENT_PLAN.length - 1 && (
-                      <div className="w-px h-6 bg-border/60 mt-1" />
-                    )}
-                  </div>
-                  <div className="pt-1">
-                    <p className={`text-sm font-medium ${step.done ? "text-accent line-through" : "text-foreground"}`}>
-                      {step.label}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{step.date}</p>
-                  </div>
+            {latestExam && (
+              <div className="bg-muted/30 rounded-2xl p-4 space-y-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Dijagnoza</p>
+                  <p className="text-sm font-medium text-foreground">{latestExam.diagnosis_codes || "Nije navedeno"}</p>
                 </div>
-              );
-            })}
-          </div>
-        </motion.div>
-      </div>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Glavne tegobe</p>
+                  <p className="text-sm text-foreground/80 leading-relaxed">
+                    {latestExam.chief_complaints || latestExam.present_illness || "Nije navedeno"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Datum pregleda</p>
+                  <p className="text-sm text-foreground/80">{formatDate(latestExam.created_at)}</p>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => navigate(`/examination/${latestExam?.id}`)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25 active:scale-[0.97] transition-all duration-200"
+            >
+              <Sparkles size={15} strokeWidth={1.8} />
+              Pogledaj detalje i objasni ✨
+            </button>
+          </motion.div>
+
+          {/* All Examinations List */}
+          <motion.div variants={item} className="glass-card-elevated p-6 space-y-4">
+            <div className="flex items-center gap-2">
+              <FileText size={18} strokeWidth={1.5} className="text-primary" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">Svi pregledi</h3>
+            </div>
+
+            <div className="space-y-1 max-h-[300px] overflow-y-auto">
+              {examinations.map((exam) => (
+                <button
+                  key={exam.id}
+                  onClick={() => navigate(`/examination/${exam.id}`)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/40 transition-colors duration-200 group text-left"
+                >
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${exam.is_read ? "bg-accent/10" : "bg-primary/10"}`}>
+                    <FileText size={14} strokeWidth={1.5} className={exam.is_read ? "text-accent" : "text-primary"} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {exam.diagnosis_codes || "Pregled"}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">{formatDate(exam.created_at)}</p>
+                  </div>
+                  {!exam.is_read && (
+                    <span className="w-2 h-2 rounded-full bg-destructive shrink-0" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Health Calendar */}
       <motion.div variants={item} className="glass-card-elevated p-6 space-y-4">
         <div className="flex items-center gap-2">
           <Calendar size={18} strokeWidth={1.5} className="text-primary" />
           <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">Moj zdravstveni kalendar</h3>
-          <span className="text-xs text-muted-foreground ml-auto">Mart 2026</span>
+          <span className="text-xs text-muted-foreground ml-auto">{MONTH_NAMES[currentMonth]} {currentYear}</span>
         </div>
 
         <div className="grid grid-cols-7 gap-1.5">
           {["Pon", "Uto", "Sre", "Čet", "Pet", "Sub", "Ned"].map((d) => (
             <div key={d} className="text-center text-[10px] font-semibold text-muted-foreground uppercase py-1">{d}</div>
           ))}
-          {/* offset for March 2026 starting on Sunday */}
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: firstDayOfWeek }).map((_, i) => (
             <div key={`empty-${i}`} />
           ))}
-          {CALENDAR_DAYS.map(({ day, hasEvent }) => (
-            <div
-              key={day}
-              className={`relative text-center py-2 rounded-xl text-sm transition-colors duration-200 cursor-default ${
-                day === 26
-                  ? "bg-primary text-primary-foreground font-semibold"
-                  : hasEvent
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-foreground/70 hover:bg-muted/40"
-              }`}
-            >
-              {day}
-              {hasEvent && day !== 26 && (
-                <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-accent" />
-              )}
-            </div>
-          ))}
+          {Array.from({ length: daysInMonth }, (_, i) => {
+            const day = i + 1;
+            const isToday = day === now.getDate();
+            const hasEvent = appointmentDays.has(day);
+            return (
+              <div
+                key={day}
+                className={`relative text-center py-2 rounded-xl text-sm transition-colors duration-200 cursor-default ${
+                  isToday
+                    ? "bg-primary text-primary-foreground font-semibold"
+                    : hasEvent
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-foreground/70 hover:bg-muted/40"
+                }`}
+              >
+                {day}
+                {hasEvent && !isToday && (
+                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-accent" />
+                )}
+              </div>
+            );
+          })}
         </div>
+
+        {/* Upcoming appointments list */}
+        {appointments.length > 0 && (
+          <div className="space-y-2 pt-2 border-t border-border/40">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Zakazani termini</p>
+            {appointments.filter((a) => new Date(a.appointment_date) >= new Date(now.toISOString().split("T")[0])).slice(0, 5).map((apt) => (
+              <div key={apt.id} className="flex items-center gap-3 py-1.5">
+                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Clock size={12} className="text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">{apt.title}</p>
+                  <p className="text-[10px] text-muted-foreground">{formatDate(apt.appointment_date)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="flex items-center gap-4 pt-2 text-[10px] text-muted-foreground">
           <div className="flex items-center gap-1.5">
@@ -147,10 +267,6 @@ export default function PatientDashboard() {
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-primary/20" />
             Zakazan termin
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-accent" />
-            Aktivnost
           </div>
         </div>
       </motion.div>

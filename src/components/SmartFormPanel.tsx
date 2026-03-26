@@ -79,6 +79,7 @@ const today = () => {
 const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
   const [form, setForm] = useState<FormData>({});
   const [filling, setFilling] = useState(false);
+  const [sending, setSending] = useState(false);
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [objectiveOpen, setObjectiveOpen] = useState(false);
 
@@ -123,8 +124,67 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
     }
   }, [transcript, filling, lang]);
 
-  const handleSubmit = () =>
-    toast({ title: "✓ Izveštaj poslat", description: "Podaci enkriptovani i poslati u klinički sistem." });
+  /* ---- send to patient ---- */
+  const handleSendToPatient = useCallback(async () => {
+    const patientEmail = window.prompt("Unesite email adresu pacijenta:");
+    if (!patientEmail?.trim()) return;
+
+    setSending(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Niste prijavljeni");
+
+      // Insert examination
+      const { data: exam, error: examError } = await supabase
+        .from("examinations")
+        .insert({
+          doctor_id: user.id,
+          patient_email: patientEmail.trim().toLowerCase(),
+          patient_name: form.patientName || null,
+          diagnosis_codes: form.diagnosisCodes || null,
+          chief_complaints: form.chiefComplaints || null,
+          present_illness: form.presentIllness || null,
+          clinical_timeline: form.clinicalTimeline || null,
+          form_data: form,
+        })
+        .select("id")
+        .single();
+
+      if (examError) throw examError;
+
+      // Try to link patient by email
+      await supabase.rpc("link_patient_by_email", {
+        p_exam_id: exam.id,
+        p_email: patientEmail.trim().toLowerCase(),
+      });
+
+      // Create default follow-up appointments
+      const now = new Date();
+      const appointments = [
+        { title: "Kontrolni pregled", appointment_date: new Date(now.getTime() + 7 * 86400000).toISOString().split("T")[0] },
+        { title: "Laboratorijski nalaz", appointment_date: new Date(now.getTime() + 5 * 86400000).toISOString().split("T")[0] },
+      ];
+
+      for (const apt of appointments) {
+        await supabase.from("appointments").insert({
+          examination_id: exam.id,
+          title: apt.title,
+          appointment_date: apt.appointment_date,
+        });
+      }
+
+      toast({ title: "✓ Izveštaj poslat", description: `Anamneza je sačuvana i povezana sa ${patientEmail}.` });
+    } catch (e) {
+      console.error("Send error:", e);
+      toast({
+        title: "Greška pri slanju",
+        description: e instanceof Error ? e.message : "Nije moguće poslati izveštaj.",
+        variant: "destructive",
+      });
+    } finally {
+      setSending(false);
+    }
+  }, [form]);
 
   const filledCount = (cat: MedicalCategory) =>
     cat.fields.filter((f) => form[f.key] && !form[f.key].startsWith("Nije pomenuto") && !form[f.key].startsWith("Not mentioned")).length;
@@ -329,9 +389,9 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
           <Download size={15} strokeWidth={1.8} />
           Preuzmi PDF
         </button>
-        <button onClick={handleSubmit} disabled={!hasAnyData} className="flex-1 flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:shadow-lg hover:shadow-accent/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-all duration-200">
-          <Send size={15} strokeWidth={1.8} />
-          Pošalji izveštaj
+        <button onClick={handleSendToPatient} disabled={!hasAnyData || sending} className="flex-1 flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:shadow-lg hover:shadow-accent/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-all duration-200">
+          {sending ? <Loader2 size={15} strokeWidth={1.8} className="animate-spin" /> : <Send size={15} strokeWidth={1.8} />}
+          {sending ? "Slanje…" : "Pošalji pacijentu"}
         </button>
       </div>
     </div>
