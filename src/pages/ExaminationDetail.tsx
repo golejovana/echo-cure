@@ -191,6 +191,30 @@ export default function ExaminationDetail() {
           </div>
 
           <div className="space-y-4">
+            {/* Medications */}
+            {fd._medications && Array.isArray((fd as any)._medications) && (fd as any)._medications.length > 0 && (
+              <div className="glass-card-elevated p-5 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Pill size={16} strokeWidth={1.5} className="text-primary" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("therapy.medicationsLabel")}</h3>
+                </div>
+                <div className="space-y-2">
+                  {((fd as any)._medications as any[]).map((med: any, i: number) => (
+                    <div key={i} className="bg-muted/20 rounded-xl px-3.5 py-2.5 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{med.name} <span className="text-muted-foreground">{med.dose}</span></p>
+                        {med.note && <p className="text-[10px] text-muted-foreground">{med.note}</p>}
+                      </div>
+                      <span className="text-xs text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full">
+                        {med.frequency === "pp" ? t("therapy.asNeeded") : `${med.frequency}${t("therapy.timesDaily")}`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Appointments */}
             <div className="glass-card-elevated p-5 space-y-4">
               <div className="flex items-center gap-2">
                 <Calendar size={16} strokeWidth={1.5} className="text-primary" />
@@ -202,13 +226,16 @@ export default function ExaminationDetail() {
                 <div className="space-y-3">
                   {appointments.map((apt) => (
                     <div key={apt.id} className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                        <Clock size={14} strokeWidth={1.5} className="text-primary" />
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${apt.priority === "high" ? "bg-destructive/10" : "bg-primary/10"}`}>
+                        {apt.priority === "high" ? <AlertTriangle size={14} strokeWidth={1.5} className="text-destructive" /> : <Clock size={14} strokeWidth={1.5} className="text-primary" />}
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="text-sm font-medium text-foreground">{apt.title}</p>
                         <p className="text-[10px] text-muted-foreground">{formatDate(apt.appointment_date)}</p>
                       </div>
+                      {apt.priority === "high" && (
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-destructive bg-destructive/10 px-2 py-0.5 rounded-full mt-1">{t("therapy.highPriority")}</span>
+                      )}
                     </div>
                   ))}
                 </div>
