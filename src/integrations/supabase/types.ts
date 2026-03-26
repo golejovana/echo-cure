@@ -21,6 +21,7 @@ export type Database = {
           examination_id: string
           id: string
           patient_id: string | null
+          priority: string
           title: string
         }
         Insert: {
@@ -29,6 +30,7 @@ export type Database = {
           examination_id: string
           id?: string
           patient_id?: string | null
+          priority?: string
           title: string
         }
         Update: {
@@ -37,6 +39,7 @@ export type Database = {
           examination_id?: string
           id?: string
           patient_id?: string | null
+          priority?: string
           title?: string
         }
         Relationships: [
