@@ -55,13 +55,10 @@ export default function HistoryPage() {
     );
   }
 
-  const isDoctor = role === "doctor";
-  const data = isDoctor ? MOCK_EXAMINATIONS : PATIENT_HISTORY;
-  const filtered = data.filter((row) => {
-    const haystack = isDoctor
-      ? `${row.patient} ${row.diagnosis}`.toLowerCase()
-      : `${(row as typeof PATIENT_HISTORY[0]).doctor} ${row.diagnosis}`.toLowerCase();
-    return haystack.includes(search.toLowerCase());
+  const examData = isDoctor ? MOCK_EXAMINATIONS : PATIENT_HISTORY;
+  const filtered = examData.filter((row) => {
+    const name = "patient" in row ? row.patient : row.doctor;
+    return `${name} ${row.diagnosis}`.toLowerCase().includes(search.toLowerCase());
   });
 
   return (
