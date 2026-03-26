@@ -80,6 +80,7 @@ const today = () => {
 /* ================================================================ */
 const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
   const { t } = useTranslation();
+  const { addLocalAppointments, clearLocalAppointments, refreshFromDb } = useAppointments();
   const [form, setForm] = useState<FormData>({});
   const [filling, setFilling] = useState(false);
   const [sending, setSending] = useState(false);
@@ -87,6 +88,21 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
   const [objectiveOpen, setObjectiveOpen] = useState(false);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [plannedAppointments, setPlannedAppointments] = useState<PlannedAppointment[]>([]);
+
+  // Sync planned appointments to shared context as doctor adds them
+  useEffect(() => {
+    clearLocalAppointments();
+    const valid = plannedAppointments.filter((a) => a.title.trim() && a.date);
+    if (valid.length > 0) {
+      addLocalAppointments(
+        valid.map((a) => ({
+          title: a.title,
+          appointment_date: a.date!.toISOString().split("T")[0],
+          priority: a.priority,
+        }))
+      );
+    }
+  }, [plannedAppointments, addLocalAppointments, clearLocalAppointments]);
 
   const toggle = (id: string) =>
     setOpenSections((p) => (p.includes(id) ? p.filter((s) => s !== id) : [...p, id]));
