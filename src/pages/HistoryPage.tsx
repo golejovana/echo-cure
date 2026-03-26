@@ -147,7 +147,7 @@ export default function HistoryPage() {
               <div key={row.id} className="p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-foreground">
-                    {isDoctor ? row.patient : (row as typeof PATIENT_HISTORY[0]).doctor}
+                    {"patient" in row ? row.patient : row.doctor}
                   </span>
                   <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${statusColor(row.status)}`}>
                     {row.status}
