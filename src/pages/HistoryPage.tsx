@@ -55,6 +55,7 @@ export default function HistoryPage() {
     );
   }
 
+  const isDoctor = role === "doctor";
   const examData = isDoctor ? MOCK_EXAMINATIONS : PATIENT_HISTORY;
   const filtered = examData.filter((row) => {
     const name = "patient" in row ? row.patient : row.doctor;
