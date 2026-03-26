@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Sparkles, Heart, Stethoscope, Droplets, Brain,
   ChevronDown, Send, Loader2, FileText, ClipboardList, Activity,
@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { generateAnamnezaPdf } from "@/lib/generateAnamnezaPdf";
 import { useTranslation } from "@/i18n/LanguageContext";
+import { useAppointments } from "@/contexts/AppointmentsContext";
 import TherapyPanel, { Medication, PlannedAppointment } from "@/components/TherapyPanel";
 
 /* ---------- types ---------- */
