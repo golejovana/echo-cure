@@ -135,9 +135,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      link_patient_by_email:
-        | { Args: { p_email: string; p_exam_id: string }; Returns: undefined }
-        | { Args: { p_email: string; p_exam_id: string }; Returns: undefined }
+      link_patient_by_email: {
+        Args: { p_email: string; p_exam_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "doctor" | "patient"
