@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   FileText, Sparkles, Loader2, HeartPulse, Calendar,
-  Clock, Activity, ClipboardList, Shield,
+  Clock, Activity, ClipboardList, Shield, Pill, AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
