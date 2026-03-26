@@ -137,7 +137,7 @@ export default function DoctorDashboard() {
                     <span className={cn(
                       "text-[10px] font-medium px-1.5 py-0.5 rounded-full",
                       patient.status === "Završen" && "bg-accent/10 text-accent",
-                      patient.status === "Čeka nalaze" && "bg-yellow-500/10 text-yellow-600",
+                      patient.status === "Čeka nalaze" && "bg-destructive/10 text-destructive",
                       patient.status === "Kontrola" && "bg-primary/10 text-primary",
                     )}>
                       {patient.status}
