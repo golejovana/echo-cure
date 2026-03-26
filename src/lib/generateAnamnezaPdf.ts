@@ -1,4 +1,6 @@
 import jsPDF from "jspdf";
+import { RobotoRegularBase64 } from "./Roboto-Regular.b64";
+import { RobotoBoldBase64 } from "./Roboto-Bold.b64";
 
 type FormData = Record<string, string>;
 
@@ -10,53 +12,53 @@ interface SystemCategory {
 
 const SYSTEM_CATEGORIES: SystemCategory[] = [
   {
-    id: "cardiovascular", label: "Kardiovaskularni / Respiratorni",
+    id: "cardiovascular", label: "Кардиоваскуларни / Респираторни",
     fields: [
-      { key: "chestPain", label: "Bol u grudima" },
-      { key: "swelling", label: "Otoci" },
-      { key: "pressure", label: "Pritisak" },
-      { key: "veins", label: "Vene" },
+      { key: "chestPain", label: "Бол у грудима" },
+      { key: "swelling", label: "Отоци" },
+      { key: "pressure", label: "Притисак" },
+      { key: "veins", label: "Вене" },
     ],
   },
   {
-    id: "gastrointestinal", label: "Gastrointestinalni (GIT)",
+    id: "gastrointestinal", label: "Гастроинтестинални (ГИТ)",
     fields: [
-      { key: "appetite", label: "Apetit" },
-      { key: "nausea", label: "Mučnina" },
-      { key: "swallowing", label: "Gutanje" },
-      { key: "bloating", label: "Nadutost" },
-      { key: "stool", label: "Stolica" },
+      { key: "appetite", label: "Апетит" },
+      { key: "nausea", label: "Мучнина" },
+      { key: "swallowing", label: "Гутање" },
+      { key: "bloating", label: "Надутост" },
+      { key: "stool", label: "Столица" },
     ],
   },
   {
-    id: "urogenital", label: "Urogenitalni (URO)",
+    id: "urogenital", label: "Урогенитални (УРО)",
     fields: [
-      { key: "urination", label: "Mokrenje" },
-      { key: "flankPain", label: "Bol u slabinama" },
+      { key: "urination", label: "Мокрење" },
+      { key: "flankPain", label: "Бол у слабинама" },
     ],
   },
   {
-    id: "locomotor", label: "Lokomotorni & CNS",
+    id: "locomotor", label: "Локомоторни & ЦНС",
     fields: [
-      { key: "jointPain", label: "Bol u zglobovima" },
-      { key: "visionHearing", label: "Vid / Sluh" },
-      { key: "dizziness", label: "Vrtoglavica" },
-      { key: "headaches", label: "Glavobolje" },
+      { key: "jointPain", label: "Бол у зглобовима" },
+      { key: "visionHearing", label: "Вид / Слух" },
+      { key: "dizziness", label: "Вртоглавица" },
+      { key: "headaches", label: "Главобоље" },
     ],
   },
 ];
 
 const OBJECTIVE_FIELDS = [
-  { key: "bloodPressure", label: "TA (krvni pritisak)" },
-  { key: "pulse", label: "Puls" },
-  { key: "temperature", label: "Temperatura" },
-  { key: "respiration", label: "Respiracija / SpO2" },
-  { key: "lungSounds", label: "Auskultacija pluca" },
-  { key: "heartSounds", label: "Srcani tonovi" },
-  { key: "abdominalExam", label: "Pregled abdomena" },
-  { key: "skinExam", label: "Koza" },
-  { key: "meningealSigns", label: "Meningealni znaci" },
-  { key: "otherFindings", label: "Ostali nalazi" },
+  { key: "bloodPressure", label: "ТА (крвни притисак)" },
+  { key: "pulse", label: "Пулс" },
+  { key: "temperature", label: "Температура" },
+  { key: "respiration", label: "Респирација / SpO2" },
+  { key: "lungSounds", label: "Аускултација плућа" },
+  { key: "heartSounds", label: "Срчани тонови" },
+  { key: "abdominalExam", label: "Преглед абдомена" },
+  { key: "skinExam", label: "Кожа" },
+  { key: "meningealSigns", label: "Менингеални знаци" },
+  { key: "otherFindings", label: "Остали налази" },
 ];
 
 const today = () => {
@@ -64,25 +66,22 @@ const today = () => {
   return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}.`;
 };
 
-/* Strip diacritics for jsPDF default font compatibility */
-function stripDiacritics(text: string): string {
-  const map: Record<string, string> = {
-    "č": "c", "ć": "c", "đ": "dj", "š": "s", "ž": "z",
-    "Č": "C", "Ć": "C", "Đ": "Dj", "Š": "S", "Ž": "Z",
-    "ü": "u", "ö": "o", "ä": "a", "ë": "e",
-  };
-  return text.replace(/[čćđšžČĆĐŠŽüöäë]/g, (ch) => map[ch] || ch);
+function setupFonts(doc: jsPDF) {
+  doc.addFileToVFS("Roboto-Regular.ttf", RobotoRegularBase64);
+  doc.addFileToVFS("Roboto-Bold.ttf", RobotoBoldBase64);
+  doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
+  doc.addFont("Roboto-Bold.ttf", "Roboto", "bold");
 }
 
 export function generateAnamnezaPdf(form: FormData) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
+  setupFonts(doc);
+
   const pageW = 210;
   const marginL = 18;
   const marginR = 18;
   const contentW = pageW - marginL - marginR;
   let y = 18;
-
-  const s = (t: string) => stripDiacritics(t);
 
   function checkPage(needed = 12) {
     if (y + needed > 280) {
@@ -95,8 +94,8 @@ export function generateAnamnezaPdf(form: FormData) {
     checkPage(14);
     y += 4;
     doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text(s(title), pageW / 2, y, { align: "center" });
+    doc.setFont("Roboto", "bold");
+    doc.text(title, pageW / 2, y, { align: "center" });
     y += 2;
     doc.setLineWidth(0.3);
     doc.line(marginL, y, pageW - marginR, y);
@@ -106,12 +105,12 @@ export function generateAnamnezaPdf(form: FormData) {
   function fieldLine(label: string, value: string) {
     checkPage(10);
     doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    doc.text(s(label) + ":", marginL, y);
-    doc.setFont("helvetica", "normal");
-    const labelW = doc.getTextWidth(s(label) + ": ");
+    doc.setFont("Roboto", "bold");
+    doc.text(label + ":", marginL, y);
+    doc.setFont("Roboto", "normal");
+    const labelW = doc.getTextWidth(label + ": ");
     const val = value || "___";
-    const lines = doc.splitTextToSize(s(val), contentW - labelW - 2);
+    const lines = doc.splitTextToSize(val, contentW - labelW - 2);
     doc.text(lines, marginL + labelW + 1, y);
     y += Math.max(lines.length * 4, 5);
   }
@@ -119,60 +118,59 @@ export function generateAnamnezaPdf(form: FormData) {
   function textBlock(label: string, value: string) {
     checkPage(16);
     doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    doc.text(s(label) + ":", marginL, y);
+    doc.setFont("Roboto", "bold");
+    doc.text(label + ":", marginL, y);
     y += 4.5;
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Roboto", "normal");
     const val = value || "___";
-    const lines = doc.splitTextToSize(s(val), contentW - 4);
+    const lines = doc.splitTextToSize(val, contentW - 4);
     doc.text(lines, marginL + 2, y);
     y += lines.length * 4 + 3;
   }
 
-  /* ===== HEADER ===== */
+  /* ===== ЗАГЛАВЉЕ ===== */
   doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.text("Republika Srbija", pageW / 2, y, { align: "center" });
+  doc.setFont("Roboto", "normal");
+  doc.text("Република Србија", pageW / 2, y, { align: "center" });
   y += 5;
   doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.text("Univerzitetski Klinicki Centar Srbije", pageW / 2, y, { align: "center" });
+  doc.setFont("Roboto", "bold");
+  doc.text("Универзитетски Клинички Центар Србије", pageW / 2, y, { align: "center" });
   y += 5;
   doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.text("Pasterova 2, Savski venac, 11000 Beograd", pageW / 2, y, { align: "center" });
+  doc.setFont("Roboto", "normal");
+  doc.text("Пастерова 2, Савски венац, 11000 Београд", pageW / 2, y, { align: "center" });
   y += 6;
   doc.setLineWidth(0.4);
   doc.line(marginL, y, pageW - marginR, y);
   y += 4;
 
   doc.setFontSize(8);
-  doc.text("Br. istorije bolesti: ___________", marginL, y);
-  doc.text("Datum: " + today(), pageW - marginR, y, { align: "right" });
+  doc.text("Бр. историје болести: ___________", marginL, y);
+  doc.text("Датум: " + today(), pageW - marginR, y, { align: "right" });
   y += 8;
 
-  /* ===== PACIJENT ===== */
-  sectionTitle("PACIJENT");
-  fieldLine("Ime i prezime", form.patientName || "");
-  fieldLine("Godiste / Starost", form.patientAge || "");
-  fieldLine("Zanimanje", form.patientOccupation || "");
-  fieldLine("Socijalni status", form.patientSocialStatus || "");
+  /* ===== ПАЦИЈЕНТ ===== */
+  sectionTitle("ПАЦИЈЕНТ");
+  fieldLine("Име и презиме", form.patientName || "");
+  fieldLine("Годиште / Старост", form.patientAge || "");
+  fieldLine("Занимање", form.patientOccupation || "");
+  fieldLine("Социјални статус", form.patientSocialStatus || "");
 
-  /* ===== ANAMNEZA ===== */
-  sectionTitle("ANAMNEZA");
+  /* ===== АНАМНЕЗА ===== */
+  sectionTitle("АНАМНЕЗА");
+  textBlock("Радне дијагнозе (ICD-10)", form.diagnosisCodes || "");
+  textBlock("Главне тегобе", form.chiefComplaints || "");
+  textBlock("Садашња болест", form.presentIllness || "");
+  textBlock("Клиничка хронологија", form.clinicalTimeline || "");
 
-  textBlock("Radne dijagnoze (ICD-10)", form.diagnosisCodes || "");
-  textBlock("Glavne tegobe", form.chiefComplaints || "");
-  textBlock("Sadasnja bolest", form.presentIllness || "");
-  textBlock("Klinicka hronologija", form.clinicalTimeline || "");
-
-  /* ===== ANAMNEZA PO SISTEMIMA ===== */
-  sectionTitle("ANAMNEZA PO SISTEMIMA");
+  /* ===== АНАМНЕЗА ПО СИСТЕМИМА ===== */
+  sectionTitle("АНАМНЕЗА ПО СИСТЕМИМА");
   for (const cat of SYSTEM_CATEGORIES) {
     checkPage(10);
     doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text(s(cat.label), marginL, y);
+    doc.setFont("Roboto", "bold");
+    doc.text(cat.label, marginL, y);
     y += 5;
     for (const f of cat.fields) {
       fieldLine(f.label, form[f.key] || "");
@@ -180,22 +178,22 @@ export function generateAnamnezaPdf(form: FormData) {
     y += 2;
   }
 
-  /* ===== LICNA ANAMNEZA ===== */
-  sectionTitle("LICNA ANAMNEZA");
-  fieldLine("Alergije", form.allergies || "");
-  fieldLine("Hronicne bolesti", form.chronicDiseases || "");
-  fieldLine("Hirurske intervencije", form.surgeries || "");
-  fieldLine("Redovna terapija", form.medications || "");
+  /* ===== ЛИЧНА АНАМНЕЗА ===== */
+  sectionTitle("ЛИЧНА АНАМНЕЗА");
+  fieldLine("Алергије", form.allergies || "");
+  fieldLine("Хроничне болести", form.chronicDiseases || "");
+  fieldLine("Хируршке интервенције", form.surgeries || "");
+  fieldLine("Редовна терапија", form.medications || "");
 
-  /* ===== PORODICNA ANAMNEZA ===== */
-  sectionTitle("PORODICNA ANAMNEZA");
-  textBlock("Porodicna anamneza", form.familyHistory || "");
+  /* ===== ПОРОДИЧНА АНАМНЕЗА ===== */
+  sectionTitle("ПОРОДИЧНА АНАМНЕЗА");
+  textBlock("Породична анамнеза", form.familyHistory || "");
 
-  /* ===== SOCIO-EPIDEMIOLOSKA ===== */
-  sectionTitle("SOCIO-EPIDEMIOLOSKA ANAMNEZA");
-  fieldLine("Uslovi zivota", form.livingConditions || "");
-  fieldLine("Pusenje / Alkohol", form.smokingAlcohol || "");
-  fieldLine("Epidemioloski podaci", form.epidemiological || "");
+  /* ===== СОЦИО-ЕПИДЕМИОЛОШКА ===== */
+  sectionTitle("СОЦИО-ЕПИДЕМИОЛОШКА АНАМНЕЗА");
+  fieldLine("Услови живота", form.livingConditions || "");
+  fieldLine("Пушење / Алкохол", form.smokingAlcohol || "");
+  fieldLine("Епидемиолошки подаци", form.epidemiological || "");
 
   /* ===== STATUS PRAESENS ===== */
   sectionTitle("STATUS PRAESENS");
@@ -203,27 +201,25 @@ export function generateAnamnezaPdf(form: FormData) {
     fieldLine(f.label, form[f.key] || "");
   }
 
-  /* ===== FOOTER ===== */
+  /* ===== ПОТПИС ===== */
   checkPage(35);
   y += 10;
   doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Roboto", "normal");
 
-  // Stamp box
-  doc.text(s("Pecat ustanove:"), marginL, y);
+  doc.text("Печат установе:", marginL, y);
   doc.rect(marginL, y + 2, 30, 25);
 
-  // Signature
-  doc.text(s("Potpis lekara:"), pageW - marginR - 50, y);
+  doc.text("Потпис лекара:", pageW - marginR - 50, y);
   y += 20;
   doc.line(pageW - marginR - 55, y, pageW - marginR, y);
   y += 4;
-  doc.text("Dr. ___________________________", pageW - marginR - 55, y);
+  doc.text("Др. ___________________________", pageW - marginR - 55, y);
   y += 4;
   doc.setFontSize(7);
-  doc.text("Faksimil", pageW - marginR - 55, y);
+  doc.text("Факсимил", pageW - marginR - 55, y);
 
-  /* ===== SAVE ===== */
-  const name = form.patientName ? s(form.patientName).replace(/\s+/g, "_") : "pacijent";
-  doc.save(`Anamneza_${name}_${today().replace(/\./g, "")}.pdf`);
+  /* ===== САЧУВАЈ ===== */
+  const name = form.patientName ? form.patientName.replace(/\s+/g, "_") : "пацијент";
+  doc.save(`Анамнеза_${name}_${today().replace(/\./g, "")}.pdf`);
 }
