@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTranslation } from "@/i18n/LanguageContext";
+import { useAppointments } from "@/contexts/AppointmentsContext";
 
 interface Examination {
   id: string;
