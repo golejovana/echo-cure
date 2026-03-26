@@ -7,7 +7,7 @@ const TopNav = () => (
         <span className="text-primary-foreground text-sm font-bold tracking-tight">E</span>
       </div>
       <span className="text-lg font-semibold tracking-tight text-foreground">
-        EchoMed <span className="font-light text-muted-foreground">AI</span>
+        EchoCure
       </span>
     </div>
     <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 active:scale-[0.97]">
