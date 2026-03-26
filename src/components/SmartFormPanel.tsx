@@ -84,6 +84,8 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
   const [sending, setSending] = useState(false);
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [objectiveOpen, setObjectiveOpen] = useState(false);
+  const [medications, setMedications] = useState<Medication[]>([]);
+  const [plannedAppointments, setPlannedAppointments] = useState<PlannedAppointment[]>([]);
 
   const toggle = (id: string) =>
     setOpenSections((p) => (p.includes(id) ? p.filter((s) => s !== id) : [...p, id]));
