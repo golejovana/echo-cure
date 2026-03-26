@@ -154,8 +154,8 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
           chief_complaints: form.chiefComplaints || null,
           present_illness: form.presentIllness || null,
           clinical_timeline: form.clinicalTimeline || null,
-          form_data: enrichedFormData,
-        })
+          form_data: enrichedFormData as any,
+        } as any)
         .select("id")
         .single();
 
