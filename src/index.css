@@ -104,6 +104,15 @@
     box-shadow: 0 2px 6px hsl(var(--glass-shadow)),
                 0 12px 32px hsl(215 25% 20% / 0.06);
   }
+
+  .led-card {
+    @apply bg-card/90 backdrop-blur-xl border border-border/30 rounded-[20px];
+    box-shadow:
+      0 0 0 1px hsl(210 60% 45% / 0.04),
+      0 1px 2px hsl(var(--glass-shadow)),
+      0 8px 24px hsl(215 25% 20% / 0.04),
+      inset 0 1px 0 hsl(0 0% 100% / 0.6);
+  }
 }
 
 @layer utilities {
