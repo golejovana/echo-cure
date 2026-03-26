@@ -121,7 +121,7 @@ export default function HistoryPage() {
                   <tr key={row.id} className="border-b border-border/20 hover:bg-muted/20 transition-colors duration-150 group">
                     <td className="px-5 py-4 text-sm text-foreground font-medium">{row.date}</td>
                     <td className="px-5 py-4 text-sm text-foreground">
-                      {isDoctor ? row.patient : (row as typeof PATIENT_HISTORY[0]).doctor}
+                      {"patient" in row ? row.patient : row.doctor}
                     </td>
                     <td className="px-5 py-4 text-sm text-foreground/80 max-w-xs truncate">{row.diagnosis}</td>
                     <td className="px-5 py-4">
