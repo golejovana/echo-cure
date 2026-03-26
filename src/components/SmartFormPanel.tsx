@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { generateAnamnezaPdf } from "@/lib/generateAnamnezaPdf";
 import { useTranslation } from "@/i18n/LanguageContext";
+import TherapyPanel, { Medication, PlannedAppointment } from "@/components/TherapyPanel";
 
 /* ---------- types ---------- */
 interface CategoryField { key: string; labelKey: string }
