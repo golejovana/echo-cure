@@ -25,6 +25,7 @@ interface Appointment {
   title: string;
   appointment_date: string;
   examination_id: string;
+  priority: string;
 }
 
 const container = {
