@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Sparkles, HeartPulse, Calendar, CheckCircle2,
-  Clock, Bell, FileText, Loader2,
+  Clock, Bell, FileText, Loader2, Pill, AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
