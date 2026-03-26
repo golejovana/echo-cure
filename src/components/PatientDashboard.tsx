@@ -43,8 +43,8 @@ const item = {
 export default function PatientDashboard() {
   const { t, tArray } = useTranslation();
   const navigate = useNavigate();
+  const { appointments: sharedAppointments, loading: aptsLoading } = useAppointments();
   const [examinations, setExaminations] = useState<Examination[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -52,13 +52,10 @@ export default function PatientDashboard() {
     const fetchData = async () => {
       const { data: exams } = await supabase
         .from("examinations").select("*").order("created_at", { ascending: false });
-      const { data: apts } = await supabase
-        .from("appointments").select("*").order("appointment_date", { ascending: true });
       if (exams) {
         setExaminations(exams as unknown as Examination[]);
         setUnreadCount(exams.filter((e: any) => !e.is_read).length);
       }
-      if (apts) setAppointments(apts as unknown as Appointment[]);
       setLoading(false);
     };
     fetchData();
@@ -73,6 +70,15 @@ export default function PatientDashboard() {
 
     return () => { supabase.removeChannel(channel); };
   }, []);
+
+  // Map shared appointments to the local Appointment interface
+  const appointments: Appointment[] = sharedAppointments.map((a) => ({
+    id: a.id,
+    title: a.title,
+    appointment_date: a.appointment_date,
+    examination_id: a.examination_id || "",
+    priority: a.priority,
+  }));
 
   const latestExam = examinations[0];
 
