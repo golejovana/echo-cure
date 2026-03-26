@@ -245,13 +245,16 @@ export default function PatientDashboard() {
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("patient.scheduledAppts")}</p>
             {appointments.filter((a) => new Date(a.appointment_date) >= new Date(now.toISOString().split("T")[0])).slice(0, 5).map((apt) => (
               <div key={apt.id} className="flex items-center gap-3 py-1.5">
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Clock size={12} className="text-primary" />
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${apt.priority === "high" ? "bg-destructive/10" : "bg-primary/10"}`}>
+                  {apt.priority === "high" ? <AlertTriangle size={12} className="text-destructive" /> : <Clock size={12} className="text-primary" />}
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-sm font-medium text-foreground">{apt.title}</p>
                   <p className="text-[10px] text-muted-foreground">{formatDate(apt.appointment_date)}</p>
                 </div>
+                {apt.priority === "high" && (
+                  <span className="text-[9px] font-semibold uppercase tracking-wider text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">{t("therapy.highPriority")}</span>
+                )}
               </div>
             ))}
           </div>
