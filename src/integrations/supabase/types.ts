@@ -14,6 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          appointment_date: string
+          created_at: string
+          examination_id: string
+          id: string
+          patient_id: string | null
+          title: string
+        }
+        Insert: {
+          appointment_date: string
+          created_at?: string
+          examination_id: string
+          id?: string
+          patient_id?: string | null
+          title: string
+        }
+        Update: {
+          appointment_date?: string
+          created_at?: string
+          examination_id?: string
+          id?: string
+          patient_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_examination_id_fkey"
+            columns: ["examination_id"]
+            isOneToOne: false
+            referencedRelation: "examinations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      examinations: {
+        Row: {
+          chief_complaints: string | null
+          clinical_timeline: string | null
+          created_at: string
+          diagnosis_codes: string | null
+          doctor_id: string
+          form_data: Json
+          id: string
+          is_read: boolean
+          patient_email: string
+          patient_id: string | null
+          patient_name: string | null
+          present_illness: string | null
+          simplified_explanation: string | null
+          updated_at: string
+        }
+        Insert: {
+          chief_complaints?: string | null
+          clinical_timeline?: string | null
+          created_at?: string
+          diagnosis_codes?: string | null
+          doctor_id: string
+          form_data?: Json
+          id?: string
+          is_read?: boolean
+          patient_email: string
+          patient_id?: string | null
+          patient_name?: string | null
+          present_illness?: string | null
+          simplified_explanation?: string | null
+          updated_at?: string
+        }
+        Update: {
+          chief_complaints?: string | null
+          clinical_timeline?: string | null
+          created_at?: string
+          diagnosis_codes?: string | null
+          doctor_id?: string
+          form_data?: Json
+          id?: string
+          is_read?: boolean
+          patient_email?: string
+          patient_id?: string | null
+          patient_name?: string | null
+          present_illness?: string | null
+          simplified_explanation?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -46,7 +132,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      link_patient_by_email: {
+        Args: { p_email: string; p_exam_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "doctor" | "patient"

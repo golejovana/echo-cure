@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { History, Search, Eye, Calendar, FileText, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,22 +8,13 @@ import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
-const MOCK_EXAMINATIONS = [
-  { id: 1, date: "25.03.2026.", patient: "Marko Petrović", diagnosis: "I20.0 — Nestabilna angina pektoris", status: "Završen" },
-  { id: 2, date: "24.03.2026.", patient: "Ana Jovanović", diagnosis: "J18.9 — Pneumonija, nespecifikovana", status: "Čeka nalaze" },
-  { id: 3, date: "23.03.2026.", patient: "Stefan Nikolić", diagnosis: "K21.0 — Gastroezofagealni refluks", status: "Završen" },
-  { id: 4, date: "22.03.2026.", patient: "Milica Đorđević", diagnosis: "E11.9 — Dijabetes melitus tip 2", status: "Kontrola" },
-  { id: 5, date: "20.03.2026.", patient: "Nikola Stojanović", diagnosis: "M54.5 — Lumbalni bol", status: "Završen" },
-  { id: 6, date: "18.03.2026.", patient: "Jovana Ilić", diagnosis: "N39.0 — Urinarna infekcija", status: "Završen" },
-  { id: 7, date: "15.03.2026.", patient: "Đorđe Pavlović", diagnosis: "I10 — Esencijalna hipertenzija", status: "Kontrola" },
-  { id: 8, date: "12.03.2026.", patient: "Maja Kostić", diagnosis: "J06.9 — Akutna infekcija gornjih disajnih puteva", status: "Završen" },
-];
-
-const PATIENT_HISTORY = [
-  { id: 1, date: "25.03.2026.", doctor: "Dr. Marko Petrović", diagnosis: "I20.0 — Nestabilna angina pektoris", status: "Završen" },
-  { id: 2, date: "10.03.2026.", doctor: "Dr. Ana Ilić", diagnosis: "I10 — Esencijalna hipertenzija", status: "Kontrola" },
-  { id: 3, date: "28.02.2026.", doctor: "Dr. Marko Petrović", diagnosis: "Z00.0 — Opšti medicinski pregled", status: "Završen" },
-];
+interface ExamRow {
+  id: string;
+  date: string;
+  name: string;
+  diagnosis: string;
+  status: string;
+}
 
 const statusColor = (status: string) => {
   if (status === "Završen") return "bg-accent/10 text-accent";
@@ -34,17 +26,52 @@ export default function HistoryPage() {
   const [role, setRole] = useState<AppRole>("doctor");
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [rows, setRows] = useState<ExamRow[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchRole = async () => {
+    const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase.from("profiles").select("role").eq("user_id", user.id).single();
-        if (data?.role) setRole(data.role);
+      if (!user) { setLoading(false); return; }
+
+      const { data: profile } = await supabase.from("profiles").select("role").eq("user_id", user.id).single();
+      const userRole = profile?.role || "doctor";
+      setRole(userRole);
+
+      // Fetch real examinations
+      const { data: exams } = await supabase
+        .from("examinations")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (exams) {
+        // Get doctor names for patient view
+        let doctorNames: Record<string, string> = {};
+        if (userRole === "patient") {
+          const doctorIds = [...new Set(exams.map((e: any) => e.doctor_id))];
+          if (doctorIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from("profiles")
+              .select("user_id, full_name")
+              .in("user_id", doctorIds);
+            if (profiles) {
+              profiles.forEach((p: any) => { doctorNames[p.user_id] = p.full_name || "Lekar"; });
+            }
+          }
+        }
+
+        setRows(exams.map((e: any) => ({
+          id: e.id,
+          date: new Date(e.created_at).toLocaleDateString("sr-Latn", { day: "2-digit", month: "2-digit", year: "numeric" }) + ".",
+          name: userRole === "doctor" ? (e.patient_name || e.patient_email) : (`Dr. ${doctorNames[e.doctor_id] || ""}`),
+          diagnosis: e.diagnosis_codes || "Nije navedeno",
+          status: e.is_read ? "Završen" : "Novo",
+        })));
       }
+
       setLoading(false);
     };
-    fetchRole();
+    fetchData();
   }, []);
 
   if (loading) {
@@ -56,11 +83,9 @@ export default function HistoryPage() {
   }
 
   const isDoctor = role === "doctor";
-  const examData = isDoctor ? MOCK_EXAMINATIONS : PATIENT_HISTORY;
-  const filtered = examData.filter((row) => {
-    const name = "patient" in row ? row.patient : row.doctor;
-    return `${name} ${row.diagnosis}`.toLowerCase().includes(search.toLowerCase());
-  });
+  const filtered = rows.filter((row) =>
+    `${row.name} ${row.diagnosis}`.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <DashboardLayout role={role}>
@@ -82,7 +107,6 @@ export default function HistoryPage() {
             </p>
           </div>
 
-          {/* Search */}
           <div className="relative">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -96,7 +120,6 @@ export default function HistoryPage() {
 
         {/* Table Card */}
         <div className="led-card overflow-hidden">
-          {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -120,9 +143,7 @@ export default function HistoryPage() {
                 {filtered.map((row) => (
                   <tr key={row.id} className="border-b border-border/20 hover:bg-muted/20 transition-colors duration-150 group">
                     <td className="px-5 py-4 text-sm text-foreground font-medium">{row.date}</td>
-                    <td className="px-5 py-4 text-sm text-foreground">
-                      {"patient" in row ? row.patient : row.doctor}
-                    </td>
+                    <td className="px-5 py-4 text-sm text-foreground">{row.name}</td>
                     <td className="px-5 py-4 text-sm text-foreground/80 max-w-xs truncate">{row.diagnosis}</td>
                     <td className="px-5 py-4">
                       <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full ${statusColor(row.status)}`}>
@@ -130,7 +151,10 @@ export default function HistoryPage() {
                       </span>
                     </td>
                     <td className="px-5 py-4">
-                      <button className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 opacity-0 group-hover:opacity-100 transition-all duration-200 px-3 py-1.5 rounded-full bg-primary/5 hover:bg-primary/10">
+                      <button
+                        onClick={() => navigate(isDoctor ? `/examination/${row.id}` : `/examination/${row.id}`)}
+                        className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 opacity-0 group-hover:opacity-100 transition-all duration-200 px-3 py-1.5 rounded-full bg-primary/5 hover:bg-primary/10"
+                      >
                         <Eye size={13} strokeWidth={1.8} />
                         Otvori
                       </button>
@@ -144,29 +168,26 @@ export default function HistoryPage() {
           {/* Mobile Cards */}
           <div className="md:hidden divide-y divide-border/20">
             {filtered.map((row) => (
-              <div key={row.id} className="p-4 space-y-2">
+              <button
+                key={row.id}
+                onClick={() => navigate(`/examination/${row.id}`)}
+                className="w-full p-4 space-y-2 text-left hover:bg-muted/20 transition-colors"
+              >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">
-                    {"patient" in row ? row.patient : row.doctor}
-                  </span>
+                  <span className="text-sm font-medium text-foreground">{row.name}</span>
                   <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${statusColor(row.status)}`}>
                     {row.status}
                   </span>
                 </div>
                 <p className="text-xs text-foreground/70 truncate">{row.diagnosis}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-muted-foreground">{row.date}</span>
-                  <button className="flex items-center gap-1 text-xs font-medium text-primary">
-                    <Eye size={12} /> Otvori
-                  </button>
-                </div>
-              </div>
+                <span className="text-[10px] text-muted-foreground">{row.date}</span>
+              </button>
             ))}
           </div>
 
           {filtered.length === 0 && (
             <div className="py-12 text-center text-sm text-muted-foreground">
-              Nema rezultata za „{search}"
+              {rows.length === 0 ? "Nema pregleda u istoriji." : `Nema rezultata za „${search}"`}
             </div>
           )}
         </div>
