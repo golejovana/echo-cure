@@ -27,6 +27,7 @@ interface Appointment {
   id: string;
   title: string;
   appointment_date: string;
+  priority: string;
 }
 
 export default function ExaminationDetail() {
