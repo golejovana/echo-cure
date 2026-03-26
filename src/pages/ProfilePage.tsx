@@ -7,16 +7,18 @@ import {
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useTranslation } from "@/i18n/LanguageContext";
+import LanguageSelector from "@/components/LanguageSelector";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const [role, setRole] = useState<AppRole>("doctor");
   const [loading, setLoading] = useState(true);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [lang, setLang] = useState<"sr" | "en">("sr");
   const [notifications, setNotifications] = useState(true);
   const navigate = useNavigate();
 
@@ -52,34 +54,27 @@ export default function ProfilePage() {
   return (
     <DashboardLayout role={role}>
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] as const }}
         className="max-w-3xl mx-auto space-y-6"
       >
         {/* Profile Header */}
         <div className="led-card p-6">
           <div className="flex items-start gap-5">
-            {/* Avatar */}
             <div className="relative group">
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/10 flex items-center justify-center shrink-0 shadow-inner">
-                {isDoctor ? (
-                  <Stethoscope size={32} strokeWidth={1.2} className="text-primary" />
-                ) : (
-                  <HeartPulse size={32} strokeWidth={1.2} className="text-accent" />
-                )}
+                {isDoctor ? <Stethoscope size={32} strokeWidth={1.2} className="text-primary" /> : <HeartPulse size={32} strokeWidth={1.2} className="text-accent" />}
               </div>
               <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-card border border-border/50 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow opacity-0 group-hover:opacity-100 duration-200">
                 <Camera size={12} strokeWidth={1.8} className="text-muted-foreground" />
               </button>
             </div>
-
             <div className="flex-1 min-w-0">
               <h2 className="text-lg font-semibold text-foreground truncate">
-                {fullName || (isDoctor ? "Dr. Korisnik" : "Pacijent")}
+                {fullName || (isDoctor ? t("profile.doctorDefault") : t("profile.patientRole"))}
               </h2>
               <p className="text-sm text-muted-foreground mt-0.5">
-                {isDoctor ? "Lekar specijalista" : "Pacijent"}
+                {isDoctor ? t("profile.specialist") : t("profile.patientRole")}
               </p>
               <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
                 <Mail size={12} />
@@ -94,24 +89,21 @@ export default function ProfilePage() {
           <div className="led-card p-6 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <User size={16} strokeWidth={1.5} className="text-primary" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Profesionalni podaci</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("profile.professionalData")}</h3>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
-                { label: "Ime i prezime", value: fullName || "—", icon: User },
-                { label: "Specijalizacija", value: "Interna medicina", icon: Stethoscope },
-                { label: "ID broj lekara", value: "RS-2026-04521", icon: Hash },
-                { label: "Ustanova", value: "UKC Srbije, Beograd", icon: Building2 },
+                { label: t("profile.name"), value: fullName || "—", icon: User },
+                { label: t("profile.specialization"), value: t("profile.internalMedicine"), icon: Stethoscope },
+                { label: t("profile.doctorId"), value: "RS-2026-04521", icon: Hash },
+                { label: t("profile.institution"), value: t("profile.institutionValue"), icon: Building2 },
               ].map((item) => (
                 <div key={item.label} className="space-y-1.5">
                   <label className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     <item.icon size={11} />
                     {item.label}
                   </label>
-                  <div className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground">
-                    {item.value}
-                  </div>
+                  <div className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground">{item.value}</div>
                 </div>
               ))}
             </div>
@@ -123,22 +115,18 @@ export default function ProfilePage() {
           <div className="led-card p-6 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <User size={16} strokeWidth={1.5} className="text-accent" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Lični podaci</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("profile.personalData")}</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
-                { label: "Ime i prezime", value: fullName || "—" },
-                { label: "JMBG", value: "••••••••••••" },
-                { label: "Datum rođenja", value: "01.01.1990." },
-                { label: "Kontakt telefon", value: "+381 6x xxx xxxx" },
+                { label: t("profile.name"), value: fullName || "—" },
+                { label: t("profile.jmbg"), value: "••••••••••••" },
+                { label: t("profile.birthDate"), value: "01.01.1990." },
+                { label: t("profile.phone"), value: "+381 6x xxx xxxx" },
               ].map((item) => (
                 <div key={item.label} className="space-y-1.5">
-                  <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    {item.label}
-                  </label>
-                  <div className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground">
-                    {item.value}
-                  </div>
+                  <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{item.label}</label>
+                  <div className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground">{item.value}</div>
                 </div>
               ))}
             </div>
@@ -149,7 +137,7 @@ export default function ProfilePage() {
         <div className="led-card p-6 space-y-4">
           <div className="flex items-center gap-2 mb-1">
             <Settings size={16} strokeWidth={1.5} className="text-muted-foreground" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Podešavanja</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("profile.settings")}</h3>
           </div>
 
           {/* Language */}
@@ -159,28 +147,11 @@ export default function ProfilePage() {
                 <Globe size={16} strokeWidth={1.5} className="text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground">Jezik</p>
-                <p className="text-[10px] text-muted-foreground">Izaberite jezik interfejsa</p>
+                <p className="text-sm font-medium text-foreground">{t("profile.language")}</p>
+                <p className="text-[10px] text-muted-foreground">{t("profile.languageDesc")}</p>
               </div>
             </div>
-            <div className="flex bg-muted/40 rounded-xl p-0.5">
-              <button
-                onClick={() => setLang("sr")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                  lang === "sr" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Srpski
-              </button>
-              <button
-                onClick={() => setLang("en")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                  lang === "en" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                English
-              </button>
-            </div>
+            <LanguageSelector variant="compact" />
           </div>
 
           {/* Notifications */}
@@ -190,19 +161,15 @@ export default function ProfilePage() {
                 <Bell size={16} strokeWidth={1.5} className="text-accent" />
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground">Obaveštenja</p>
-                <p className="text-[10px] text-muted-foreground">Primajte notifikacije o novim nalazima</p>
+                <p className="text-sm font-medium text-foreground">{t("profile.notifications")}</p>
+                <p className="text-[10px] text-muted-foreground">{t("profile.notificationsDesc")}</p>
               </div>
             </div>
             <button
               onClick={() => setNotifications(!notifications)}
-              className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
-                notifications ? "bg-accent" : "bg-muted"
-              }`}
+              className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${notifications ? "bg-accent" : "bg-muted"}`}
             >
-              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-card shadow-sm transition-transform duration-200 ${
-                notifications ? "left-[22px]" : "left-0.5"
-              }`} />
+              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-card shadow-sm transition-transform duration-200 ${notifications ? "left-[22px]" : "left-0.5"}`} />
             </button>
           </div>
         </div>
@@ -213,7 +180,7 @@ export default function ProfilePage() {
           className="w-full flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-semibold text-destructive bg-destructive/5 border border-destructive/15 hover:bg-destructive/10 active:scale-[0.98] transition-all duration-200"
         >
           <LogOut size={16} strokeWidth={1.8} />
-          Odjavi se
+          {t("profile.logout")}
         </button>
       </motion.div>
     </DashboardLayout>

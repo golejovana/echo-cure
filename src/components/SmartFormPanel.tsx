@@ -9,62 +9,62 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { generateAnamnezaPdf } from "@/lib/generateAnamnezaPdf";
+import { useTranslation } from "@/i18n/LanguageContext";
 
 /* ---------- types ---------- */
-interface CategoryField { key: string; label: string }
-interface MedicalCategory { id: string; label: string; icon: React.ElementType; fields: CategoryField[] }
+interface CategoryField { key: string; labelKey: string }
+interface MedicalCategory { id: string; labelKey: string; icon: React.ElementType; fields: CategoryField[] }
 
 /* ---------- ANAMNEZA PO SISTEMIMA ---------- */
 const SYSTEM_CATEGORIES: MedicalCategory[] = [
   {
-    id: "cardiovascular", label: "Kardiovaskularni / Respiratorni", icon: Heart,
+    id: "cardiovascular", labelKey: "form.cardiovascular", icon: Heart,
     fields: [
-      { key: "chestPain", label: "Bol u grudima / Chest Pain" },
-      { key: "swelling", label: "Otoci / Swelling" },
-      { key: "pressure", label: "Pritisak / Pressure sensation" },
-      { key: "veins", label: "Vene / Veins" },
+      { key: "chestPain", labelKey: "form.chestPain" },
+      { key: "swelling", labelKey: "form.swelling" },
+      { key: "pressure", labelKey: "form.pressure" },
+      { key: "veins", labelKey: "form.veins" },
     ],
   },
   {
-    id: "gastrointestinal", label: "Gastrointestinalni (GIT)", icon: Stethoscope,
+    id: "gastrointestinal", labelKey: "form.gastrointestinal", icon: Stethoscope,
     fields: [
-      { key: "appetite", label: "Apetit / Appetite" },
-      { key: "nausea", label: "Mučnina / Nausea" },
-      { key: "swallowing", label: "Gutanje / Swallowing" },
-      { key: "bloating", label: "Nadutost / Bloating" },
-      { key: "stool", label: "Stolica / Stool" },
+      { key: "appetite", labelKey: "form.appetite" },
+      { key: "nausea", labelKey: "form.nausea" },
+      { key: "swallowing", labelKey: "form.swallowing" },
+      { key: "bloating", labelKey: "form.bloating" },
+      { key: "stool", labelKey: "form.stool" },
     ],
   },
   {
-    id: "urogenital", label: "Urogenitalni (URO)", icon: Droplets,
+    id: "urogenital", labelKey: "form.urogenital", icon: Droplets,
     fields: [
-      { key: "urination", label: "Mokrenje / Urination" },
-      { key: "flankPain", label: "Bol u slabinama / Flank Pain" },
+      { key: "urination", labelKey: "form.urination" },
+      { key: "flankPain", labelKey: "form.flankPain" },
     ],
   },
   {
-    id: "locomotor", label: "Lokomotorni & CNS", icon: Brain,
+    id: "locomotor", labelKey: "form.locomotor", icon: Brain,
     fields: [
-      { key: "jointPain", label: "Bol u zglobovima / Joint Pain" },
-      { key: "visionHearing", label: "Vid / Sluh" },
-      { key: "dizziness", label: "Vrtoglavica / Dizziness" },
-      { key: "headaches", label: "Glavobolje / Headaches" },
+      { key: "jointPain", labelKey: "form.jointPain" },
+      { key: "visionHearing", labelKey: "form.visionHearing" },
+      { key: "dizziness", labelKey: "form.dizziness" },
+      { key: "headaches", labelKey: "form.headaches" },
     ],
   },
 ];
 
-/* ---------- objective findings fields ---------- */
 const OBJECTIVE_FIELDS: CategoryField[] = [
-  { key: "bloodPressure", label: "TA (krvni pritisak)" },
-  { key: "pulse", label: "Puls" },
-  { key: "temperature", label: "Temperatura" },
-  { key: "respiration", label: "Respiracija / SpO2" },
-  { key: "lungSounds", label: "Auskultacija pluća" },
-  { key: "heartSounds", label: "Srčani tonovi" },
-  { key: "abdominalExam", label: "Pregled abdomena" },
-  { key: "skinExam", label: "Koža / Skin" },
-  { key: "meningealSigns", label: "Meningealni znaci" },
-  { key: "otherFindings", label: "Ostali nalazi" },
+  { key: "bloodPressure", labelKey: "form.bloodPressure" },
+  { key: "pulse", labelKey: "form.pulse" },
+  { key: "temperature", labelKey: "form.temperature" },
+  { key: "respiration", labelKey: "form.respiration" },
+  { key: "lungSounds", labelKey: "form.lungSounds" },
+  { key: "heartSounds", labelKey: "form.heartSounds" },
+  { key: "abdominalExam", labelKey: "form.abdominalExam" },
+  { key: "skinExam", labelKey: "form.skinExam" },
+  { key: "meningealSigns", labelKey: "form.meningealSigns" },
+  { key: "otherFindings", labelKey: "form.otherFindings" },
 ];
 
 type FormData = Record<string, string>;
@@ -77,6 +77,7 @@ const today = () => {
 
 /* ================================================================ */
 const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState<FormData>({});
   const [filling, setFilling] = useState(false);
   const [sending, setSending] = useState(false);
@@ -113,28 +114,27 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
       ];
       allKeys.forEach((key, i) => {
         setTimeout(() => {
-          setForm((prev) => ({ ...prev, [key]: fd[key] || "Nije pomenuto u transkriptu" }));
+          setForm((prev) => ({ ...prev, [key]: fd[key] || t("form.notMentioned") }));
           if (i === allKeys.length - 1) setFilling(false);
         }, 50 + i * 40);
       });
     } catch (e) {
       console.error("Auto-fill error:", e);
-      toast({ title: "Greška pri ekstrakciji", description: e instanceof Error ? e.message : "Nije moguće parsirati transkript.", variant: "destructive" });
+      toast({ title: t("form.extractError"), description: e instanceof Error ? e.message : t("form.extractErrorDesc"), variant: "destructive" });
       setFilling(false);
     }
-  }, [transcript, filling, lang]);
+  }, [transcript, filling, lang, t]);
 
   /* ---- send to patient ---- */
   const handleSendToPatient = useCallback(async () => {
-    const patientEmail = window.prompt("Unesite email adresu pacijenta:");
+    const patientEmail = window.prompt(t("form.sendPrompt"));
     if (!patientEmail?.trim()) return;
 
     setSending(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Niste prijavljeni");
+      if (!user) throw new Error(t("form.notLoggedIn"));
 
-      // Insert examination
       const { data: exam, error: examError } = await supabase
         .from("examinations")
         .insert({
@@ -152,17 +152,15 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
 
       if (examError) throw examError;
 
-      // Try to link patient by email
       await supabase.rpc("link_patient_by_email", {
         p_exam_id: exam.id,
         p_email: patientEmail.trim().toLowerCase(),
       });
 
-      // Create default follow-up appointments
       const now = new Date();
       const appointments = [
-        { title: "Kontrolni pregled", appointment_date: new Date(now.getTime() + 7 * 86400000).toISOString().split("T")[0] },
-        { title: "Laboratorijski nalaz", appointment_date: new Date(now.getTime() + 5 * 86400000).toISOString().split("T")[0] },
+        { title: t("form.followUp"), appointment_date: new Date(now.getTime() + 7 * 86400000).toISOString().split("T")[0] },
+        { title: t("form.labResult"), appointment_date: new Date(now.getTime() + 5 * 86400000).toISOString().split("T")[0] },
       ];
 
       for (const apt of appointments) {
@@ -173,36 +171,32 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
         });
       }
 
-      toast({ title: "✓ Izveštaj poslat", description: `Anamneza je sačuvana i povezana sa ${patientEmail}.` });
+      toast({ title: t("form.sendSuccess"), description: `${t("form.sendSuccessDesc")} ${patientEmail}.` });
     } catch (e) {
       console.error("Send error:", e);
-      toast({
-        title: "Greška pri slanju",
-        description: e instanceof Error ? e.message : "Nije moguće poslati izveštaj.",
-        variant: "destructive",
-      });
+      toast({ title: t("form.sendError"), description: e instanceof Error ? e.message : t("form.sendErrorDesc"), variant: "destructive" });
     } finally {
       setSending(false);
     }
-  }, [form]);
+  }, [form, t]);
 
   const filledCount = (cat: MedicalCategory) =>
-    cat.fields.filter((f) => form[f.key] && !form[f.key].startsWith("Nije pomenuto") && !form[f.key].startsWith("Not mentioned")).length;
+    cat.fields.filter((f) => form[f.key] && !form[f.key].startsWith("Nije pomenuto") && !form[f.key].startsWith("Not mentioned") && !form[f.key].startsWith("Non mentionné")).length;
 
-  const hasAnyData = Object.values(form).some((v) => v && !v.startsWith("Nije pomenuto") && !v.startsWith("Not mentioned"));
+  const hasAnyData = Object.values(form).some((v) => v && !v.startsWith("Nije pomenuto") && !v.startsWith("Not mentioned") && !v.startsWith("Non mentionné"));
 
   return (
     <div className="flex flex-col h-full">
       {/* top bar */}
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Anamneza i Status Praesens</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">{t("form.title")}</h2>
         <button
           onClick={handleAutoFill}
           disabled={!transcript.trim() || filling}
           className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-primary text-primary-foreground shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.96] transition-all duration-200"
         >
           {filling ? <Loader2 size={15} strokeWidth={1.8} className="animate-spin" /> : <Sparkles size={15} strokeWidth={1.8} />}
-          {filling ? "Ekstrakcija…" : "Ekstrahuj & Popuni"}
+          {filling ? t("form.extracting") : t("form.extractBtn")}
         </button>
       </div>
 
@@ -212,13 +206,13 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
         {/* ===== HEADER ===== */}
         <div className="glass-card p-5 space-y-3">
           <div className="text-center space-y-0.5">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Republika Srbija</p>
-            <p className="text-xs font-bold text-foreground">Univerzitetski Klinički Centar Srbije</p>
-            <p className="text-[11px] text-muted-foreground">Pasterova 2, Savski venac, 11000 Beograd</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{t("form.country")}</p>
+            <p className="text-xs font-bold text-foreground">{t("form.hospital")}</p>
+            <p className="text-[11px] text-muted-foreground">{t("form.address")}</p>
           </div>
           <div className="border-t border-border/50 pt-3 flex justify-between items-center">
-            <span className="text-[11px] text-muted-foreground">Br. istorije bolesti: ___________</span>
-            <span className="text-[11px] text-muted-foreground">Datum: {today()}</span>
+            <span className="text-[11px] text-muted-foreground">{t("form.historyNo")} ___________</span>
+            <span className="text-[11px] text-muted-foreground">{t("form.date")} {today()}</span>
           </div>
         </div>
 
@@ -226,21 +220,21 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
         <div className="glass-card p-5 space-y-3">
           <div className="flex items-center gap-2 mb-1">
             <User size={16} strokeWidth={1.5} className="text-muted-foreground" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Pacijent</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("form.patientSection")}</h3>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { key: "patientName", label: "Ime i prezime" },
-              { key: "patientAge", label: "Godište / Starost" },
-              { key: "patientOccupation", label: "Zanimanje" },
-              { key: "patientSocialStatus", label: "Socijalni status" },
+              { key: "patientName", labelKey: "form.patientName" },
+              { key: "patientAge", labelKey: "form.patientAge" },
+              { key: "patientOccupation", labelKey: "form.patientOccupation" },
+              { key: "patientSocialStatus", labelKey: "form.patientSocial" },
             ].map((f) => (
               <div key={f.key}>
-                <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{f.label}</label>
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t(f.labelKey)}</label>
                 <input
                   value={form[f.key] || ""}
                   onChange={(e) => set(f.key, e.target.value)}
-                  placeholder="Iz transkripta…"
+                  placeholder={t("form.fromTranscript")}
                   className={cn(
                     "w-full bg-muted/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-200",
                     form[f.key]?.startsWith("Nije pomenuto") && "text-muted-foreground/60 italic"
@@ -254,24 +248,24 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
 
         {/* ===== ANAMNEZA title ===== */}
         <div className="text-center py-2">
-          <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-foreground">Anamneza</h2>
+          <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-foreground">{t("form.anamnesis")}</h2>
         </div>
 
         {/* ===== RADNE DIJAGNOZE / ICD-10 ===== */}
-        <SectionBlock icon={Activity} title="Radne dijagnoze (ICD-10)" fieldKey="diagnosisCodes" value={form.diagnosisCodes || ""} onChange={set} filling={filling} rows={3} placeholder="npr. I10 - Esencijalna hipertenzija&#10;N18.4 - HBI stadijum 4" />
+        <SectionBlock icon={Activity} title={t("form.workingDiagnosis")} fieldKey="diagnosisCodes" value={form.diagnosisCodes || ""} onChange={set} filling={filling} rows={3} placeholder={t("form.diagnosisPlaceholder")} fromTranscript={t("form.fromTranscript")} />
 
         {/* ===== GLAVNE TEGOBE ===== */}
-        <SectionBlock icon={ClipboardList} title="Glavne tegobe" fieldKey="chiefComplaints" value={form.chiefComplaints || ""} onChange={set} filling={filling} rows={3} />
+        <SectionBlock icon={ClipboardList} title={t("form.chiefComplaints")} fieldKey="chiefComplaints" value={form.chiefComplaints || ""} onChange={set} filling={filling} rows={3} fromTranscript={t("form.fromTranscript")} />
 
         {/* ===== SADAŠNJA BOLEST ===== */}
-        <SectionBlock icon={FileText} title="Sadašnja bolest" fieldKey="presentIllness" value={form.presentIllness || ""} onChange={set} filling={filling} rows={5} placeholder="Detaljni narativ sadašnje bolesti…" />
+        <SectionBlock icon={FileText} title={t("form.presentIllness")} fieldKey="presentIllness" value={form.presentIllness || ""} onChange={set} filling={filling} rows={5} placeholder={t("form.presentIllnessPlaceholder")} fromTranscript={t("form.fromTranscript")} />
 
         {/* ===== KLINIČKA HRONOLOGIJA ===== */}
-        <SectionBlock icon={Clock} title="Klinička hronologija" fieldKey="clinicalTimeline" value={form.clinicalTimeline || ""} onChange={set} filling={filling} rows={3} placeholder="Početak, bolnice, terapije, procedure…" />
+        <SectionBlock icon={Clock} title={t("form.clinicalTimeline")} fieldKey="clinicalTimeline" value={form.clinicalTimeline || ""} onChange={set} filling={filling} rows={3} placeholder={t("form.timelinePlaceholder")} fromTranscript={t("form.fromTranscript")} />
 
         {/* ===== ANAMNEZA PO SISTEMIMA ===== */}
         <div className="space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">Anamneza po sistemima</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">{t("form.systemAnamnesis")}</p>
           {SYSTEM_CATEGORIES.map((cat) => {
             const isOpen = openSections.includes(cat.id);
             const Icon = cat.icon;
@@ -280,7 +274,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
               <div key={cat.id} className="glass-card overflow-hidden">
                 <button onClick={() => toggle(cat.id)} className="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-muted/30 transition-colors duration-200 active:scale-[0.995]">
                   <Icon size={17} strokeWidth={1.5} className="text-muted-foreground shrink-0" />
-                  <span className="flex-1 text-sm font-semibold text-foreground tracking-wide">{cat.label}</span>
+                  <span className="flex-1 text-sm font-semibold text-foreground tracking-wide">{t(cat.labelKey)}</span>
                   {filled > 0 && <span className="text-[10px] font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full">{filled}/{cat.fields.length}</span>}
                   <ChevronDown size={15} strokeWidth={1.8} className={cn("text-muted-foreground transition-transform duration-300", isOpen && "rotate-180")} />
                 </button>
@@ -289,7 +283,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
                     <motion.div key={cat.id + "-content"} initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden">
                       <div className="px-5 pb-4 space-y-3 border-t border-border/50 pt-3">
                         {cat.fields.map((field) => (
-                          <FieldRow key={field.key} field={field} value={form[field.key] || ""} onChange={set} filling={filling} />
+                          <FieldRow key={field.key} field={field} value={form[field.key] || ""} onChange={set} filling={filling} fromTranscript={t("form.fromTranscript")} />
                         ))}
                       </div>
                     </motion.div>
@@ -304,50 +298,50 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
         <div className="glass-card p-5 space-y-3">
           <div className="flex items-center gap-2 mb-1">
             <Shield size={16} strokeWidth={1.5} className="text-muted-foreground" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Lična anamneza</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("form.personalHistory")}</h3>
           </div>
           <div className="space-y-3">
             {[
-              { key: "allergies", label: "Alergije" },
-              { key: "chronicDiseases", label: "Hronične bolesti" },
-              { key: "surgeries", label: "Hirurške intervencije" },
-              { key: "medications", label: "Redovna terapija" },
+              { key: "allergies", labelKey: "form.allergies" },
+              { key: "chronicDiseases", labelKey: "form.chronicDiseases" },
+              { key: "surgeries", labelKey: "form.surgeries" },
+              { key: "medications", labelKey: "form.medications" },
             ].map((f) => (
-              <FieldRow key={f.key} field={f} value={form[f.key] || ""} onChange={set} filling={filling} />
+              <FieldRow key={f.key} field={f} value={form[f.key] || ""} onChange={set} filling={filling} fromTranscript={t("form.fromTranscript")} />
             ))}
           </div>
         </div>
 
         {/* ===== PORODIČNA ANAMNEZA ===== */}
-        <SectionBlock icon={User} title="Porodična anamneza" fieldKey="familyHistory" value={form.familyHistory || ""} onChange={set} filling={filling} rows={2} placeholder="Hronične bolesti u porodici…" />
+        <SectionBlock icon={User} title={t("form.familyHistory")} fieldKey="familyHistory" value={form.familyHistory || ""} onChange={set} filling={filling} rows={2} placeholder={t("form.familyHistoryPlaceholder")} fromTranscript={t("form.fromTranscript")} />
 
         {/* ===== SOCIO-EPIDEMIOLOŠKA ANAMNEZA ===== */}
         <div className="glass-card p-5 space-y-3">
           <div className="flex items-center gap-2 mb-1">
             <Home size={16} strokeWidth={1.5} className="text-muted-foreground" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Socio-epidemiološka anamneza</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("form.socioEpidemiological")}</h3>
           </div>
           <div className="space-y-3">
             {[
-              { key: "livingConditions", label: "Uslovi života" },
-              { key: "smokingAlcohol", label: "Pušenje / Alkohol" },
-              { key: "epidemiological", label: "Epidemiološki podaci" },
+              { key: "livingConditions", labelKey: "form.livingConditions" },
+              { key: "smokingAlcohol", labelKey: "form.smokingAlcohol" },
+              { key: "epidemiological", labelKey: "form.epidemiological" },
             ].map((f) => (
-              <FieldRow key={f.key} field={f} value={form[f.key] || ""} onChange={set} filling={filling} />
+              <FieldRow key={f.key} field={f} value={form[f.key] || ""} onChange={set} filling={filling} fromTranscript={t("form.fromTranscript")} />
             ))}
           </div>
         </div>
 
         {/* ===== STATUS PRAESENS ===== */}
         <div className="text-center py-2">
-          <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-foreground">Status Praesens</h2>
-          <p className="text-[10px] text-muted-foreground mt-0.5">Popunjava lekar pri pregledu</p>
+          <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-foreground">{t("form.statusPraesens")}</h2>
+          <p className="text-[10px] text-muted-foreground mt-0.5">{t("form.statusSubtitle")}</p>
         </div>
 
         <div className="glass-card overflow-hidden">
           <button onClick={() => setObjectiveOpen((o) => !o)} className="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-muted/30 transition-colors duration-200 active:scale-[0.995]">
             <Thermometer size={17} strokeWidth={1.5} className="text-muted-foreground shrink-0" />
-            <span className="flex-1 text-sm font-semibold text-foreground tracking-wide">Objektivni nalaz</span>
+            <span className="flex-1 text-sm font-semibold text-foreground tracking-wide">{t("form.objectiveFindings")}</span>
             <ChevronDown size={15} strokeWidth={1.8} className={cn("text-muted-foreground transition-transform duration-300", objectiveOpen && "rotate-180")} />
           </button>
           <AnimatePresence mode="wait" initial={false}>
@@ -355,7 +349,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
               <motion.div key="obj-content" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden">
                 <div className="px-5 pb-4 space-y-3 border-t border-border/50 pt-3">
                   {OBJECTIVE_FIELDS.map((field) => (
-                    <FieldRow key={field.key} field={field} value={form[field.key] || ""} onChange={set} filling={filling} />
+                    <FieldRow key={field.key} field={field} value={form[field.key] || ""} onChange={set} filling={filling} fromTranscript={t("form.fromTranscript")} />
                   ))}
                 </div>
               </motion.div>
@@ -367,17 +361,17 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
         <div className="glass-card p-5">
           <div className="flex justify-between items-end">
             <div className="space-y-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Pečat ustanove</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("form.institutionStamp")}</p>
               <div className="w-24 h-24 border border-dashed border-border/60 rounded-lg flex items-center justify-center">
                 <span className="text-[10px] text-muted-foreground/40 italic">Stamp</span>
               </div>
             </div>
             <div className="text-right space-y-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Potpis lekara</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("form.doctorSignature")}</p>
               <div className="w-48 border-b border-border/60 pb-1">
                 <span className="text-[10px] text-muted-foreground/40 italic">Dr. ___________________________</span>
               </div>
-              <p className="text-[10px] text-muted-foreground/50">Faksimil</p>
+              <p className="text-[10px] text-muted-foreground/50">{t("form.facsimile")}</p>
             </div>
           </div>
         </div>
@@ -387,11 +381,11 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
       <div className="pt-4 mt-2 border-t border-border/40 flex gap-3">
         <button onClick={() => generateAnamnezaPdf(form)} disabled={!hasAnyData} className="flex-1 flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-all duration-200">
           <Download size={15} strokeWidth={1.8} />
-          Preuzmi PDF
+          {t("form.downloadPdf")}
         </button>
         <button onClick={handleSendToPatient} disabled={!hasAnyData || sending} className="flex-1 flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:shadow-lg hover:shadow-accent/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-all duration-200">
           {sending ? <Loader2 size={15} strokeWidth={1.8} className="animate-spin" /> : <Send size={15} strokeWidth={1.8} />}
-          {sending ? "Slanje…" : "Pošalji pacijentu"}
+          {sending ? t("form.sending") : t("form.sendToPatient")}
         </button>
       </div>
     </div>
@@ -399,16 +393,17 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
 };
 
 /* ---- small helpers ---- */
-function FieldRow({ field, value, onChange, filling }: { field: CategoryField; value: string; onChange: (k: string, v: string) => void; filling: boolean }) {
-  const isFaded = value === "Nije pomenuto u transkriptu" || value === "Not mentioned in transcript" || value === "Negativno / Negira" || value === "Negative / Denied" || value === "Nije pregledano" || value === "Not examined / Not mentioned";
+function FieldRow({ field, value, onChange, filling, fromTranscript }: { field: { key: string; labelKey: string }; value: string; onChange: (k: string, v: string) => void; filling: boolean; fromTranscript: string }) {
+  const { t } = useTranslation();
+  const isFaded = value === "Nije pomenuto u transkriptu" || value === "Not mentioned in transcript" || value === "Non mentionné dans la transcription" || value === "Negativno / Negira" || value === "Negative / Denied" || value === "Nije pregledano" || value === "Not examined / Not mentioned";
   return (
     <motion.div initial={false} animate={value ? { scale: [1, 1.004, 1] } : {}} transition={{ duration: 0.3, ease: "easeOut" }}>
-      <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{field.label}</label>
+      <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t(field.labelKey)}</label>
       <textarea
         value={value}
         onChange={(e) => onChange(field.key, e.target.value)}
         rows={2}
-        placeholder="Iz transkripta…"
+        placeholder={fromTranscript}
         className={cn(
           "w-full bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-200",
           isFaded && "text-muted-foreground/60 italic"
@@ -420,10 +415,10 @@ function FieldRow({ field, value, onChange, filling }: { field: CategoryField; v
   );
 }
 
-function SectionBlock({ icon: Icon, title, fieldKey, value, onChange, filling, rows = 2, placeholder }: {
-  icon: React.ElementType; title: string; fieldKey: string; value: string; onChange: (k: string, v: string) => void; filling: boolean; rows?: number; placeholder?: string;
+function SectionBlock({ icon: Icon, title, fieldKey, value, onChange, filling, rows = 2, placeholder, fromTranscript }: {
+  icon: React.ElementType; title: string; fieldKey: string; value: string; onChange: (k: string, v: string) => void; filling: boolean; rows?: number; placeholder?: string; fromTranscript: string;
 }) {
-  const isFaded = value?.startsWith("Nije pomenuto") || value?.startsWith("Not mentioned");
+  const isFaded = value?.startsWith("Nije pomenuto") || value?.startsWith("Not mentioned") || value?.startsWith("Non mentionné");
   return (
     <div className="glass-card p-5 space-y-2">
       <div className="flex items-center gap-2">
@@ -434,7 +429,7 @@ function SectionBlock({ icon: Icon, title, fieldKey, value, onChange, filling, r
         value={value}
         onChange={(e) => onChange(fieldKey, e.target.value)}
         rows={rows}
-        placeholder={placeholder || "Iz transkripta…"}
+        placeholder={placeholder || fromTranscript}
         className={cn(
           "w-full bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-200",
           isFaded && "text-muted-foreground/60 italic"

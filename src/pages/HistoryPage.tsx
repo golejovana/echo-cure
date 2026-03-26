@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { History, Search, Eye, Calendar, FileText, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useTranslation } from "@/i18n/LanguageContext";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -16,18 +17,22 @@ interface ExamRow {
   status: string;
 }
 
-const statusColor = (status: string) => {
-  if (status === "Završen") return "bg-accent/10 text-accent";
-  if (status === "Čeka nalaze") return "bg-destructive/10 text-destructive";
-  return "bg-primary/10 text-primary";
-};
-
 export default function HistoryPage() {
+  const { t } = useTranslation();
   const [role, setRole] = useState<AppRole>("doctor");
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<ExamRow[]>([]);
   const navigate = useNavigate();
+
+  const statusDone = t("doctor.statusDone");
+  const statusNew = t("patient.new");
+
+  const statusColor = (status: string) => {
+    if (status === statusDone) return "bg-accent/10 text-accent";
+    if (status === statusNew) return "bg-primary/10 text-primary";
+    return "bg-destructive/10 text-destructive";
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,25 +43,16 @@ export default function HistoryPage() {
       const userRole = profile?.role || "doctor";
       setRole(userRole);
 
-      // Fetch real examinations
       const { data: exams } = await supabase
-        .from("examinations")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .from("examinations").select("*").order("created_at", { ascending: false });
 
       if (exams) {
-        // Get doctor names for patient view
         let doctorNames: Record<string, string> = {};
         if (userRole === "patient") {
           const doctorIds = [...new Set(exams.map((e: any) => e.doctor_id))];
           if (doctorIds.length > 0) {
-            const { data: profiles } = await supabase
-              .from("profiles")
-              .select("user_id, full_name")
-              .in("user_id", doctorIds);
-            if (profiles) {
-              profiles.forEach((p: any) => { doctorNames[p.user_id] = p.full_name || "Lekar"; });
-            }
+            const { data: profiles } = await supabase.from("profiles").select("user_id, full_name").in("user_id", doctorIds);
+            if (profiles) profiles.forEach((p: any) => { doctorNames[p.user_id] = p.full_name || ""; });
           }
         }
 
@@ -64,8 +60,8 @@ export default function HistoryPage() {
           id: e.id,
           date: new Date(e.created_at).toLocaleDateString("sr-Latn", { day: "2-digit", month: "2-digit", year: "numeric" }) + ".",
           name: userRole === "doctor" ? (e.patient_name || e.patient_email) : (`Dr. ${doctorNames[e.doctor_id] || ""}`),
-          diagnosis: e.diagnosis_codes || "Nije navedeno",
-          status: e.is_read ? "Završen" : "Novo",
+          diagnosis: e.diagnosis_codes || t("patient.notSpecified"),
+          status: e.is_read ? statusDone : statusNew,
         })));
       }
 
@@ -90,51 +86,44 @@ export default function HistoryPage() {
   return (
     <DashboardLayout role={role}>
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] as const }}
         className="max-w-5xl mx-auto space-y-6"
       >
-        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
               <History size={22} strokeWidth={1.5} className="text-primary" />
-              Istorija pregleda
+              {t("history.title")}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {isDoctor ? "Pregled svih prethodnih pregleda pacijenata." : "Vaši prethodni medicinski pregledi."}
+              {isDoctor ? t("history.doctorSubtitle") : t("history.patientSubtitle")}
             </p>
           </div>
-
           <div className="relative">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Pretraži…"
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("history.search")}
               className="pl-9 pr-4 py-2.5 rounded-2xl bg-card border border-border/50 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 w-full sm:w-64 transition-shadow duration-200 shadow-sm focus:shadow-md"
             />
           </div>
         </div>
 
-        {/* Table Card */}
         <div className="led-card overflow-hidden">
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/40">
                   <th className="text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-5 py-3.5">
-                    <div className="flex items-center gap-1.5"><Calendar size={12} /> Datum</div>
+                    <div className="flex items-center gap-1.5"><Calendar size={12} /> {t("history.date")}</div>
                   </th>
                   <th className="text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-5 py-3.5">
-                    {isDoctor ? "Pacijent" : "Lekar"}
+                    {isDoctor ? t("history.patient") : t("history.doctorCol")}
                   </th>
                   <th className="text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-5 py-3.5">
-                    <div className="flex items-center gap-1.5"><FileText size={12} /> Dijagnoza</div>
+                    <div className="flex items-center gap-1.5"><FileText size={12} /> {t("history.diagnosisCol")}</div>
                   </th>
                   <th className="text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-5 py-3.5">
-                    <div className="flex items-center gap-1.5"><Filter size={12} /> Status</div>
+                    <div className="flex items-center gap-1.5"><Filter size={12} /> {t("history.status")}</div>
                   </th>
                   <th className="px-5 py-3.5" />
                 </tr>
@@ -146,17 +135,13 @@ export default function HistoryPage() {
                     <td className="px-5 py-4 text-sm text-foreground">{row.name}</td>
                     <td className="px-5 py-4 text-sm text-foreground/80 max-w-xs truncate">{row.diagnosis}</td>
                     <td className="px-5 py-4">
-                      <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full ${statusColor(row.status)}`}>
-                        {row.status}
-                      </span>
+                      <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full ${statusColor(row.status)}`}>{row.status}</span>
                     </td>
                     <td className="px-5 py-4">
-                      <button
-                        onClick={() => navigate(isDoctor ? `/examination/${row.id}` : `/examination/${row.id}`)}
-                        className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 opacity-0 group-hover:opacity-100 transition-all duration-200 px-3 py-1.5 rounded-full bg-primary/5 hover:bg-primary/10"
-                      >
+                      <button onClick={() => navigate(`/examination/${row.id}`)}
+                        className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 opacity-0 group-hover:opacity-100 transition-all duration-200 px-3 py-1.5 rounded-full bg-primary/5 hover:bg-primary/10">
                         <Eye size={13} strokeWidth={1.8} />
-                        Otvori
+                        {t("history.open")}
                       </button>
                     </td>
                   </tr>
@@ -165,19 +150,12 @@ export default function HistoryPage() {
             </table>
           </div>
 
-          {/* Mobile Cards */}
           <div className="md:hidden divide-y divide-border/20">
             {filtered.map((row) => (
-              <button
-                key={row.id}
-                onClick={() => navigate(`/examination/${row.id}`)}
-                className="w-full p-4 space-y-2 text-left hover:bg-muted/20 transition-colors"
-              >
+              <button key={row.id} onClick={() => navigate(`/examination/${row.id}`)} className="w-full p-4 space-y-2 text-left hover:bg-muted/20 transition-colors">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-foreground">{row.name}</span>
-                  <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${statusColor(row.status)}`}>
-                    {row.status}
-                  </span>
+                  <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${statusColor(row.status)}`}>{row.status}</span>
                 </div>
                 <p className="text-xs text-foreground/70 truncate">{row.diagnosis}</p>
                 <span className="text-[10px] text-muted-foreground">{row.date}</span>
@@ -187,7 +165,7 @@ export default function HistoryPage() {
 
           {filtered.length === 0 && (
             <div className="py-12 text-center text-sm text-muted-foreground">
-              {rows.length === 0 ? "Nema pregleda u istoriji." : `Nema rezultata za „${search}"`}
+              {rows.length === 0 ? t("history.empty") : `${t("history.noResults")} „${search}"`}
             </div>
           )}
         </div>
