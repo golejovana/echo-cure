@@ -2,12 +2,13 @@ import { useState, useCallback } from "react";
 import {
   Sparkles, Heart, Stethoscope, Droplets, Brain,
   ChevronDown, Send, Loader2, FileText, ClipboardList, Activity,
-  User, Clock, Thermometer, Shield, Home,
+  User, Clock, Thermometer, Shield, Home, Download,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { generateAnamnezaPdf } from "@/lib/generateAnamnezaPdf";
 
 /* ---------- types ---------- */
 interface CategoryField { key: string; label: string }
@@ -323,8 +324,12 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
       </div>
 
       {/* submit */}
-      <div className="pt-4 mt-2 border-t border-border/40">
-        <button onClick={handleSubmit} disabled={!hasAnyData} className="w-full flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:shadow-lg hover:shadow-accent/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-all duration-200">
+      <div className="pt-4 mt-2 border-t border-border/40 flex gap-3">
+        <button onClick={() => generateAnamnezaPdf(form)} disabled={!hasAnyData} className="flex-1 flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-all duration-200">
+          <Download size={15} strokeWidth={1.8} />
+          Preuzmi PDF
+        </button>
+        <button onClick={handleSubmit} disabled={!hasAnyData} className="flex-1 flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:shadow-lg hover:shadow-accent/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-all duration-200">
           <Send size={15} strokeWidth={1.8} />
           Pošalji izveštaj
         </button>
