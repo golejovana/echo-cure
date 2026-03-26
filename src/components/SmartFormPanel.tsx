@@ -161,11 +161,6 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
 
       if (examError) throw examError;
 
-      await supabase.rpc("link_patient_by_email", {
-        p_exam_id: exam.id,
-        p_email: patientEmail.trim().toLowerCase(),
-      });
-
       // Create appointments from doctor-specified dates
       const validAppointments = plannedAppointments.filter((a) => a.title.trim() && a.date);
       if (validAppointments.length > 0) {
@@ -193,6 +188,12 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
           });
         }
       }
+
+      // Link patient AFTER appointments are created so patient_id gets set on all records
+      await supabase.rpc("link_patient_by_email", {
+        p_exam_id: exam.id,
+        p_email: patientEmail.trim().toLowerCase(),
+      });
 
       toast({ title: t("form.sendSuccess"), description: `${t("form.sendSuccessDesc")} ${patientEmail}.` });
     } catch (e) {
