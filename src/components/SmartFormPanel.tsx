@@ -223,9 +223,9 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
                   {filled > 0 && <span className="text-[10px] font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full">{filled}/{cat.fields.length}</span>}
                   <ChevronDown size={15} strokeWidth={1.8} className={cn("text-muted-foreground transition-transform duration-300", isOpen && "rotate-180")} />
                 </button>
-                <AnimatePresence initial={false}>
+                <AnimatePresence mode="wait" initial={false}>
                   {isOpen && (
-                    <motion.div key="c" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden">
+                    <motion.div key={cat.id + "-content"} initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden">
                       <div className="px-5 pb-4 space-y-3 border-t border-border/50 pt-3">
                         {cat.fields.map((field) => (
                           <FieldRow key={field.key} field={field} value={form[field.key] || ""} onChange={set} filling={filling} />
