@@ -6,6 +6,7 @@ import {
   Clock, Bell, FileText, Loader2, Pill, AlertTriangle,
   ChevronLeft, ChevronRight,
 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
