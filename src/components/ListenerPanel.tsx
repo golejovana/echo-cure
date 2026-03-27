@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Mic, MicOff, Globe } from "lucide-react";
+import { Mic, MicOff, Pause, Play, Globe } from "lucide-react";
 import { useTranslation } from "@/i18n/LanguageContext";
 
 export type Lang = "en-US" | "sr-RS";
@@ -17,6 +17,7 @@ const LANG_LABELS: Record<Lang, string> = {
 const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps) => {
   const { t } = useTranslation();
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [lines, setLines] = useState<string[]>([]);
   const [interimText, setInterimText] = useState("");
   const [lang, setLang] = useState<Lang>("en-US");
@@ -38,6 +39,7 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
       recognitionRef.current = null;
     }
     setIsRecording(false);
+    setIsPaused(false);
     setInterimText("");
   }, []);
 
@@ -80,8 +82,24 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
   }, [lang, stopRecognition]);
 
   const toggleRecording = useCallback(() => {
-    if (isRecording) { stopRecognition(); } else { setLines([]); setInterimText(""); startRecognition(); }
+    if (isRecording) { stopRecognition(); } else { setLines([]); setInterimText(""); setIsPaused(false); startRecognition(); }
   }, [isRecording, stopRecognition, startRecognition]);
+
+  const togglePause = useCallback(() => {
+    if (!isRecording) return;
+    if (isPaused) {
+      startRecognition();
+      setIsPaused(false);
+    } else {
+      if (recognitionRef.current) {
+        recognitionRef.current.onend = null;
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      }
+      setIsPaused(true);
+      setInterimText("");
+    }
+  }, [isRecording, isPaused, startRecognition]);
 
   const fullText = lines.join(" ");
 
@@ -127,9 +145,9 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
         </button>
       </div>
 
-      <div className="flex justify-center mb-8">
+      <div className="flex justify-center items-center gap-4 mb-8">
         <button onClick={toggleRecording} className="relative group active:scale-[0.95] transition-transform duration-150">
-          {isRecording && (
+          {isRecording && !isPaused && (
             <>
               <span className="absolute inset-0 rounded-full bg-destructive/30" style={{ animation: "pulse-ring 1.5s ease-out infinite" }} />
               <span className="absolute inset-0 rounded-full bg-destructive/20" style={{ animation: "pulse-ring 1.5s ease-out infinite 0.4s" }} />
@@ -141,10 +159,20 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
             {isRecording ? <MicOff size={22} strokeWidth={1.8} /> : <Mic size={22} strokeWidth={1.8} />}
           </div>
         </button>
+
+        {isRecording && (
+          <button onClick={togglePause} className="active:scale-[0.95] transition-transform duration-150" title={isPaused ? t("listener.resume") : t("listener.pause")}>
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+              isPaused ? "bg-primary text-primary-foreground shadow-md shadow-primary/15" : "bg-muted text-muted-foreground shadow-sm hover:bg-muted/80"
+            }`}>
+              {isPaused ? <Play size={18} strokeWidth={1.8} /> : <Pause size={18} strokeWidth={1.8} />}
+            </div>
+          </button>
+        )}
       </div>
 
       <p className="text-center text-xs text-muted-foreground mb-6">
-        {isRecording ? t("listener.listening") : t("listener.tapToRecord")}
+        {isRecording ? (isPaused ? t("listener.paused") : t("listener.listening")) : t("listener.tapToRecord")}
       </p>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto pr-1">

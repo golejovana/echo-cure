@@ -171,6 +171,9 @@ const en: Record<string, string | string[]> = {
   // Listener Panel
   "listener.title": "Live Transcript",
   "listener.listening": "Listening…",
+  "listener.paused": "Paused",
+  "listener.pause": "Pause",
+  "listener.resume": "Resume",
   "listener.tapToRecord": "Tap to begin recording",
   "listener.placeholder": "Transcript will appear here… You can also type or edit directly.",
   "listener.unsupported": "Your browser does not support Speech Recognition. Please use Chrome or Edge.",

@@ -176,6 +176,9 @@ const sr = {
   // Listener Panel
   "listener.title": "Transkript uživo",
   "listener.listening": "Slušam…",
+  "listener.paused": "Pauzirano",
+  "listener.pause": "Pauziraj",
+  "listener.resume": "Nastavi",
   "listener.tapToRecord": "Dodirnite za snimanje",
   "listener.placeholder": "Transkript će se pojaviti ovde… Možete i ručno kucati ili menjati.",
   "listener.unsupported": "Vaš pregledač ne podržava prepoznavanje govora. Koristite Chrome ili Edge.",

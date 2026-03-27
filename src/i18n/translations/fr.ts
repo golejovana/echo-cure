@@ -171,6 +171,9 @@ const fr: Record<string, string | string[]> = {
   // Listener Panel
   "listener.title": "Transcription en direct",
   "listener.listening": "Écoute…",
+  "listener.paused": "En pause",
+  "listener.pause": "Pause",
+  "listener.resume": "Reprendre",
   "listener.tapToRecord": "Appuyez pour enregistrer",
   "listener.placeholder": "La transcription apparaîtra ici… Vous pouvez aussi taper ou modifier directement.",
   "listener.unsupported": "Votre navigateur ne prend pas en charge la reconnaissance vocale. Utilisez Chrome ou Edge.",
