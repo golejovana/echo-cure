@@ -242,24 +242,6 @@ export default function PatientDashboard() {
               {t("patient.viewDetails")}
             </button>
 
-            {/* Medications from latest exam */}
-            {latestExam?.form_data && (latestExam.form_data as any)?._medications?.length > 0 && (
-              <div className="bg-muted/30 rounded-2xl p-4 space-y-2 mt-3">
-                <div className="flex items-center gap-1.5">
-                  <Pill size={13} strokeWidth={1.5} className="text-primary" />
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("therapy.medicationsLabel")}</p>
-                </div>
-                {((latestExam.form_data as any)._medications as any[]).map((med: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-foreground">{med.name} {med.dose}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {med.frequency === "pp" ? t("therapy.asNeeded") : `${med.frequency}${t("therapy.timesDaily")}`}
-                      {med.note ? ` · ${med.note}` : ""}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
           </motion.div>
 
           <motion.div variants={item} className="glass-card-elevated p-6 space-y-4">
