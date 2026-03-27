@@ -202,7 +202,7 @@ export default function TherapyPanel({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-3 gap-2.5">
                 <div>
                   <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("therapy.appointmentTitle")}</label>
                   <input
@@ -234,6 +234,22 @@ export default function TherapyPanel({
                       />
                     </PopoverContent>
                   </Popover>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("therapy.time")}</label>
+                  <select
+                    value={apt.time}
+                    onChange={(e) => updateApt(i, "time", e.target.value)}
+                    className={cn(
+                      "w-full bg-muted/30 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all appearance-none cursor-pointer",
+                      apt.time ? "text-foreground" : "text-muted-foreground/40"
+                    )}
+                  >
+                    <option value="">{t("therapy.selectTime")}</option>
+                    {TIME_OPTIONS.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
