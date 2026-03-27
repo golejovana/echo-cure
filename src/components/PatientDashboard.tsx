@@ -338,7 +338,9 @@ export default function PatientDashboard() {
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground">{apt.title}</p>
-                    <p className="text-[10px] text-muted-foreground">{formatDate(apt.appointment_date)}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {formatDate(apt.appointment_date)}{apt.appointment_time ? ` · ${apt.appointment_time}` : ""}
+                    </p>
                   </div>
                   {apt.priority === "high" && (
                     <span className="text-[9px] font-semibold uppercase tracking-wider text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">{t("therapy.highPriority")}</span>

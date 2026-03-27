@@ -268,11 +268,18 @@ const en: Record<string, string | string[]> = {
   "therapy.appointmentTitle": "Description",
   "therapy.appointmentPlaceholder": "e.g. MRI, Lab work, Follow-up",
   "therapy.date": "Date",
+  "therapy.time": "Time",
   "therapy.selectDate": "Select date",
+  "therapy.selectTime": "Select time",
   "therapy.highPriority": "High priority",
   "therapy.medicationsLabel": "Prescribed Medications",
   "therapy.timesDaily": "x daily",
   "therapy.asNeeded": "as needed",
+
+  // Patient reminders
+  "patient.reminderTomorrow": "Reminder: appointment is tomorrow",
+  "patient.reminderToday": "Reminder: appointment is today",
+  "patient.atTime": "at",
 
   // Language names
   "lang.sr": "Srpski",

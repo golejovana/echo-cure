@@ -273,11 +273,18 @@ const sr = {
   "therapy.appointmentTitle": "Opis",
   "therapy.appointmentPlaceholder": "npr. MRI, Laboratorija, Kontrola",
   "therapy.date": "Datum",
+  "therapy.time": "Vreme",
   "therapy.selectDate": "Izaberite datum",
+  "therapy.selectTime": "Izaberite vreme",
   "therapy.highPriority": "Visok prioritet",
   "therapy.medicationsLabel": "Propisani lekovi",
   "therapy.timesDaily": "x dnevno",
   "therapy.asNeeded": "po potrebi",
+
+  // Patient reminders
+  "patient.reminderTomorrow": "Podsetnik: kontrola je sutra",
+  "patient.reminderToday": "Podsetnik: kontrola je danas",
+  "patient.atTime": "u",
 
   // Language names
   "lang.sr": "Srpski",
