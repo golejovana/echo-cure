@@ -1,11 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Mic, MicOff, Sparkles, Send, FileText,
-  Clock, User, ChevronRight, Stethoscope,
+  Clock, User, ChevronRight, Stethoscope, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
+
+interface RecentPatient {
+  id: string;
+  name: string;
+  date: string;
+  status: string;
+}
 
 const container = {
   hidden: { opacity: 0 },
@@ -18,16 +27,42 @@ const item = {
 
 export default function DoctorDashboard() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [hasAnamnesis, setHasAnamnesis] = useState(false);
+  const [recentPatients, setRecentPatients] = useState<RecentPatient[]>([]);
+  const [patientsLoading, setPatientsLoading] = useState(true);
 
-  const RECENT_PATIENTS = [
-    { name: "Marko Petrović", date: "25.03.2026.", status: t("doctor.statusDone") },
-    { name: "Ana Jovanović", date: "24.03.2026.", status: t("doctor.statusWaiting") },
-    { name: "Stefan Nikolić", date: "23.03.2026.", status: t("doctor.statusDone") },
-    { name: "Milica Đorđević", date: "22.03.2026.", status: t("doctor.statusFollowUp") },
-    { name: "Nikola Stojanović", date: "20.03.2026.", status: t("doctor.statusDone") },
-  ];
+  useEffect(() => {
+    const fetchRecent = async () => {
+      const { data } = await supabase
+        .from("examinations")
+        .select("id, patient_name, patient_email, created_at, is_read, patient_id")
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (data) {
+        const patients: RecentPatient[] = data.map((ex: any) => {
+          let status = t("doctor.statusDone");
+          if (!ex.patient_id) status = t("doctor.statusWaiting");
+          else if (!ex.is_read) status = t("doctor.statusFollowUp");
+
+          const d = new Date(ex.created_at);
+          const dateStr = `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}.`;
+
+          return {
+            id: ex.id,
+            name: ex.patient_name || ex.patient_email || t("patient.notSpecified"),
+            date: dateStr,
+            status,
+          };
+        });
+        setRecentPatients(patients);
+      }
+      setPatientsLoading(false);
+    };
+    fetchRecent();
+  }, [t]);
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-6xl mx-auto">
@@ -108,30 +143,38 @@ export default function DoctorDashboard() {
             <Clock size={16} strokeWidth={1.5} className="text-muted-foreground" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("doctor.recentPatients")}</h3>
           </div>
-          <div className="space-y-1">
-            {RECENT_PATIENTS.map((patient) => (
-              <button key={patient.name} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/40 transition-colors duration-200 group text-left">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <User size={14} strokeWidth={1.5} className="text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{patient.name}</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-[10px] text-muted-foreground">{patient.date}</p>
-                    <span className={cn(
-                      "text-[10px] font-medium px-1.5 py-0.5 rounded-full",
-                      patient.status === t("doctor.statusDone") && "bg-accent/10 text-accent",
-                      patient.status === t("doctor.statusWaiting") && "bg-destructive/10 text-destructive",
-                      patient.status === t("doctor.statusFollowUp") && "bg-primary/10 text-primary",
-                    )}>
-                      {patient.status}
-                    </span>
+          {patientsLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="animate-spin text-primary" size={20} />
+            </div>
+          ) : recentPatients.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">{t("patient.emptyState")}</p>
+          ) : (
+            <div className="space-y-1">
+              {recentPatients.map((patient) => (
+                <button key={patient.id} onClick={() => navigate(`/examination/${patient.id}`)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/40 transition-colors duration-200 group text-left">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <User size={14} strokeWidth={1.5} className="text-primary" />
                   </div>
-                </div>
-                <ChevronRight size={14} className="text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
-              </button>
-            ))}
-          </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{patient.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-[10px] text-muted-foreground">{patient.date}</p>
+                      <span className={cn(
+                        "text-[10px] font-medium px-1.5 py-0.5 rounded-full",
+                        patient.status === t("doctor.statusDone") && "bg-accent/10 text-accent",
+                        patient.status === t("doctor.statusWaiting") && "bg-destructive/10 text-destructive",
+                        patient.status === t("doctor.statusFollowUp") && "bg-primary/10 text-primary",
+                      )}>
+                        {patient.status}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight size={14} className="text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                </button>
+              ))}
+            </div>
+          )}
         </motion.div>
       </div>
     </motion.div>
