@@ -98,6 +98,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
         valid.map((a) => ({
           title: a.title,
           appointment_date: a.date!.toISOString().split("T")[0],
+          appointment_time: a.time || null,
           priority: a.priority,
         }))
       );
