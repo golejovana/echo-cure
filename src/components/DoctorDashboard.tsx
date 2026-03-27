@@ -143,30 +143,38 @@ export default function DoctorDashboard() {
             <Clock size={16} strokeWidth={1.5} className="text-muted-foreground" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("doctor.recentPatients")}</h3>
           </div>
-          <div className="space-y-1">
-            {RECENT_PATIENTS.map((patient) => (
-              <button key={patient.name} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/40 transition-colors duration-200 group text-left">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <User size={14} strokeWidth={1.5} className="text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{patient.name}</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-[10px] text-muted-foreground">{patient.date}</p>
-                    <span className={cn(
-                      "text-[10px] font-medium px-1.5 py-0.5 rounded-full",
-                      patient.status === t("doctor.statusDone") && "bg-accent/10 text-accent",
-                      patient.status === t("doctor.statusWaiting") && "bg-destructive/10 text-destructive",
-                      patient.status === t("doctor.statusFollowUp") && "bg-primary/10 text-primary",
-                    )}>
-                      {patient.status}
-                    </span>
+          {patientsLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="animate-spin text-primary" size={20} />
+            </div>
+          ) : recentPatients.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">{t("patient.emptyState")}</p>
+          ) : (
+            <div className="space-y-1">
+              {recentPatients.map((patient) => (
+                <button key={patient.id} onClick={() => navigate(`/examination/${patient.id}`)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/40 transition-colors duration-200 group text-left">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <User size={14} strokeWidth={1.5} className="text-primary" />
                   </div>
-                </div>
-                <ChevronRight size={14} className="text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
-              </button>
-            ))}
-          </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{patient.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-[10px] text-muted-foreground">{patient.date}</p>
+                      <span className={cn(
+                        "text-[10px] font-medium px-1.5 py-0.5 rounded-full",
+                        patient.status === t("doctor.statusDone") && "bg-accent/10 text-accent",
+                        patient.status === t("doctor.statusWaiting") && "bg-destructive/10 text-destructive",
+                        patient.status === t("doctor.statusFollowUp") && "bg-primary/10 text-primary",
+                      )}>
+                        {patient.status}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight size={14} className="text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                </button>
+              ))}
+            </div>
+          )}
         </motion.div>
       </div>
     </motion.div>
