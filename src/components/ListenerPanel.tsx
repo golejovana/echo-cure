@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Mic, MicOff, Globe } from "lucide-react";
+import { Mic, MicOff, Pause, Play, Globe } from "lucide-react";
 import { useTranslation } from "@/i18n/LanguageContext";
 
 export type Lang = "en-US" | "sr-RS";
