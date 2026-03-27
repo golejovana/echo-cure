@@ -17,6 +17,7 @@ const LANG_LABELS: Record<Lang, string> = {
 const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps) => {
   const { t } = useTranslation();
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [lines, setLines] = useState<string[]>([]);
   const [interimText, setInterimText] = useState("");
   const [lang, setLang] = useState<Lang>("en-US");
