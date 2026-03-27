@@ -135,13 +135,13 @@ export default function PatientDashboard() {
   const firstDayOfWeek = (new Date(calYear, calMonth, 1).getDay() + 6) % 7;
 
   // Build a map: day number → list of appointment titles for the viewed month
-  const appointmentMap = new Map<number, { title: string; priority: string }[]>();
+  const appointmentMap = new Map<number, { title: string; priority: string; time: string | null }[]>();
   appointments.forEach((a) => {
     const d = new Date(a.appointment_date + "T00:00:00");
     if (d.getMonth() === calMonth && d.getFullYear() === calYear) {
       const day = d.getDate();
       if (!appointmentMap.has(day)) appointmentMap.set(day, []);
-      appointmentMap.get(day)!.push({ title: a.title, priority: a.priority });
+      appointmentMap.get(day)!.push({ title: a.title, priority: a.priority, time: a.appointment_time });
     }
   });
 
