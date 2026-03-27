@@ -289,6 +289,13 @@ const fr: Record<string, string | string[]> = {
   // Timeline
   "timeline.title": "Chronologie du traitement",
   "timeline.initialExam": "Examen initial",
+
+  // Drug Tracker
+  "drugTracker.title": "Suivi des médicaments",
+  "drugTracker.taken": "pris",
+  "drugTracker.markTaken": "Marquer comme pris",
+  "drugTracker.takenAt": "Pris à",
+  "drugTracker.instruction": "Instruction",
 };
 
 export default fr;

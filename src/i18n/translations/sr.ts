@@ -294,6 +294,13 @@ const sr = {
   // Timeline
   "timeline.title": "Linija terapije",
   "timeline.initialExam": "Inicijalni pregled",
+
+  // Drug Tracker
+  "drugTracker.title": "Praćenje lekova",
+  "drugTracker.taken": "popijeno",
+  "drugTracker.markTaken": "Popio/la sam lek",
+  "drugTracker.takenAt": "Popijeno u",
+  "drugTracker.instruction": "Uputstvo",
 };
 
 export default sr;
