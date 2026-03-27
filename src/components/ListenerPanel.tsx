@@ -82,8 +82,24 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
   }, [lang, stopRecognition]);
 
   const toggleRecording = useCallback(() => {
-    if (isRecording) { stopRecognition(); } else { setLines([]); setInterimText(""); startRecognition(); }
+    if (isRecording) { stopRecognition(); } else { setLines([]); setInterimText(""); setIsPaused(false); startRecognition(); }
   }, [isRecording, stopRecognition, startRecognition]);
+
+  const togglePause = useCallback(() => {
+    if (!isRecording) return;
+    if (isPaused) {
+      startRecognition();
+      setIsPaused(false);
+    } else {
+      if (recognitionRef.current) {
+        recognitionRef.current.onend = null;
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      }
+      setIsPaused(true);
+      setInterimText("");
+    }
+  }, [isRecording, isPaused, startRecognition]);
 
   const fullText = lines.join(" ");
 
