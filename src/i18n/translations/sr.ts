@@ -290,6 +290,10 @@ const sr = {
   "lang.sr": "Srpski",
   "lang.en": "English",
   "lang.fr": "Français",
+
+  // Timeline
+  "timeline.title": "Linija terapije",
+  "timeline.initialExam": "Inicijalni pregled",
 };
 
 export default sr;

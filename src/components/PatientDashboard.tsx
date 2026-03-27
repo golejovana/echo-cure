@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTranslation } from "@/i18n/LanguageContext";
 import { useAppointments } from "@/contexts/AppointmentsContext";
+import TreatmentTimeline from "@/components/TreatmentTimeline";
 
 interface Examination {
   id: string;
@@ -179,6 +180,16 @@ export default function PatientDashboard() {
           </Badge>
         )}
       </motion.div>
+
+      {/* Treatment Timeline */}
+      {latestExam && (
+        <motion.div variants={item}>
+          <TreatmentTimeline
+            examDate={latestExam.created_at}
+            appointments={appointments}
+          />
+        </motion.div>
+      )}
 
       {examinations.length === 0 ? (
         <motion.div variants={item} className="glass-card-elevated p-8 text-center space-y-3">
