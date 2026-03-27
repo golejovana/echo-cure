@@ -316,7 +316,7 @@ export default function PatientDashboard() {
                         {dayAppts.map((a, idx) => (
                           <div key={idx} className="flex items-center gap-1.5 text-xs">
                             {a.priority === "high" ? <AlertTriangle size={10} className="text-destructive shrink-0" /> : <Clock size={10} className="text-primary shrink-0" />}
-                            <span>{a.title}</span>
+                            <span>{a.title}{a.time ? ` · ${a.time}` : ""}</span>
                           </div>
                         ))}
                       </div>
