@@ -39,6 +39,7 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
       recognitionRef.current = null;
     }
     setIsRecording(false);
+    setIsPaused(false);
     setInterimText("");
   }, []);
 
