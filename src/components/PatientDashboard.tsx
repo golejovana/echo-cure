@@ -28,6 +28,7 @@ interface Appointment {
   id: string;
   title: string;
   appointment_date: string;
+  appointment_time: string | null;
   examination_id: string;
   priority: string;
 }
