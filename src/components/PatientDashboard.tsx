@@ -192,6 +192,13 @@ export default function PatientDashboard() {
         </motion.div>
       )}
 
+      {/* Drug Tracker */}
+      {latestExam?.form_data && ((latestExam.form_data as any)?._medications?.length > 0) && (
+        <motion.div variants={item}>
+          <DrugTracker medications={(latestExam.form_data as any)._medications} />
+        </motion.div>
+      )}
+
       {examinations.length === 0 ? (
         <motion.div variants={item} className="glass-card-elevated p-8 text-center space-y-3">
           <HeartPulse size={32} className="text-muted-foreground/40 mx-auto" />
