@@ -181,6 +181,16 @@ export default function PatientDashboard() {
         )}
       </motion.div>
 
+      {/* Treatment Timeline */}
+      {latestExam && (
+        <motion.div variants={item}>
+          <TreatmentTimeline
+            examDate={latestExam.created_at}
+            appointments={appointments}
+          />
+        </motion.div>
+      )}
+
       {examinations.length === 0 ? (
         <motion.div variants={item} className="glass-card-elevated p-8 text-center space-y-3">
           <HeartPulse size={32} className="text-muted-foreground/40 mx-auto" />
