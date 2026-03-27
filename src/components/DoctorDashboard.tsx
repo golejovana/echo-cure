@@ -1,11 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Mic, MicOff, Sparkles, Send, FileText,
-  Clock, User, ChevronRight, Stethoscope,
+  Clock, User, ChevronRight, Stethoscope, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
+
+interface RecentPatient {
+  id: string;
+  name: string;
+  date: string;
+  status: string;
+}
 
 const container = {
   hidden: { opacity: 0 },
@@ -18,16 +27,42 @@ const item = {
 
 export default function DoctorDashboard() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [hasAnamnesis, setHasAnamnesis] = useState(false);
+  const [recentPatients, setRecentPatients] = useState<RecentPatient[]>([]);
+  const [patientsLoading, setPatientsLoading] = useState(true);
 
-  const RECENT_PATIENTS = [
-    { name: "Marko Petrović", date: "25.03.2026.", status: t("doctor.statusDone") },
-    { name: "Ana Jovanović", date: "24.03.2026.", status: t("doctor.statusWaiting") },
-    { name: "Stefan Nikolić", date: "23.03.2026.", status: t("doctor.statusDone") },
-    { name: "Milica Đorđević", date: "22.03.2026.", status: t("doctor.statusFollowUp") },
-    { name: "Nikola Stojanović", date: "20.03.2026.", status: t("doctor.statusDone") },
-  ];
+  useEffect(() => {
+    const fetchRecent = async () => {
+      const { data } = await supabase
+        .from("examinations")
+        .select("id, patient_name, patient_email, created_at, is_read, patient_id")
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (data) {
+        const patients: RecentPatient[] = data.map((ex: any) => {
+          let status = t("doctor.statusDone");
+          if (!ex.patient_id) status = t("doctor.statusWaiting");
+          else if (!ex.is_read) status = t("doctor.statusFollowUp");
+
+          const d = new Date(ex.created_at);
+          const dateStr = `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}.`;
+
+          return {
+            id: ex.id,
+            name: ex.patient_name || ex.patient_email || t("patient.notSpecified"),
+            date: dateStr,
+            status,
+          };
+        });
+        setRecentPatients(patients);
+      }
+      setPatientsLoading(false);
+    };
+    fetchRecent();
+  }, [t]);
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-6xl mx-auto">
