@@ -76,9 +76,48 @@ export default function PatientDashboard() {
     id: a.id,
     title: a.title,
     appointment_date: a.appointment_date,
+    appointment_time: a.appointment_time || null,
     examination_id: a.examination_id || "",
     priority: a.priority,
   }));
+
+  // Reminder notifications for upcoming appointments
+  useEffect(() => {
+    if (aptsLoading || appointments.length === 0) return;
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+
+    const shownKey = "echocure_reminders_shown";
+    const shown: string[] = JSON.parse(localStorage.getItem(shownKey) || "[]");
+
+    appointments.forEach((apt) => {
+      const reminderId = `${apt.id}-${apt.appointment_date}`;
+      if (shown.includes(reminderId)) return;
+
+      const timeStr = apt.appointment_time ? ` ${t("patient.atTime")} ${apt.appointment_time}` : "";
+
+      if (apt.appointment_date === tomorrowStr) {
+        toast({
+          title: `🔔 ${t("patient.reminderTomorrow")}`,
+          description: `${apt.title}${timeStr}`,
+          duration: 8000,
+        });
+        shown.push(reminderId);
+      } else if (apt.appointment_date === todayStr) {
+        toast({
+          title: `⏰ ${t("patient.reminderToday")}`,
+          description: `${apt.title}${timeStr}`,
+          duration: 10000,
+        });
+        shown.push(reminderId);
+      }
+    });
+
+    localStorage.setItem(shownKey, JSON.stringify(shown));
+  }, [aptsLoading, appointments, t]);
 
   const latestExam = examinations[0];
 
