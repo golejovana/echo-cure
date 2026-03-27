@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2, Pill, CalendarPlus, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Pill, CalendarPlus, AlertTriangle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/LanguageContext";
@@ -17,6 +17,7 @@ export interface Medication {
 export interface PlannedAppointment {
   title: string;
   date: Date | undefined;
+  time: string; // HH:mm format
   priority: "normal" | "high";
 }
 
@@ -28,7 +29,15 @@ interface TherapyPanelProps {
 }
 
 const EMPTY_MED: Medication = { name: "", dose: "", frequency: "1x", note: "" };
-const EMPTY_APT: PlannedAppointment = { title: "", date: undefined, priority: "normal" };
+const EMPTY_APT: PlannedAppointment = { title: "", date: undefined, time: "", priority: "normal" };
+
+const TIME_OPTIONS = [
+  "07:00", "07:30", "08:00", "08:30", "09:00", "09:30",
+  "10:00", "10:30", "11:00", "11:30", "12:00", "12:30",
+  "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30",
+  "19:00", "19:30", "20:00",
+];
 
 export default function TherapyPanel({
   medications, onMedicationsChange,
