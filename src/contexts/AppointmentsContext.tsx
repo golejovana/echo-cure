@@ -5,6 +5,7 @@ export interface SharedAppointment {
   id: string;
   title: string;
   appointment_date: string; // YYYY-MM-DD
+  appointment_time: string | null;
   priority: string;
   examination_id?: string;
   source: "local" | "db";
@@ -49,6 +50,7 @@ export function AppointmentsProvider({ children }: { children: ReactNode }) {
           id: a.id,
           title: a.title,
           appointment_date: a.appointment_date,
+          appointment_time: a.appointment_time || null,
           priority: a.priority,
           examination_id: a.examination_id,
           source: "db" as const,

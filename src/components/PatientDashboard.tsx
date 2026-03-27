@@ -6,6 +6,7 @@ import {
   Clock, Bell, FileText, Loader2, Pill, AlertTriangle,
   ChevronLeft, ChevronRight,
 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -27,6 +28,7 @@ interface Appointment {
   id: string;
   title: string;
   appointment_date: string;
+  appointment_time: string | null;
   examination_id: string;
   priority: string;
 }
@@ -76,9 +78,48 @@ export default function PatientDashboard() {
     id: a.id,
     title: a.title,
     appointment_date: a.appointment_date,
+    appointment_time: a.appointment_time || null,
     examination_id: a.examination_id || "",
     priority: a.priority,
   }));
+
+  // Reminder notifications for upcoming appointments
+  useEffect(() => {
+    if (aptsLoading || appointments.length === 0) return;
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+
+    const shownKey = "echocure_reminders_shown";
+    const shown: string[] = JSON.parse(localStorage.getItem(shownKey) || "[]");
+
+    appointments.forEach((apt) => {
+      const reminderId = `${apt.id}-${apt.appointment_date}`;
+      if (shown.includes(reminderId)) return;
+
+      const timeStr = apt.appointment_time ? ` ${t("patient.atTime")} ${apt.appointment_time}` : "";
+
+      if (apt.appointment_date === tomorrowStr) {
+        toast({
+          title: `🔔 ${t("patient.reminderTomorrow")}`,
+          description: `${apt.title}${timeStr}`,
+          duration: 8000,
+        });
+        shown.push(reminderId);
+      } else if (apt.appointment_date === todayStr) {
+        toast({
+          title: `⏰ ${t("patient.reminderToday")}`,
+          description: `${apt.title}${timeStr}`,
+          duration: 10000,
+        });
+        shown.push(reminderId);
+      }
+    });
+
+    localStorage.setItem(shownKey, JSON.stringify(shown));
+  }, [aptsLoading, appointments, t]);
 
   const latestExam = examinations[0];
 
@@ -94,13 +135,13 @@ export default function PatientDashboard() {
   const firstDayOfWeek = (new Date(calYear, calMonth, 1).getDay() + 6) % 7;
 
   // Build a map: day number → list of appointment titles for the viewed month
-  const appointmentMap = new Map<number, { title: string; priority: string }[]>();
+  const appointmentMap = new Map<number, { title: string; priority: string; time: string | null }[]>();
   appointments.forEach((a) => {
     const d = new Date(a.appointment_date + "T00:00:00");
     if (d.getMonth() === calMonth && d.getFullYear() === calYear) {
       const day = d.getDate();
       if (!appointmentMap.has(day)) appointmentMap.set(day, []);
-      appointmentMap.get(day)!.push({ title: a.title, priority: a.priority });
+      appointmentMap.get(day)!.push({ title: a.title, priority: a.priority, time: a.appointment_time });
     }
   });
 
@@ -275,7 +316,7 @@ export default function PatientDashboard() {
                         {dayAppts.map((a, idx) => (
                           <div key={idx} className="flex items-center gap-1.5 text-xs">
                             {a.priority === "high" ? <AlertTriangle size={10} className="text-destructive shrink-0" /> : <Clock size={10} className="text-primary shrink-0" />}
-                            <span>{a.title}</span>
+                            <span>{a.title}{a.time ? ` · ${a.time}` : ""}</span>
                           </div>
                         ))}
                       </div>
@@ -297,7 +338,9 @@ export default function PatientDashboard() {
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground">{apt.title}</p>
-                    <p className="text-[10px] text-muted-foreground">{formatDate(apt.appointment_date)}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {formatDate(apt.appointment_date)}{apt.appointment_time ? ` · ${apt.appointment_time}` : ""}
+                    </p>
                   </div>
                   {apt.priority === "high" && (
                     <span className="text-[9px] font-semibold uppercase tracking-wider text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">{t("therapy.highPriority")}</span>

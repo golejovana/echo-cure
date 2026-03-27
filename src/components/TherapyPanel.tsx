@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2, Pill, CalendarPlus, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Pill, CalendarPlus, AlertTriangle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/LanguageContext";
@@ -17,6 +17,7 @@ export interface Medication {
 export interface PlannedAppointment {
   title: string;
   date: Date | undefined;
+  time: string; // HH:mm format
   priority: "normal" | "high";
 }
 
@@ -28,7 +29,15 @@ interface TherapyPanelProps {
 }
 
 const EMPTY_MED: Medication = { name: "", dose: "", frequency: "1x", note: "" };
-const EMPTY_APT: PlannedAppointment = { title: "", date: undefined, priority: "normal" };
+const EMPTY_APT: PlannedAppointment = { title: "", date: undefined, time: "", priority: "normal" };
+
+const TIME_OPTIONS = [
+  "07:00", "07:30", "08:00", "08:30", "09:00", "09:30",
+  "10:00", "10:30", "11:00", "11:30", "12:00", "12:30",
+  "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30",
+  "19:00", "19:30", "20:00",
+];
 
 export default function TherapyPanel({
   medications, onMedicationsChange,
@@ -193,7 +202,7 @@ export default function TherapyPanel({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-3 gap-2.5">
                 <div>
                   <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("therapy.appointmentTitle")}</label>
                   <input
@@ -225,6 +234,22 @@ export default function TherapyPanel({
                       />
                     </PopoverContent>
                   </Popover>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("therapy.time")}</label>
+                  <select
+                    value={apt.time}
+                    onChange={(e) => updateApt(i, "time", e.target.value)}
+                    className={cn(
+                      "w-full bg-muted/30 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all appearance-none cursor-pointer",
+                      apt.time ? "text-foreground" : "text-muted-foreground/40"
+                    )}
+                  >
+                    <option value="">{t("therapy.selectTime")}</option>
+                    {TIME_OPTIONS.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>

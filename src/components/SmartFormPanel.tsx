@@ -98,6 +98,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
         valid.map((a) => ({
           title: a.title,
           appointment_date: a.date!.toISOString().split("T")[0],
+          appointment_time: a.time || null,
           priority: a.priority,
         }))
       );
@@ -186,8 +187,9 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
             examination_id: exam.id,
             title: apt.title,
             appointment_date: apt.date!.toISOString().split("T")[0],
+            appointment_time: apt.time || null,
             priority: apt.priority,
-          });
+          } as any);
         }
       } else {
         // Fallback default appointments if none specified
