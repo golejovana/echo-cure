@@ -5,6 +5,7 @@ export interface SharedAppointment {
   id: string;
   title: string;
   appointment_date: string; // YYYY-MM-DD
+  appointment_time: string | null;
   priority: string;
   examination_id?: string;
   source: "local" | "db";
