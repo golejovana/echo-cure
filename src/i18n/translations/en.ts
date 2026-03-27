@@ -285,6 +285,10 @@ const en: Record<string, string | string[]> = {
   "lang.sr": "Srpski",
   "lang.en": "English",
   "lang.fr": "Français",
+
+  // Timeline
+  "timeline.title": "Treatment Timeline",
+  "timeline.initialExam": "Initial Exam",
 };
 
 export default en;
