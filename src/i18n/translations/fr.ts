@@ -296,6 +296,16 @@ const fr: Record<string, string | string[]> = {
   "drugTracker.markTaken": "Marquer comme pris",
   "drugTracker.takenAt": "Pris à",
   "drugTracker.instruction": "Instruction",
+
+  // Safety Check
+  "therapy.safetyNote": "Remarque :",
+  "therapy.warningNsaidDiabetes": "Vérifiez la compatibilité de {drug} avec la résistance à l'insuline / le diabète du patient.",
+  "therapy.warningNsaidGastric": "{drug} peut aggraver les troubles gastro-intestinaux du patient.",
+  "therapy.warningMetforminRenal": "Vérifiez la fonction rénale avant de prescrire {drug}.",
+  "therapy.warningAceKalium": "{drug} peut augmenter le risque d'hyperkaliémie chez ce patient.",
+  "therapy.warningAnticoagBleeding": "{drug} augmente le risque de saignement chez ce patient.",
+  "therapy.warningBetaBlockerAsthma": "{drug} est contre-indiqué chez les patients asthmatiques.",
+  "therapy.warningAllergy": "Le patient est allergique à {drug} – vérifiez avant de prescrire.",
 };
 
 export default fr;
