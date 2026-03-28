@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   User, Settings, Globe, Bell, LogOut,
-  Stethoscope, Building2, Hash, Camera, HeartPulse, Mail,
+  Stethoscope, Building2, Hash, Camera, HeartPulse, Mail, Pencil, Check, X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useTranslation } from "@/i18n/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
+import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -20,6 +21,9 @@ export default function ProfilePage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [notifications, setNotifications] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,6 +39,33 @@ export default function ProfilePage() {
     };
     fetch();
   }, []);
+
+  const handleSave = async () => {
+    if (!editName.trim()) return;
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { error } = await supabase.from("profiles").update({ full_name: editName.trim() }).eq("user_id", user.id);
+      if (error) {
+        toast.error(t("profile.saveError"));
+      } else {
+        setFullName(editName.trim());
+        toast.success(t("profile.saveSuccess"));
+        setEditing(false);
+      }
+    }
+    setSaving(false);
+  };
+
+  const startEditing = () => {
+    setEditName(fullName);
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setEditing(false);
+    setEditName("");
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -70,9 +101,32 @@ export default function ProfilePage() {
               </button>
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-semibold text-foreground truncate">
-                {fullName || (isDoctor ? t("profile.doctorDefault") : t("profile.patientRole"))}
-              </h2>
+              {editing ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="text-lg font-semibold text-foreground bg-muted/30 rounded-xl px-3 py-1.5 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/30 w-full"
+                    autoFocus
+                    onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                  />
+                  <button onClick={handleSave} disabled={saving} className="w-8 h-8 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center transition-colors">
+                    <Check size={14} className="text-primary" />
+                  </button>
+                  <button onClick={cancelEditing} className="w-8 h-8 rounded-full bg-muted/50 hover:bg-muted flex items-center justify-center transition-colors">
+                    <X size={14} className="text-muted-foreground" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 group/name">
+                  <h2 className="text-lg font-semibold text-foreground truncate">
+                    {fullName || (isDoctor ? t("profile.doctorDefault") : t("profile.patientRole"))}
+                  </h2>
+                  <button onClick={startEditing} className="w-6 h-6 rounded-full hover:bg-muted/50 flex items-center justify-center opacity-0 group-hover/name:opacity-100 transition-opacity">
+                    <Pencil size={12} className="text-muted-foreground" />
+                  </button>
+                </div>
+              )}
               <p className="text-sm text-muted-foreground mt-0.5">
                 {isDoctor ? t("profile.specialist") : t("profile.patientRole")}
               </p>
@@ -87,13 +141,21 @@ export default function ProfilePage() {
         {/* Professional Info (Doctor only) */}
         {isDoctor && (
           <div className="led-card p-6 space-y-4">
-            <div className="flex items-center gap-2 mb-1">
-              <User size={16} strokeWidth={1.5} className="text-primary" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("profile.professionalData")}</h3>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <User size={16} strokeWidth={1.5} className="text-primary" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("profile.professionalData")}</h3>
+              </div>
+              {!editing && (
+                <button onClick={startEditing} className="text-xs text-primary/70 hover:text-primary flex items-center gap-1 transition-colors">
+                  <Pencil size={11} />
+                  {t("profile.edit")}
+                </button>
+              )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
-                { label: t("profile.name"), value: fullName || "—", icon: User },
+                { label: t("profile.name"), value: fullName || "—", icon: User, editable: true },
                 { label: t("profile.specialization"), value: t("profile.internalMedicine"), icon: Stethoscope },
                 { label: t("profile.doctorId"), value: "RS-2026-04521", icon: Hash },
                 { label: t("profile.institution"), value: t("profile.institutionValue"), icon: Building2 },
@@ -103,33 +165,79 @@ export default function ProfilePage() {
                     <item.icon size={11} />
                     {item.label}
                   </label>
-                  <div className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground">{item.value}</div>
+                  {editing && item.editable ? (
+                    <input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground w-full border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                    />
+                  ) : (
+                    <div className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground">{item.value}</div>
+                  )}
                 </div>
               ))}
             </div>
+            {editing && (
+              <div className="flex justify-end gap-2 pt-2">
+                <button onClick={cancelEditing} className="px-4 py-2 text-xs font-medium rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground transition-colors">
+                  {t("profile.cancel")}
+                </button>
+                <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-xs font-medium rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+                  {saving ? t("profile.saving") : t("profile.save")}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
         {/* Patient Info */}
         {!isDoctor && (
           <div className="led-card p-6 space-y-4">
-            <div className="flex items-center gap-2 mb-1">
-              <User size={16} strokeWidth={1.5} className="text-accent" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("profile.personalData")}</h3>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <User size={16} strokeWidth={1.5} className="text-accent" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("profile.personalData")}</h3>
+              </div>
+              {!editing && (
+                <button onClick={startEditing} className="text-xs text-primary/70 hover:text-primary flex items-center gap-1 transition-colors">
+                  <Pencil size={11} />
+                  {t("profile.edit")}
+                </button>
+              )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
-                { label: t("profile.name"), value: fullName || "—" },
+                { label: t("profile.name"), value: fullName || "—", editable: true },
                 { label: t("profile.jmbg"), value: "••••••••••••" },
                 { label: t("profile.birthDate"), value: "01.01.1990." },
                 { label: t("profile.phone"), value: "+381 6x xxx xxxx" },
               ].map((item) => (
                 <div key={item.label} className="space-y-1.5">
                   <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{item.label}</label>
-                  <div className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground">{item.value}</div>
+                  {editing && item.editable ? (
+                    <input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground w-full border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                    />
+                  ) : (
+                    <div className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground">{item.value}</div>
+                  )}
                 </div>
               ))}
             </div>
+            {editing && (
+              <div className="flex justify-end gap-2 pt-2">
+                <button onClick={cancelEditing} className="px-4 py-2 text-xs font-medium rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground transition-colors">
+                  {t("profile.cancel")}
+                </button>
+                <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-xs font-medium rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+                  {saving ? t("profile.saving") : t("profile.save")}
+                </button>
+              </div>
+            )}
           </div>
         )}
 

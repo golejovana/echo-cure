@@ -215,6 +215,12 @@ const fr: Record<string, string | string[]> = {
   "profile.notifications": "Notifications",
   "profile.notificationsDesc": "Recevoir des notifications sur les nouveaux résultats",
   "profile.logout": "Déconnexion",
+  "profile.edit": "Modifier",
+  "profile.save": "Enregistrer",
+  "profile.saving": "Enregistrement...",
+  "profile.cancel": "Annuler",
+  "profile.saveSuccess": "Profil mis à jour avec succès",
+  "profile.saveError": "Erreur lors de la sauvegarde du profil",
 
   // Examination Detail
   "examDetail.title": "Détails de l'examen",

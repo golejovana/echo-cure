@@ -220,6 +220,12 @@ const sr = {
   "profile.notifications": "Obaveštenja",
   "profile.notificationsDesc": "Primajte notifikacije o novim nalazima",
   "profile.logout": "Odjavi se",
+  "profile.edit": "Izmeni",
+  "profile.save": "Sačuvaj",
+  "profile.saving": "Čuvam...",
+  "profile.cancel": "Otkaži",
+  "profile.saveSuccess": "Profil je uspešno ažuriran",
+  "profile.saveError": "Greška pri čuvanju profila",
 
   // Examination Detail
   "examDetail.title": "Detalji pregleda",
