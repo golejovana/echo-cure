@@ -178,12 +178,12 @@ export default function TherapyPanel({
             {warnings.map((w, i) => (
               <div
                 key={`${w.messageKey}-${w.drugName}-${i}`}
-                className="flex items-start gap-3 px-4 py-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 backdrop-blur-sm"
+                className="flex items-start gap-3 px-4 py-3 rounded-2xl border border-yellow-600/20 bg-yellow-900/10 backdrop-blur-sm"
               >
-                <ShieldAlert size={16} strokeWidth={1.5} className="text-amber-500 shrink-0 mt-0.5" />
-                <p className="text-xs leading-relaxed text-amber-200/90">
-                  <span className="font-semibold text-amber-400">{t("therapy.safetyNote")}</span>{" "}
-                  {t(w.messageKey, { drug: w.drugName })}
+                <ShieldAlert size={16} strokeWidth={1.5} className="text-yellow-500 shrink-0 mt-0.5" />
+                <p className="text-xs leading-relaxed text-foreground/80">
+                  <span className="font-semibold text-yellow-500">{t("therapy.safetyNote")}</span>{" "}
+                  {t(w.messageKey).replace("{drug}", w.drugName)}
                 </p>
               </div>
             ))}
