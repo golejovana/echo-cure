@@ -80,7 +80,7 @@ export default function TreatmentTimeline({ examDate, appointments }: TreatmentT
     return all;
   }, [examDate, appointments, t]);
 
-  if (steps.length <= 1 && appointments.length === 0) return null;
+  if (steps.length === 0) return null;
 
   return (
     <div className="glass-card-elevated p-6 space-y-4">
