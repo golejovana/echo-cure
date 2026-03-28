@@ -132,6 +132,7 @@ const TIME_OPTIONS = [
 export default function TherapyPanel({
   medications, onMedicationsChange,
   appointments, onAppointmentsChange,
+  allergies = "", chronicDiseases = "",
 }: TherapyPanelProps) {
   const { t } = useTranslation();
 
