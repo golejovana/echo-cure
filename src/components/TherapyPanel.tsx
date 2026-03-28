@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Trash2, Pill, CalendarPlus, AlertTriangle, Clock } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, Trash2, Pill, CalendarPlus, AlertTriangle, Clock, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/LanguageContext";
