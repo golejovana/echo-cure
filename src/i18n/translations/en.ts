@@ -296,6 +296,16 @@ const en: Record<string, string | string[]> = {
   "drugTracker.markTaken": "Mark as Taken",
   "drugTracker.takenAt": "Taken at",
   "drugTracker.instruction": "Instruction",
+
+  // Safety Check
+  "therapy.safetyNote": "Note:",
+  "therapy.warningNsaidDiabetes": "Check compatibility of {drug} with patient's insulin resistance / diabetes diagnosis.",
+  "therapy.warningNsaidGastric": "{drug} may worsen the patient's gastrointestinal conditions.",
+  "therapy.warningMetforminRenal": "Verify renal function before prescribing {drug}.",
+  "therapy.warningAceKalium": "{drug} may increase hyperkalemia risk for this patient.",
+  "therapy.warningAnticoagBleeding": "{drug} increases bleeding risk for this patient.",
+  "therapy.warningBetaBlockerAsthma": "{drug} is contraindicated in patients with asthma.",
+  "therapy.warningAllergy": "Patient has a recorded allergy to {drug} – verify before prescribing.",
 };
 
 export default en;

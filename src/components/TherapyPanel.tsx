@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Trash2, Pill, CalendarPlus, AlertTriangle, Clock } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, Trash2, Pill, CalendarPlus, AlertTriangle, Clock, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/LanguageContext";
@@ -26,6 +26,96 @@ interface TherapyPanelProps {
   onMedicationsChange: (meds: Medication[]) => void;
   appointments: PlannedAppointment[];
   onAppointmentsChange: (apts: PlannedAppointment[]) => void;
+  allergies?: string;
+  chronicDiseases?: string;
+}
+
+/* ---- Contraindication rules ---- */
+interface ContraindicationRule {
+  drugPatterns: RegExp[];
+  conditionPatterns: RegExp[];
+  messageKey: string;
+  context: string; // fallback / interpolation hint
+}
+
+const CONTRAINDICATION_RULES: ContraindicationRule[] = [
+  {
+    drugPatterns: [/ibuprofen/i, /aspirin/i, /diklofenak/i, /diclofenac/i, /naproxen/i, /ketoprofen/i, /piroxicam/i, /indometacin/i, /nsaid/i, /brufen/i, /voltaren/i],
+    conditionPatterns: [/insulin/i, /dijabet/i, /diabet/i, /gluko/i, /glucophage/i, /metformin/i, /rezisten/i],
+    messageKey: "therapy.warningNsaidDiabetes",
+    context: "NSAID + diabetes/insulin resistance",
+  },
+  {
+    drugPatterns: [/ibuprofen/i, /diklofenak/i, /diclofenac/i, /naproxen/i, /ketoprofen/i, /piroxicam/i, /nsaid/i, /brufen/i, /voltaren/i, /aspirin/i],
+    conditionPatterns: [/ulkus/i, /ulcer/i, /gastrit/i, /gastritis/i, /krvarenje/i, /bleeding/i, /želudac/i, /stomach/i],
+    messageKey: "therapy.warningNsaidGastric",
+    context: "NSAID + gastric issues",
+  },
+  {
+    drugPatterns: [/metformin/i, /glucophage/i, /gluformin/i],
+    conditionPatterns: [/bubreg/i, /renal/i, /kidney/i, /insuficijencija/i],
+    messageKey: "therapy.warningMetforminRenal",
+    context: "Metformin + renal insufficiency",
+  },
+  {
+    drugPatterns: [/ace inhibitor/i, /enalapril/i, /ramipril/i, /lizinopril/i, /lisinopril/i, /captopril/i, /perindopril/i],
+    conditionPatterns: [/kalijum/i, /potassium/i, /hiperkale/i, /hyperkal/i],
+    messageKey: "therapy.warningAceKalium",
+    context: "ACE inhibitor + hyperkalemia",
+  },
+  {
+    drugPatterns: [/warfarin/i, /heparin/i, /antikoagul/i, /anticoag/i, /sintrom/i, /acenocoumarol/i],
+    conditionPatterns: [/krvarenje/i, /bleeding/i, /hemofilija/i, /hemophilia/i],
+    messageKey: "therapy.warningAnticoagBleeding",
+    context: "Anticoagulant + bleeding risk",
+  },
+  {
+    drugPatterns: [/beta.?blokator/i, /beta.?blocker/i, /propranolol/i, /atenolol/i, /bisoprolol/i, /metoprolol/i, /carvedilol/i, /nebivolol/i],
+    conditionPatterns: [/astma/i, /asthma/i, /bronhospaz/i, /bronchospas/i],
+    messageKey: "therapy.warningBetaBlockerAsthma",
+    context: "Beta-blocker + asthma",
+  },
+];
+
+function checkContraindications(
+  medications: Medication[],
+  allergies: string,
+  chronicDiseases: string,
+): { messageKey: string; drugName: string; condition: string }[] {
+  const warnings: { messageKey: string; drugName: string; condition: string }[] = [];
+  const combined = `${allergies} ${chronicDiseases}`.toLowerCase();
+  if (!combined.trim()) return warnings;
+
+  for (const med of medications) {
+    if (!med.name.trim()) continue;
+    const nameLC = med.name.toLowerCase();
+    for (const rule of CONTRAINDICATION_RULES) {
+      const drugMatch = rule.drugPatterns.some((p) => p.test(nameLC));
+      const condMatch = rule.conditionPatterns.some((p) => p.test(combined));
+      if (drugMatch && condMatch) {
+        warnings.push({ messageKey: rule.messageKey, drugName: med.name, condition: rule.context });
+      }
+    }
+  }
+
+  // Allergy direct match
+  const allergyWords = allergies.toLowerCase().split(/[,;.\s]+/).filter(Boolean);
+  for (const med of medications) {
+    if (!med.name.trim()) continue;
+    const nameLC = med.name.toLowerCase();
+    if (allergyWords.some((a) => a.length > 2 && nameLC.includes(a))) {
+      warnings.push({ messageKey: "therapy.warningAllergy", drugName: med.name, condition: "allergy" });
+    }
+  }
+
+  // Deduplicate
+  const seen = new Set<string>();
+  return warnings.filter((w) => {
+    const key = `${w.messageKey}-${w.drugName}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 const EMPTY_MED: Medication = { name: "", dose: "", frequency: "1x", note: "" };
@@ -42,6 +132,7 @@ const TIME_OPTIONS = [
 export default function TherapyPanel({
   medications, onMedicationsChange,
   appointments, onAppointmentsChange,
+  allergies = "", chronicDiseases = "",
 }: TherapyPanelProps) {
   const { t } = useTranslation();
 
@@ -77,6 +168,28 @@ export default function TherapyPanel({
         <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-foreground">{t("therapy.title")}</h2>
         <p className="text-[10px] text-muted-foreground mt-0.5">{t("therapy.subtitle")}</p>
       </div>
+
+      {/* Safety Warnings */}
+      {(() => {
+        const warnings = checkContraindications(medications, allergies, chronicDiseases);
+        if (warnings.length === 0) return null;
+        return (
+          <div className="space-y-2">
+            {warnings.map((w, i) => (
+              <div
+                key={`${w.messageKey}-${w.drugName}-${i}`}
+                className="flex items-start gap-3 px-4 py-3 rounded-2xl border border-yellow-600/20 bg-yellow-900/10 backdrop-blur-sm"
+              >
+                <ShieldAlert size={16} strokeWidth={1.5} className="text-yellow-500 shrink-0 mt-0.5" />
+                <p className="text-xs leading-relaxed text-foreground/80">
+                  <span className="font-semibold text-yellow-500">{t("therapy.safetyNote")}</span>{" "}
+                  {t(w.messageKey).replace("{drug}", w.drugName)}
+                </p>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Medications */}
       <div className="glass-card p-5 space-y-3">

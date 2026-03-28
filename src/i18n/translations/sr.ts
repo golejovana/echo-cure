@@ -301,6 +301,16 @@ const sr = {
   "drugTracker.markTaken": "Popio/la sam lek",
   "drugTracker.takenAt": "Popijeno u",
   "drugTracker.instruction": "Uputstvo",
+
+  // Safety Check
+  "therapy.safetyNote": "Napomena:",
+  "therapy.warningNsaidDiabetes": "Proverite kompatibilnost leka {drug} sa dijagnozom insulinske rezistencije / dijabetesa.",
+  "therapy.warningNsaidGastric": "Lek {drug} može pogoršati gastrointestinalne tegobe pacijenta.",
+  "therapy.warningMetforminRenal": "Proverite bubrežnu funkciju pre propisivanja leka {drug}.",
+  "therapy.warningAceKalium": "Lek {drug} može povećati rizik od hiperkalemije kod ovog pacijenta.",
+  "therapy.warningAnticoagBleeding": "Lek {drug} povećava rizik od krvarenja kod ovog pacijenta.",
+  "therapy.warningBetaBlockerAsthma": "Lek {drug} je kontraindikovan kod pacijenata sa astmom.",
+  "therapy.warningAllergy": "Pacijent je alergičan na {drug} – proverite pre propisivanja.",
 };
 
 export default sr;
