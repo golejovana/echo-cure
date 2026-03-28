@@ -410,6 +410,8 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
           onMedicationsChange={setMedications}
           appointments={plannedAppointments}
           onAppointmentsChange={setPlannedAppointments}
+          allergies={form.allergies || ""}
+          chronicDiseases={form.chronicDiseases || ""}
         />
 
         {/* ===== FOOTER ===== */}
