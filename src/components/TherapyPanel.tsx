@@ -169,6 +169,28 @@ export default function TherapyPanel({
         <p className="text-[10px] text-muted-foreground mt-0.5">{t("therapy.subtitle")}</p>
       </div>
 
+      {/* Safety Warnings */}
+      {(() => {
+        const warnings = checkContraindications(medications, allergies, chronicDiseases);
+        if (warnings.length === 0) return null;
+        return (
+          <div className="space-y-2">
+            {warnings.map((w, i) => (
+              <div
+                key={`${w.messageKey}-${w.drugName}-${i}`}
+                className="flex items-start gap-3 px-4 py-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 backdrop-blur-sm"
+              >
+                <ShieldAlert size={16} strokeWidth={1.5} className="text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-xs leading-relaxed text-amber-200/90">
+                  <span className="font-semibold text-amber-400">{t("therapy.safetyNote")}</span>{" "}
+                  {t(w.messageKey, { drug: w.drugName })}
+                </p>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
       {/* Medications */}
       <div className="glass-card p-5 space-y-3">
         <div className="flex items-center justify-between">
