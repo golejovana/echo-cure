@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Users, FileText, AlertTriangle, Clock, ChevronRight,
-  Loader2, TrendingUp, Zap, Activity,
+  Loader2, TrendingUp, Zap, Activity, Sparkles, ArrowUpRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/LanguageContext";
@@ -30,15 +30,15 @@ interface DiagCount {
 
 const container = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.07 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.08 } },
 };
 const item = {
-  hidden: { opacity: 0, y: 10 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
+  hidden: { opacity: 0, y: 14, filter: "blur(4px)" },
+  show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  completed: "bg-accent/15 text-accent border-accent/20",
+  completed: "bg-accent/12 text-accent border-accent/20",
   waiting: "bg-primary/10 text-primary border-primary/20",
   priority: "bg-destructive/10 text-destructive border-destructive/20",
 };
@@ -47,6 +47,36 @@ const STATUS_LABELS: Record<string, string> = {
   waiting: "Čeka",
   priority: "Prioritet",
 };
+
+const STAT_CONFIGS = [
+  {
+    key: "patients",
+    label: "Pacijenata danas",
+    icon: Users,
+    gradient: "from-primary/15 to-primary/5",
+    iconBg: "bg-primary/12",
+    iconColor: "text-primary",
+    borderAccent: "border-l-primary",
+  },
+  {
+    key: "reports",
+    label: "Generisanih nalaza",
+    icon: FileText,
+    gradient: "from-accent/15 to-accent/5",
+    iconBg: "bg-accent/12",
+    iconColor: "text-accent",
+    borderAccent: "border-l-accent",
+  },
+  {
+    key: "alerts",
+    label: "Upozorenja",
+    icon: AlertTriangle,
+    gradient: "from-warning/15 to-warning/5",
+    iconBg: "bg-warning/12",
+    iconColor: "text-warning",
+    borderAccent: "border-l-warning",
+  },
+];
 
 export default function DoctorDashboard() {
   const { t } = useTranslation();
@@ -60,21 +90,18 @@ export default function DoctorDashboard() {
     const load = async () => {
       const today = new Date().toISOString().split("T")[0];
 
-      // Fetch today's appointments
       const { data: appts } = await supabase
         .from("appointments")
         .select("id, appointment_time, title, priority, examination_id")
         .eq("appointment_date", today)
         .order("appointment_time", { ascending: true });
 
-      // Fetch recent examinations for stats & diagnoses
       const { data: exams } = await supabase
         .from("examinations")
         .select("id, patient_name, patient_email, diagnosis_codes, created_at, chief_complaints")
         .order("created_at", { ascending: false })
         .limit(50);
 
-      // Build schedule from appointments + exam data
       const examMap = new Map<string, any>();
       exams?.forEach((e: any) => examMap.set(e.id, e));
 
@@ -93,7 +120,6 @@ export default function DoctorDashboard() {
       });
       setSchedule(rows);
 
-      // Stats
       const todayExams = exams?.filter((e: any) =>
         e.created_at?.startsWith(today)
       ) || [];
@@ -103,7 +129,6 @@ export default function DoctorDashboard() {
         alerts: rows.filter(r => r.status === "priority").length,
       });
 
-      // Top diagnoses
       const diagMap = new Map<string, number>();
       exams?.forEach((e: any) => {
         if (e.diagnosis_codes) {
@@ -127,7 +152,15 @@ export default function DoctorDashboard() {
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary" size={24} />
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <Loader2 className="animate-spin text-primary" size={22} />
+            </div>
+            <div className="absolute inset-0 rounded-2xl bg-primary/5 animate-ping" />
+          </div>
+          <p className="text-xs text-muted-foreground font-medium">Učitavanje...</p>
+        </div>
       </div>
     );
   }
@@ -135,50 +168,46 @@ export default function DoctorDashboard() {
   const maxDiag = topDiagnoses.length ? Math.max(...topDiagnoses.map(d => d.count)) : 1;
 
   return (
-    <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-7xl mx-auto">
+    <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-7xl mx-auto relative">
+      {/* Decorative background elements */}
+      <div className="floating-dot w-32 h-32 bg-primary/30 -top-10 -right-10 blur-3xl" />
+      <div className="floating-dot w-24 h-24 bg-accent/25 top-40 -left-8 blur-2xl" style={{ animationDelay: "2s" }} />
+
       {/* Header */}
-      <motion.div variants={item}>
-        <h2 className="text-xl font-semibold text-foreground">Clinical Intelligence Hub</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">Pregled aktivnosti i kliničkih podataka</p>
+      <motion.div variants={item} className="flex items-end justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center">
+              <Sparkles size={14} className="text-primary-foreground" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground tracking-tight">Clinical Intelligence Hub</h2>
+          </div>
+          <p className="text-sm text-muted-foreground ml-10">Pregled aktivnosti i kliničkih podataka</p>
+        </div>
+        <div className="text-xs text-muted-foreground font-medium bg-muted/50 px-3 py-1.5 rounded-full">
+          {new Date().toLocaleDateString("sr-RS", { weekday: "long", day: "numeric", month: "long" })}
+        </div>
       </motion.div>
 
       {/* Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          {
-            label: "Pacijenata danas",
-            value: stats.patients,
-            icon: Users,
-            accent: "text-primary",
-            bg: "bg-primary/8",
-          },
-          {
-            label: "Generisanih nalaza",
-            value: stats.reports,
-            icon: FileText,
-            accent: "text-accent",
-            bg: "bg-accent/8",
-          },
-          {
-            label: "Bezbednosna upozorenja",
-            value: stats.alerts,
-            icon: AlertTriangle,
-            accent: "text-amber-600",
-            bg: "bg-amber-500/10",
-          },
-        ].map((s, i) => (
+        {STAT_CONFIGS.map((s, i) => (
           <motion.div key={i} variants={item}>
-            <Card className="border-border/40 shadow-sm hover:shadow-md transition-shadow duration-300">
-              <CardContent className="p-5 flex items-center gap-4">
-                <div className={cn("w-11 h-11 rounded-2xl flex items-center justify-center", s.bg)}>
-                  <s.icon size={20} strokeWidth={1.6} className={s.accent} />
+            <div className={cn("stat-card border-l-[3px]", s.borderAccent)}>
+              <div className={cn("absolute inset-0 rounded-2xl bg-gradient-to-br opacity-50", s.gradient)} />
+              <div className="relative flex items-center gap-4">
+                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center", s.iconBg)}>
+                  <s.icon size={20} strokeWidth={1.6} className={s.iconColor} />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground tracking-tight">{s.value}</p>
-                  <p className="text-xs text-muted-foreground font-medium">{s.label}</p>
+                <div className="flex-1">
+                  <p className="text-3xl font-extrabold text-foreground tracking-tight">
+                    {stats[s.key as keyof typeof stats]}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground font-semibold tracking-wide">{s.label}</p>
                 </div>
-              </CardContent>
-            </Card>
+                <ArrowUpRight size={16} className="text-muted-foreground/30" />
+              </div>
+            </div>
           </motion.div>
         ))}
       </div>
@@ -187,37 +216,51 @@ export default function DoctorDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Daily Schedule — 60% */}
         <motion.div variants={item} className="lg:col-span-3">
-          <Card className="border-border/40 shadow-sm">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Clock size={16} strokeWidth={1.5} className="text-primary" />
-                <CardTitle className="text-sm font-bold uppercase tracking-wider">Dnevni raspored</CardTitle>
+          <Card className="led-card border-border/30 overflow-hidden">
+            <CardHeader className="pb-3 border-b border-border/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Clock size={15} strokeWidth={1.8} className="text-primary" />
+                  </div>
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider">Dnevni raspored</CardTitle>
+                </div>
+                <Badge variant="outline" className="text-[10px] font-semibold bg-primary/5 border-primary/15 text-primary">
+                  {schedule.length} zakazano
+                </Badge>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               {schedule.length === 0 ? (
-                <div className="py-12 text-center">
-                  <Activity size={32} className="mx-auto text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">Nema zakazanih pregleda za danas</p>
+                <div className="py-14 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+                    <Activity size={24} className="text-muted-foreground/30" />
+                  </div>
+                  <p className="text-sm text-muted-foreground font-medium">Nema zakazanih pregleda za danas</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Dodajte pregled iz sekcije "Pregled"</p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead className="text-xs font-semibold uppercase tracking-wider">Vreme</TableHead>
-                      <TableHead className="text-xs font-semibold uppercase tracking-wider">Pacijent</TableHead>
-                      <TableHead className="text-xs font-semibold uppercase tracking-wider hidden sm:table-cell">Razlog</TableHead>
-                      <TableHead className="text-xs font-semibold uppercase tracking-wider text-right">Status</TableHead>
+                    <TableRow className="hover:bg-transparent border-border/20">
+                      <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Vreme</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Pacijent</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 hidden sm:table-cell">Razlog</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 text-right">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {schedule.map((row) => (
-                      <TableRow key={row.id} className="cursor-pointer group" onClick={() => navigate("/history")}>
-                        <TableCell className="font-medium text-foreground whitespace-nowrap">{row.time}</TableCell>
-                        <TableCell className="text-foreground">{row.patient}</TableCell>
-                        <TableCell className="text-muted-foreground hidden sm:table-cell">{row.reason}</TableCell>
+                    {schedule.map((row, idx) => (
+                      <TableRow
+                        key={row.id}
+                        className="cursor-pointer group hover:bg-primary/3 transition-colors duration-200 border-border/15"
+                        onClick={() => navigate("/history")}
+                      >
+                        <TableCell className="font-bold text-foreground whitespace-nowrap text-sm">{row.time}</TableCell>
+                        <TableCell className="text-foreground font-medium">{row.patient}</TableCell>
+                        <TableCell className="text-muted-foreground hidden sm:table-cell text-sm">{row.reason}</TableCell>
                         <TableCell className="text-right">
-                          <Badge variant="outline" className={cn("text-[10px] font-semibold border", STATUS_STYLES[row.status])}>
+                          <Badge variant="outline" className={cn("text-[10px] font-bold border px-2.5 py-0.5", STATUS_STYLES[row.status])}>
                             {STATUS_LABELS[row.status]}
                           </Badge>
                         </TableCell>
@@ -233,29 +276,31 @@ export default function DoctorDashboard() {
         {/* Quick Insights — 40% */}
         <motion.div variants={item} className="lg:col-span-2 space-y-4">
           {/* Top Diagnoses */}
-          <Card className="border-border/40 shadow-sm">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp size={16} strokeWidth={1.5} className="text-primary" />
-                <CardTitle className="text-sm font-bold uppercase tracking-wider">Top dijagnoze nedeljno</CardTitle>
+          <Card className="led-card border-border/30 overflow-hidden">
+            <CardHeader className="pb-3 border-b border-border/20">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center">
+                  <TrendingUp size={15} strokeWidth={1.8} className="text-accent" />
+                </div>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider">Top dijagnoze</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-3 pt-1">
               {topDiagnoses.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Nema podataka</p>
+                <p className="text-sm text-muted-foreground text-center py-6">Nema podataka</p>
               ) : (
                 topDiagnoses.map((d, i) => (
-                  <div key={i} className="space-y-1">
+                  <div key={i} className="space-y-1.5">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-foreground font-medium truncate pr-2">{d.name}</span>
-                      <span className="text-xs text-muted-foreground font-semibold shrink-0">{d.count}</span>
+                      <span className="text-sm text-foreground font-semibold truncate pr-2">{d.name}</span>
+                      <span className="text-xs text-muted-foreground font-bold shrink-0 bg-muted/50 px-2 py-0.5 rounded-full">{d.count}</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div className="h-2 rounded-full bg-muted/60 overflow-hidden">
                       <motion.div
-                        className="h-full rounded-full bg-primary/60"
+                        className="h-full rounded-full bg-gradient-to-r from-primary/70 to-primary-glow/70"
                         initial={{ width: 0 }}
                         animate={{ width: `${(d.count / maxDiag) * 100}%` }}
-                        transition={{ duration: 0.6, delay: 0.2 + i * 0.08 }}
+                        transition={{ duration: 0.7, delay: 0.3 + i * 0.1, ease: [0.16, 1, 0.3, 1] }}
                       />
                     </div>
                   </div>
@@ -265,31 +310,34 @@ export default function DoctorDashboard() {
           </Card>
 
           {/* System Efficiency */}
-          <Card className="border-border/40 shadow-sm">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Zap size={16} strokeWidth={1.5} className="text-accent" />
-                <CardTitle className="text-sm font-bold uppercase tracking-wider">Efikasnost sistema</CardTitle>
+          <Card className="led-card border-border/30 overflow-hidden">
+            <CardHeader className="pb-3 border-b border-border/20">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary/15 to-accent/10 flex items-center justify-center">
+                  <Zap size={15} strokeWidth={1.8} className="text-primary" />
+                </div>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider">AI efikasnost</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-1">
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-foreground tracking-tight">
+                <span className="text-4xl font-extrabold gradient-text tracking-tight">
                   {stats.reports * 5 + 12}
                 </span>
-                <span className="text-sm text-muted-foreground">min uštede danas</span>
+                <span className="text-sm text-muted-foreground font-medium">min uštede</span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                AI anamneza i klinička podrška ubrzali su dokumentaciju za <span className="font-semibold text-accent">{stats.reports}</span> pregleda.
+                AI anamneza i klinička podrška ubrzali su dokumentaciju za{" "}
+                <span className="font-bold text-accent">{stats.reports}</span> pregleda danas.
               </p>
               <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="bg-muted/40 rounded-xl p-3 text-center">
-                  <p className="text-lg font-bold text-foreground">{stats.reports}</p>
-                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">AI nalaza</p>
+                <div className="rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/10 p-3 text-center">
+                  <p className="text-xl font-extrabold text-foreground">{stats.reports}</p>
+                  <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">AI nalaza</p>
                 </div>
-                <div className="bg-muted/40 rounded-xl p-3 text-center">
-                  <p className="text-lg font-bold text-foreground">{stats.alerts}</p>
-                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Upozorenja</p>
+                <div className="rounded-xl bg-gradient-to-br from-accent/8 to-accent/3 border border-accent/10 p-3 text-center">
+                  <p className="text-xl font-extrabold text-foreground">{stats.alerts}</p>
+                  <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">Upozorenja</p>
                 </div>
               </div>
             </CardContent>
