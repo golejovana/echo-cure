@@ -38,10 +38,16 @@ export default function ExaminationDetail() {
   const [loading, setLoading] = useState(true);
   const [simplifying, setSimplifying] = useState(false);
   const [simplified, setSimplified] = useState<string | null>(null);
+  const [role, setRole] = useState<"doctor" | "patient">("patient");
 
   useEffect(() => {
     if (!id) return;
     const fetch = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase.from("profiles").select("role").eq("user_id", user.id).single();
+        if (profile?.role) setRole(profile.role);
+      }
       const { data: examData } = await supabase.from("examinations").select("*").eq("id", id).single();
       if (examData) {
         const e = examData as unknown as Examination;
