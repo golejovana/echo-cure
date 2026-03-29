@@ -175,7 +175,7 @@ export default function ExaminationDetail() {
     if (!exam) return;
     setPdfLoading(true);
     try {
-      await generateAnamnezaPdf(exam.form_data as Record<string, string>, "sr", institutionInfo, t);
+      await generateAnamnezaPdf(exam.form_data as Record<string, string>, "sr", institutionInfo);
     } catch (e) {
       console.error("PDF error:", e);
       toast({ title: "PDF greška", description: e instanceof Error ? e.message : "Neuspešno generisanje", variant: "destructive" });
