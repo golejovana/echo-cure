@@ -1,11 +1,12 @@
-import { useState, useMemo } from "react";
-import { Plus, Trash2, Pill, CalendarPlus, AlertTriangle, Clock, ShieldAlert } from "lucide-react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { Plus, Trash2, Pill, CalendarPlus, AlertTriangle, Clock, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Medication {
   name: string;
@@ -17,7 +18,7 @@ export interface Medication {
 export interface PlannedAppointment {
   title: string;
   date: Date | undefined;
-  time: string; // HH:mm format
+  time: string;
   priority: "normal" | "high";
 }
 
@@ -30,12 +31,12 @@ interface TherapyPanelProps {
   chronicDiseases?: string;
 }
 
-/* ---- Contraindication rules ---- */
+/* ---- Contraindication rules (chronic diseases) ---- */
 interface ContraindicationRule {
   drugPatterns: RegExp[];
   conditionPatterns: RegExp[];
   messageKey: string;
-  context: string; // fallback / interpolation hint
+  context: string;
 }
 
 const CONTRAINDICATION_RULES: ContraindicationRule[] = [
@@ -98,7 +99,6 @@ function checkContraindications(
     }
   }
 
-  // Allergy direct match
   const allergyWords = allergies.toLowerCase().split(/[,;.\s]+/).filter(Boolean);
   for (const med of medications) {
     if (!med.name.trim()) continue;
@@ -108,7 +108,6 @@ function checkContraindications(
     }
   }
 
-  // Deduplicate
   const seen = new Set<string>();
   return warnings.filter((w) => {
     const key = `${w.messageKey}-${w.drugName}`;
@@ -118,7 +117,12 @@ function checkContraindications(
   });
 }
 
-const EMPTY_MED: Medication = { name: "", dose: "", frequency: "1x", note: "" };
+interface AllergyWarning {
+  risk: boolean;
+  allergen: string;
+  reason: string;
+}
+
 const EMPTY_APT: PlannedAppointment = { title: "", date: undefined, time: "", priority: "normal" };
 
 const TIME_OPTIONS = [
@@ -136,14 +140,75 @@ export default function TherapyPanel({
 }: TherapyPanelProps) {
   const { t } = useTranslation();
 
-  const updateMed = (i: number, field: keyof Medication, value: string) => {
-    const next = [...medications];
-    next[i] = { ...next[i], [field]: value };
-    onMedicationsChange(next);
+  /* ---- New medication input state ---- */
+  const [newName, setNewName] = useState("");
+  const [newDose, setNewDose] = useState("");
+  const [newFreq, setNewFreq] = useState("1x");
+  const [newNote, setNewNote] = useState("");
+  const [allergyWarning, setAllergyWarning] = useState<AllergyWarning | null>(null);
+  const [checkingAllergy, setCheckingAllergy] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /* ---- AI allergy check with debounce ---- */
+  const checkAllergyAI = useCallback(async (drugName: string) => {
+    if (!drugName.trim() || !allergies.trim()) {
+      setAllergyWarning(null);
+      return;
+    }
+
+    // Quick local check first
+    const allergyWords = allergies.toLowerCase().split(/[,;.\s]+/).filter((w) => w.length > 2);
+    const nameLC = drugName.toLowerCase();
+    const localMatch = allergyWords.find((a) => nameLC.includes(a) || a.includes(nameLC));
+    if (localMatch) {
+      setAllergyWarning({ risk: true, allergen: localMatch, reason: "Direktno poklapanje sa alergijom" });
+      return;
+    }
+
+    // AI check for cross-reactions
+    setCheckingAllergy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("check-allergy", {
+        body: { drugName, allergies },
+      });
+      if (error) throw error;
+      if (data?.risk) {
+        setAllergyWarning({ risk: true, allergen: data.allergen || allergies, reason: data.reason || "" });
+      } else {
+        setAllergyWarning(null);
+      }
+    } catch (err) {
+      console.error("Allergy check error:", err);
+      // Don't block the flow on AI failure
+      setAllergyWarning(null);
+    } finally {
+      setCheckingAllergy(false);
+    }
+  }, [allergies]);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!newName.trim()) {
+      setAllergyWarning(null);
+      return;
+    }
+    debounceRef.current = setTimeout(() => {
+      checkAllergyAI(newName);
+    }, 600);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [newName, checkAllergyAI]);
+
+  const handleAddMed = () => {
+    if (!newName.trim()) return;
+    onMedicationsChange([...medications, { name: newName.trim(), dose: newDose.trim(), frequency: newFreq, note: newNote.trim() }]);
+    setNewName("");
+    setNewDose("");
+    setNewFreq("1x");
+    setNewNote("");
+    setAllergyWarning(null);
   };
 
   const removeMed = (i: number) => onMedicationsChange(medications.filter((_, idx) => idx !== i));
-  const addMed = () => onMedicationsChange([...medications, { ...EMPTY_MED }]);
 
   const updateApt = (i: number, field: keyof PlannedAppointment, value: any) => {
     const next = [...appointments];
@@ -161,6 +226,8 @@ export default function TherapyPanel({
     { value: "pp", label: t("therapy.freqAsNeeded") },
   ];
 
+  const hasAllergyRisk = allergyWarning?.risk === true;
+
   return (
     <div className="space-y-4">
       {/* Section Title */}
@@ -169,7 +236,7 @@ export default function TherapyPanel({
         <p className="text-[10px] text-muted-foreground mt-0.5">{t("therapy.subtitle")}</p>
       </div>
 
-      {/* Safety Warnings */}
+      {/* Safety Warnings for existing medications */}
       {(() => {
         const warnings = checkContraindications(medications, allergies, chronicDiseases);
         if (warnings.length === 0) return null;
@@ -192,78 +259,134 @@ export default function TherapyPanel({
       })()}
 
       {/* Medications */}
-      <div className="glass-card p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Pill size={16} strokeWidth={1.5} className="text-primary" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("therapy.medications")}</h3>
-          </div>
-          <button
-            onClick={addMed}
-            className="flex items-center gap-1 text-[11px] font-medium text-primary hover:text-primary/80 px-2.5 py-1 rounded-full bg-primary/5 hover:bg-primary/10 transition-all duration-200 active:scale-[0.96]"
-          >
-            <Plus size={13} strokeWidth={2} />
-            {t("therapy.addMedication")}
-          </button>
+      <div className="glass-card p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <Pill size={16} strokeWidth={1.5} className="text-primary" />
+          <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("therapy.medications")}</h3>
         </div>
 
+        {/* ---- AI Allergy Warning Banner ---- */}
+        {hasAllergyRisk && (
+          <div className="flex items-start gap-3 px-4 py-3 rounded-2xl border border-orange-500/40 bg-orange-900/15 backdrop-blur-sm animate-in fade-in duration-300">
+            <AlertTriangle size={18} strokeWidth={2} className="text-orange-400 shrink-0 mt-0.5 animate-pulse" />
+            <div>
+              <p className="text-sm font-semibold text-orange-400">
+                ⚠️ {t("therapy.allergyBannerTitle")}
+              </p>
+              <p className="text-xs leading-relaxed text-foreground/80 mt-1">
+                {t("therapy.allergyBannerBody").replace("{allergen}", allergyWarning?.allergen || "")}
+              </p>
+              {allergyWarning?.reason && (
+                <p className="text-[10px] text-muted-foreground mt-1 italic">{allergyWarning.reason}</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ---- Add medication form ---- */}
+        <div className={cn(
+          "rounded-2xl p-4 space-y-3 border transition-all duration-300",
+          hasAllergyRisk
+            ? "border-orange-500/50 bg-orange-950/10 shadow-[0_0_20px_-5px_hsl(25_95%_53%/0.15)]"
+            : "border-border/20 bg-muted/10"
+        )}>
+          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            {t("therapy.newMedication")}
+          </span>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("therapy.drugName")}</label>
+              <div className="relative">
+                <input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder={t("therapy.drugNamePlaceholder")}
+                  className={cn(
+                    "w-full rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none transition-all duration-300",
+                    hasAllergyRisk
+                      ? "bg-orange-950/20 border border-orange-500/60 ring-1 ring-orange-500/30 focus:ring-orange-500/50"
+                      : "bg-muted/30 focus:ring-1 focus:ring-primary/30"
+                  )}
+                />
+                {checkingAllergy && (
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                    <div className="w-3.5 h-3.5 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
+                  </div>
+                )}
+                {!checkingAllergy && newName.trim() && !hasAllergyRisk && allergies.trim() && (
+                  <CheckCircle2 size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-500/60" />
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("therapy.dose")}</label>
+              <input
+                value={newDose}
+                onChange={(e) => setNewDose(e.target.value)}
+                placeholder="75mg"
+                className="w-full bg-muted/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("therapy.frequency")}</label>
+              <select
+                value={newFreq}
+                onChange={(e) => setNewFreq(e.target.value)}
+                className="w-full bg-muted/30 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all appearance-none cursor-pointer"
+              >
+                {frequencyOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("therapy.note")}</label>
+              <input
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                placeholder={t("therapy.notePlaceholder")}
+                className="w-full bg-muted/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
+              />
+            </div>
+          </div>
+
+          <Button
+            onClick={handleAddMed}
+            disabled={!newName.trim()}
+            className={cn(
+              "w-full gap-2 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all duration-300",
+              "bg-primary hover:bg-primary/90 text-primary-foreground",
+              "hover:shadow-[0_4px_20px_-4px_hsl(var(--primary)/0.4)]",
+              "active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
+            )}
+            size="sm"
+          >
+            <Plus size={14} strokeWidth={2.5} />
+            {t("therapy.addMedicationBtn")}
+          </Button>
+        </div>
+
+        {/* ---- Existing medications list ---- */}
         {medications.length === 0 && (
           <p className="text-xs text-muted-foreground italic py-2">{t("therapy.noMedications")}</p>
         )}
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {medications.map((med, i) => (
-            <div key={i} className="bg-muted/20 rounded-2xl p-3.5 space-y-2.5 border border-border/20">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  {t("therapy.medication")} #{i + 1}
-                </span>
-                <button onClick={() => removeMed(i)} className="text-muted-foreground/50 hover:text-destructive transition-colors p-1 rounded-lg hover:bg-destructive/5">
-                  <Trash2 size={13} strokeWidth={1.8} />
-                </button>
+            <div key={i} className="flex items-center gap-3 bg-muted/15 rounded-xl px-4 py-3 border border-border/10 group">
+              <Pill size={14} strokeWidth={1.5} className="text-primary/60 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{med.name}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {[med.dose, frequencyOptions.find((f) => f.value === med.frequency)?.label, med.note].filter(Boolean).join(" · ")}
+                </p>
               </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("therapy.drugName")}</label>
-                  <input
-                    value={med.name}
-                    onChange={(e) => updateMed(i, "name", e.target.value)}
-                    placeholder={t("therapy.drugNamePlaceholder")}
-                    className="w-full bg-muted/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("therapy.dose")}</label>
-                  <input
-                    value={med.dose}
-                    onChange={(e) => updateMed(i, "dose", e.target.value)}
-                    placeholder="75mg"
-                    className="w-full bg-muted/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("therapy.frequency")}</label>
-                  <select
-                    value={med.frequency}
-                    onChange={(e) => updateMed(i, "frequency", e.target.value)}
-                    className="w-full bg-muted/30 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all appearance-none cursor-pointer"
-                  >
-                    {frequencyOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("therapy.note")}</label>
-                  <input
-                    value={med.note}
-                    onChange={(e) => updateMed(i, "note", e.target.value)}
-                    placeholder={t("therapy.notePlaceholder")}
-                    className="w-full bg-muted/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
-                  />
-                </div>
-              </div>
+              <button
+                onClick={() => removeMed(i)}
+                className="opacity-0 group-hover:opacity-100 text-muted-foreground/50 hover:text-destructive transition-all p-1.5 rounded-lg hover:bg-destructive/5"
+              >
+                <Trash2 size={13} strokeWidth={1.8} />
+              </button>
             </div>
           ))}
         </div>
