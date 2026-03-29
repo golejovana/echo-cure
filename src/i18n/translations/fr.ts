@@ -120,7 +120,7 @@ const fr: Record<string, string | string[]> = {
   "form.institutionStamp": "Cachet de l'établissement",
   "form.doctorSignature": "Signature du médecin",
   "form.facsimile": "Fac-similé",
-  "form.downloadPdf": "Télécharger PDF",
+  "form.downloadPdf": "Générer PDF",
   "form.sendToPatient": "Envoyer au patient",
   "form.sending": "Envoi…",
   "form.notMentioned": "Non mentionné dans la transcription",

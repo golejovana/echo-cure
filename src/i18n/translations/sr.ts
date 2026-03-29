@@ -120,7 +120,7 @@ const sr = {
   "form.institutionStamp": "Pečat ustanove",
   "form.doctorSignature": "Potpis lekara",
   "form.facsimile": "Faksimil",
-  "form.downloadPdf": "Preuzmi PDF",
+  "form.downloadPdf": "Generiši PDF",
   "form.sendToPatient": "Pošalji pacijentu",
   "form.sending": "Slanje…",
   "form.notMentioned": "Nije pomenuto u transkriptu",

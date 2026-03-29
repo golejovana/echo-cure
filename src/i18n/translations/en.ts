@@ -120,7 +120,7 @@ const en: Record<string, string | string[]> = {
   "form.institutionStamp": "Institution Stamp",
   "form.doctorSignature": "Physician Signature",
   "form.facsimile": "Facsimile",
-  "form.downloadPdf": "Download PDF",
+  "form.downloadPdf": "Generate PDF",
   "form.sendToPatient": "Send to Patient",
   "form.sending": "Sending…",
   "form.notMentioned": "Not mentioned in transcript",
