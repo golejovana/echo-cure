@@ -226,6 +226,14 @@ const sr = {
   "profile.cancel": "Otkaži",
   "profile.saveSuccess": "Profil je uspešno ažuriran",
   "profile.saveError": "Greška pri čuvanju profila",
+  "profile.institutionBranding": "Brendiranje ustanove",
+  "profile.institutionName": "Naziv ustanove",
+  "profile.institutionAddress": "Adresa",
+  "profile.institutionCity": "Opština i grad",
+  "profile.institutionLogo": "Logo ustanove",
+  "profile.uploadLogo": "Otpremi logo",
+  "profile.uploading": "Otpremam...",
+  "profile.logoUploadError": "Greška pri otpremanju logoa",
 
   // Examination Detail
   "examDetail.title": "Detalji pregleda",

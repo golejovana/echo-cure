@@ -111,6 +111,10 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          institution_address: string | null
+          institution_city: string | null
+          institution_logo_url: string | null
+          institution_name: string | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
           user_id: string
@@ -119,6 +123,10 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          institution_address?: string | null
+          institution_city?: string | null
+          institution_logo_url?: string | null
+          institution_name?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id: string
@@ -127,6 +135,10 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          institution_address?: string | null
+          institution_city?: string | null
+          institution_logo_url?: string | null
+          institution_name?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id?: string

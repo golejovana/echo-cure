@@ -221,6 +221,14 @@ const en: Record<string, string | string[]> = {
   "profile.cancel": "Cancel",
   "profile.saveSuccess": "Profile updated successfully",
   "profile.saveError": "Error saving profile",
+  "profile.institutionBranding": "Institution Branding",
+  "profile.institutionName": "Institution Name",
+  "profile.institutionAddress": "Address",
+  "profile.institutionCity": "City & Municipality",
+  "profile.institutionLogo": "Institution Logo",
+  "profile.uploadLogo": "Upload Logo",
+  "profile.uploading": "Uploading...",
+  "profile.logoUploadError": "Error uploading logo",
 
   // Examination Detail
   "examDetail.title": "Examination Details",
