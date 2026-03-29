@@ -626,7 +626,7 @@ export async function generateAnamnezaPdf(
   const consentLines = doc.splitTextToSize(consent, contentW);
   doc.text(consentLines, marginL, y);
 
-  /* ===== SAVE ===== */
-  const name = form.patientName ? form.patientName.replace(/\s+/g, "_") : "patient";
-  doc.save(`Anamneza_${name}_${today().replace(/\./g, "")}.pdf`);
+  /* ===== OPEN IN NEW TAB ===== */
+  const blobUrl = doc.output("bloburl");
+  window.open(blobUrl as string, "_blank");
 }
