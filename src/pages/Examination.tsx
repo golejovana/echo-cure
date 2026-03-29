@@ -9,7 +9,7 @@ import SmartFormPanel from "@/components/SmartFormPanel";
 
 export default function Examination() {
   const [transcript, setTranscript] = useState("");
-  const [lang, setLang] = useState<Lang>("en-US");
+  const [lang, setLang] = useState<Lang>("sr-RS");
   const [role, setRole] = useState<"doctor" | "patient">("doctor");
   const navigate = useNavigate();
 
