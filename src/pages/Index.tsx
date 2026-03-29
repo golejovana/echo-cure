@@ -7,7 +7,7 @@ import SmartFormPanel from "@/components/SmartFormPanel";
 
 const Index = () => {
   const [transcript, setTranscript] = useState("");
-  const [lang, setLang] = useState<Lang>("en-US");
+  const [lang, setLang] = useState<Lang>("sr-RS");
 
   const handleTranscriptUpdate = useCallback((text: string) => {
     setTranscript(text);
