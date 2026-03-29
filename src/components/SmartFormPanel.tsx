@@ -467,9 +467,24 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
 
       {/* submit */}
       <div className="pt-4 mt-2 border-t border-border/40 flex gap-3">
-        <button onClick={async () => { try { await generateAnamnezaPdf(form, lang, institutionInfo); } catch(e) { console.error("PDF generation error:", e); } }} disabled={!hasAnyData} className="flex-1 flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-all duration-200">
-          <Download size={15} strokeWidth={1.8} />
-          {t("form.downloadPdf")}
+        <button
+          onClick={async () => {
+            if (pdfLoading || !hasAnyData) return;
+            setPdfLoading(true);
+            try {
+              await generateAnamnezaPdf(form, lang, institutionInfo);
+            } catch (e) {
+              console.error("PDF generation error:", e);
+              toast({ title: "PDF Error", description: e instanceof Error ? e.message : "Failed to generate PDF", variant: "destructive" });
+            } finally {
+              setPdfLoading(false);
+            }
+          }}
+          disabled={!hasAnyData || pdfLoading}
+          className="flex-1 flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-all duration-200"
+        >
+          {pdfLoading ? <Loader2 size={15} strokeWidth={1.8} className="animate-spin" /> : <Download size={15} strokeWidth={1.8} />}
+          {pdfLoading ? (lang === "sr" ? "Generisanje..." : "Generating...") : t("form.downloadPdf")}
         </button>
         <button onClick={handleSendToPatient} disabled={!hasAnyData || sending} className="flex-1 flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:shadow-lg hover:shadow-accent/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-all duration-200">
           {sending ? <Loader2 size={15} strokeWidth={1.8} className="animate-spin" /> : <Send size={15} strokeWidth={1.8} />}

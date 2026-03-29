@@ -627,6 +627,23 @@ export async function generateAnamnezaPdf(
   doc.text(consentLines, marginL, y);
 
   /* ===== OPEN IN NEW TAB ===== */
-  const blobUrl = doc.output("bloburl");
-  window.open(String(blobUrl), "_blank");
+  try {
+    const blob = doc.output("blob");
+    const url = URL.createObjectURL(blob);
+    const opened = window.open(url, "_blank");
+    if (!opened) {
+      // Popup blocked — fallback to download
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Anamneza_${(form.patientName || "patient").replace(/\s+/g, "_")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+    // Clean up after a delay
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  } catch (e) {
+    console.error("PDF output error:", e);
+    doc.save(`Anamneza_${(form.patientName || "patient").replace(/\s+/g, "_")}.pdf`);
+  }
 }
