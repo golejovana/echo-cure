@@ -101,7 +101,7 @@ export default function ExaminationDetail() {
 
   if (!exam) {
     return (
-      <DashboardLayout role="patient">
+      <DashboardLayout role={role}>
         <div className="text-center py-20 text-muted-foreground">{t("examDetail.notFound")}</div>
       </DashboardLayout>
     );
