@@ -38,10 +38,16 @@ export default function ExaminationDetail() {
   const [loading, setLoading] = useState(true);
   const [simplifying, setSimplifying] = useState(false);
   const [simplified, setSimplified] = useState<string | null>(null);
+  const [role, setRole] = useState<"doctor" | "patient">("patient");
 
   useEffect(() => {
     if (!id) return;
     const fetch = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase.from("profiles").select("role").eq("user_id", user.id).single();
+        if (profile?.role) setRole(profile.role);
+      }
       const { data: examData } = await supabase.from("examinations").select("*").eq("id", id).single();
       if (examData) {
         const e = examData as unknown as Examination;
@@ -85,7 +91,7 @@ export default function ExaminationDetail() {
 
   if (loading) {
     return (
-      <DashboardLayout role="patient">
+      <DashboardLayout role={role}>
         <div className="flex items-center justify-center py-20">
           <Loader2 className="animate-spin text-primary" size={24} />
         </div>
@@ -95,7 +101,7 @@ export default function ExaminationDetail() {
 
   if (!exam) {
     return (
-      <DashboardLayout role="patient">
+      <DashboardLayout role={role}>
         <div className="text-center py-20 text-muted-foreground">{t("examDetail.notFound")}</div>
       </DashboardLayout>
     );
@@ -104,7 +110,7 @@ export default function ExaminationDetail() {
   const fd = exam.form_data || {};
 
   return (
-    <DashboardLayout role="patient">
+    <DashboardLayout role={role}>
       <motion.div
         initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
