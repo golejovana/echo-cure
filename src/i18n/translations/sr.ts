@@ -317,6 +317,10 @@ const sr = {
   "therapy.warningAnticoagBleeding": "Lek {drug} povećava rizik od krvarenja kod ovog pacijenta.",
   "therapy.warningBetaBlockerAsthma": "Lek {drug} je kontraindikovan kod pacijenata sa astmom.",
   "therapy.warningAllergy": "Pacijent je alergičan na {drug} – proverite pre propisivanja.",
+  "therapy.allergyBannerTitle": "UPOZORENJE: Potencijalna alergijska reakcija!",
+  "therapy.allergyBannerBody": "Pacijent ima evidentiranu alergiju na: {allergen}.",
+  "therapy.newMedication": "Novi lek",
+  "therapy.addMedicationBtn": "Dodaj lek",
 };
 
 export default sr;
