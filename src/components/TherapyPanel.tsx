@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { Plus, Trash2, Pill, CalendarPlus, AlertTriangle, Clock, ShieldAlert, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, Pill, CalendarPlus, AlertTriangle, Clock, ShieldAlert, CheckCircle2, Activity } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/LanguageContext";
@@ -31,96 +31,11 @@ interface TherapyPanelProps {
   chronicDiseases?: string;
 }
 
-/* ---- Contraindication rules (chronic diseases) ---- */
-interface ContraindicationRule {
-  drugPatterns: RegExp[];
-  conditionPatterns: RegExp[];
-  messageKey: string;
-  context: string;
-}
-
-const CONTRAINDICATION_RULES: ContraindicationRule[] = [
-  {
-    drugPatterns: [/ibuprofen/i, /aspirin/i, /diklofenak/i, /diclofenac/i, /naproxen/i, /ketoprofen/i, /piroxicam/i, /indometacin/i, /nsaid/i, /brufen/i, /voltaren/i],
-    conditionPatterns: [/insulin/i, /dijabet/i, /diabet/i, /gluko/i, /glucophage/i, /metformin/i, /rezisten/i],
-    messageKey: "therapy.warningNsaidDiabetes",
-    context: "NSAID + diabetes/insulin resistance",
-  },
-  {
-    drugPatterns: [/ibuprofen/i, /diklofenak/i, /diclofenac/i, /naproxen/i, /ketoprofen/i, /piroxicam/i, /nsaid/i, /brufen/i, /voltaren/i, /aspirin/i],
-    conditionPatterns: [/ulkus/i, /ulcer/i, /gastrit/i, /gastritis/i, /krvarenje/i, /bleeding/i, /želudac/i, /stomach/i],
-    messageKey: "therapy.warningNsaidGastric",
-    context: "NSAID + gastric issues",
-  },
-  {
-    drugPatterns: [/metformin/i, /glucophage/i, /gluformin/i],
-    conditionPatterns: [/bubreg/i, /renal/i, /kidney/i, /insuficijencija/i],
-    messageKey: "therapy.warningMetforminRenal",
-    context: "Metformin + renal insufficiency",
-  },
-  {
-    drugPatterns: [/ace inhibitor/i, /enalapril/i, /ramipril/i, /lizinopril/i, /lisinopril/i, /captopril/i, /perindopril/i],
-    conditionPatterns: [/kalijum/i, /potassium/i, /hiperkale/i, /hyperkal/i],
-    messageKey: "therapy.warningAceKalium",
-    context: "ACE inhibitor + hyperkalemia",
-  },
-  {
-    drugPatterns: [/warfarin/i, /heparin/i, /antikoagul/i, /anticoag/i, /sintrom/i, /acenocoumarol/i],
-    conditionPatterns: [/krvarenje/i, /bleeding/i, /hemofilija/i, /hemophilia/i],
-    messageKey: "therapy.warningAnticoagBleeding",
-    context: "Anticoagulant + bleeding risk",
-  },
-  {
-    drugPatterns: [/beta.?blokator/i, /beta.?blocker/i, /propranolol/i, /atenolol/i, /bisoprolol/i, /metoprolol/i, /carvedilol/i, /nebivolol/i],
-    conditionPatterns: [/astma/i, /asthma/i, /bronhospaz/i, /bronchospas/i],
-    messageKey: "therapy.warningBetaBlockerAsthma",
-    context: "Beta-blocker + asthma",
-  },
-];
-
-function checkContraindications(
-  medications: Medication[],
-  allergies: string,
-  chronicDiseases: string,
-): { messageKey: string; drugName: string; condition: string }[] {
-  const warnings: { messageKey: string; drugName: string; condition: string }[] = [];
-  const combined = `${allergies} ${chronicDiseases}`.toLowerCase();
-  if (!combined.trim()) return warnings;
-
-  for (const med of medications) {
-    if (!med.name.trim()) continue;
-    const nameLC = med.name.toLowerCase();
-    for (const rule of CONTRAINDICATION_RULES) {
-      const drugMatch = rule.drugPatterns.some((p) => p.test(nameLC));
-      const condMatch = rule.conditionPatterns.some((p) => p.test(combined));
-      if (drugMatch && condMatch) {
-        warnings.push({ messageKey: rule.messageKey, drugName: med.name, condition: rule.context });
-      }
-    }
-  }
-
-  const allergyWords = allergies.toLowerCase().split(/[,;.\s]+/).filter(Boolean);
-  for (const med of medications) {
-    if (!med.name.trim()) continue;
-    const nameLC = med.name.toLowerCase();
-    if (allergyWords.some((a) => a.length > 2 && nameLC.includes(a))) {
-      warnings.push({ messageKey: "therapy.warningAllergy", drugName: med.name, condition: "allergy" });
-    }
-  }
-
-  const seen = new Set<string>();
-  return warnings.filter((w) => {
-    const key = `${w.messageKey}-${w.drugName}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-interface AllergyWarning {
-  risk: boolean;
-  allergen: string;
-  reason: string;
+interface AIWarning {
+  type: "allergy" | "contraindication";
+  severity: "high" | "medium";
+  title: string;
+  explanation: string;
 }
 
 const EMPTY_APT: PlannedAppointment = { title: "", date: undefined, time: "", priority: "normal" };
@@ -138,65 +53,99 @@ export default function TherapyPanel({
   appointments, onAppointmentsChange,
   allergies = "", chronicDiseases = "",
 }: TherapyPanelProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   /* ---- New medication input state ---- */
   const [newName, setNewName] = useState("");
   const [newDose, setNewDose] = useState("");
   const [newFreq, setNewFreq] = useState("1x");
   const [newNote, setNewNote] = useState("");
-  const [allergyWarning, setAllergyWarning] = useState<AllergyWarning | null>(null);
-  const [checkingAllergy, setCheckingAllergy] = useState(false);
+  const [aiWarnings, setAiWarnings] = useState<AIWarning[]>([]);
+  const [checkingDrug, setCheckingDrug] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /* ---- AI allergy check with debounce ---- */
-  const checkAllergyAI = useCallback(async (drugName: string) => {
-    if (!drugName.trim() || !allergies.trim()) {
-      setAllergyWarning(null);
+  /* ---- Warnings for existing medications (cached per medication list) ---- */
+  const [existingMedWarnings, setExistingMedWarnings] = useState<Map<string, AIWarning[]>>(new Map());
+  const existingCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /* ---- AI clinical decision support check ---- */
+  const checkDrugSafety = useCallback(async (drugName: string) => {
+    if (!drugName.trim()) {
+      setAiWarnings([]);
       return;
     }
 
-    // Quick local check first
-    const allergyWords = allergies.toLowerCase().split(/[,;.\s]+/).filter((w) => w.length > 2);
-    const nameLC = drugName.toLowerCase();
-    const localMatch = allergyWords.find((a) => nameLC.includes(a) || a.includes(nameLC));
-    if (localMatch) {
-      setAllergyWarning({ risk: true, allergen: localMatch, reason: "Direktno poklapanje sa alergijom" });
+    const hasAllergies = !!allergies.trim();
+    const hasChronic = !!chronicDiseases.trim();
+
+    if (!hasAllergies && !hasChronic) {
+      setAiWarnings([]);
       return;
     }
 
-    // AI check for cross-reactions
-    setCheckingAllergy(true);
+    setCheckingDrug(true);
     try {
       const { data, error } = await supabase.functions.invoke("check-allergy", {
-        body: { drugName, allergies },
+        body: { drugName, allergies, chronicDiseases, language },
       });
       if (error) throw error;
-      if (data?.risk) {
-        setAllergyWarning({ risk: true, allergen: data.allergen || allergies, reason: data.reason || "" });
+      if (data?.warnings && Array.isArray(data.warnings)) {
+        setAiWarnings(data.warnings);
       } else {
-        setAllergyWarning(null);
+        setAiWarnings([]);
       }
     } catch (err) {
-      console.error("Allergy check error:", err);
-      // Don't block the flow on AI failure
-      setAllergyWarning(null);
+      console.error("Clinical decision support error:", err);
+      setAiWarnings([]);
     } finally {
-      setCheckingAllergy(false);
+      setCheckingDrug(false);
     }
-  }, [allergies]);
+  }, [allergies, chronicDiseases, language]);
 
+  /* ---- Debounced check on drug name input ---- */
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!newName.trim()) {
-      setAllergyWarning(null);
+      setAiWarnings([]);
       return;
     }
     debounceRef.current = setTimeout(() => {
-      checkAllergyAI(newName);
-    }, 600);
+      checkDrugSafety(newName);
+    }, 700);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [newName, checkAllergyAI]);
+  }, [newName, checkDrugSafety]);
+
+  /* ---- Re-check existing medications when allergies/chronicDiseases change ---- */
+  useEffect(() => {
+    if (existingCheckRef.current) clearTimeout(existingCheckRef.current);
+    if (medications.length === 0) {
+      setExistingMedWarnings(new Map());
+      return;
+    }
+    existingCheckRef.current = setTimeout(async () => {
+      const hasContext = !!allergies.trim() || !!chronicDiseases.trim();
+      if (!hasContext) {
+        setExistingMedWarnings(new Map());
+        return;
+      }
+      const newWarnings = new Map<string, AIWarning[]>();
+      for (const med of medications) {
+        if (!med.name.trim()) continue;
+        try {
+          const { data } = await supabase.functions.invoke("check-allergy", {
+            body: { drugName: med.name, allergies, chronicDiseases, language },
+          });
+          if (data?.warnings?.length) {
+            newWarnings.set(med.name, data.warnings);
+          }
+        } catch {
+          // Silent fail for existing med checks
+        }
+      }
+      setExistingMedWarnings(newWarnings);
+    }, 1000);
+    return () => { if (existingCheckRef.current) clearTimeout(existingCheckRef.current); };
+  }, [medications, allergies, chronicDiseases, language]);
 
   const handleAddMed = () => {
     if (!newName.trim()) return;
@@ -205,7 +154,7 @@ export default function TherapyPanel({
     setNewDose("");
     setNewFreq("1x");
     setNewNote("");
-    setAllergyWarning(null);
+    setAiWarnings([]);
   };
 
   const removeMed = (i: number) => onMedicationsChange(medications.filter((_, idx) => idx !== i));
@@ -226,7 +175,17 @@ export default function TherapyPanel({
     { value: "pp", label: t("therapy.freqAsNeeded") },
   ];
 
-  const hasAllergyRisk = allergyWarning?.risk === true;
+  const hasHighRisk = aiWarnings.some(w => w.severity === "high");
+  const hasAnyRisk = aiWarnings.length > 0;
+
+  // Collect all existing med warnings into a flat list for the top banner
+  const allExistingWarnings = useMemo(() => {
+    const result: { medName: string; warning: AIWarning }[] = [];
+    existingMedWarnings.forEach((warnings, medName) => {
+      warnings.forEach(w => result.push({ medName, warning: w }));
+    });
+    return result;
+  }, [existingMedWarnings]);
 
   return (
     <div className="space-y-4">
@@ -236,27 +195,36 @@ export default function TherapyPanel({
         <p className="text-[10px] text-muted-foreground mt-0.5">{t("therapy.subtitle")}</p>
       </div>
 
-      {/* Safety Warnings for existing medications */}
-      {(() => {
-        const warnings = checkContraindications(medications, allergies, chronicDiseases);
-        if (warnings.length === 0) return null;
-        return (
-          <div className="space-y-2">
-            {warnings.map((w, i) => (
-              <div
-                key={`${w.messageKey}-${w.drugName}-${i}`}
-                className="flex items-start gap-3 px-4 py-3 rounded-2xl border border-yellow-600/20 bg-yellow-900/10 backdrop-blur-sm"
-              >
-                <ShieldAlert size={16} strokeWidth={1.5} className="text-yellow-500 shrink-0 mt-0.5" />
-                <p className="text-xs leading-relaxed text-foreground/80">
-                  <span className="font-semibold text-yellow-500">{t("therapy.safetyNote")}</span>{" "}
-                  {t(w.messageKey).replace("{drug}", w.drugName)}
+      {/* AI Safety Warnings for existing medications */}
+      {allExistingWarnings.length > 0 && (
+        <div className="space-y-2">
+          {allExistingWarnings.map((item, i) => (
+            <div
+              key={`existing-${item.medName}-${i}`}
+              className={cn(
+                "flex items-start gap-3 px-4 py-3 rounded-2xl border backdrop-blur-sm",
+                item.warning.severity === "high"
+                  ? "border-red-500/30 bg-red-950/15"
+                  : "border-yellow-600/20 bg-yellow-900/10"
+              )}
+            >
+              {item.warning.type === "allergy" ? (
+                <AlertTriangle size={16} strokeWidth={1.5} className={cn("shrink-0 mt-0.5", item.warning.severity === "high" ? "text-red-400" : "text-yellow-500")} />
+              ) : (
+                <ShieldAlert size={16} strokeWidth={1.5} className={cn("shrink-0 mt-0.5", item.warning.severity === "high" ? "text-red-400" : "text-yellow-500")} />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className={cn("text-xs font-semibold", item.warning.severity === "high" ? "text-red-400" : "text-yellow-500")}>
+                  {item.warning.type === "allergy" ? "⚠️" : "🛡️"} {item.medName}: {item.warning.title}
+                </p>
+                <p className="text-xs leading-relaxed text-foreground/80 mt-0.5">
+                  {item.warning.explanation}
                 </p>
               </div>
-            ))}
-          </div>
-        );
-      })()}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Medications */}
       <div className="glass-card p-5 space-y-4">
@@ -265,30 +233,45 @@ export default function TherapyPanel({
           <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("therapy.medications")}</h3>
         </div>
 
-        {/* ---- AI Allergy Warning Banner ---- */}
-        {hasAllergyRisk && (
-          <div className="flex items-start gap-3 px-4 py-3 rounded-2xl border border-orange-500/40 bg-orange-900/15 backdrop-blur-sm animate-in fade-in duration-300">
-            <AlertTriangle size={18} strokeWidth={2} className="text-orange-400 shrink-0 mt-0.5 animate-pulse" />
-            <div>
-              <p className="text-sm font-semibold text-orange-400">
-                ⚠️ {t("therapy.allergyBannerTitle")}
-              </p>
-              <p className="text-xs leading-relaxed text-foreground/80 mt-1">
-                {t("therapy.allergyBannerBody").replace("{allergen}", allergyWarning?.allergen || "")}
-              </p>
-              {allergyWarning?.reason && (
-                <p className="text-[10px] text-muted-foreground mt-1 italic">{allergyWarning.reason}</p>
-              )}
-            </div>
+        {/* ---- AI Warning Banner for new drug input ---- */}
+        {hasAnyRisk && (
+          <div className="space-y-2 animate-in fade-in duration-300">
+            {aiWarnings.map((warning, i) => (
+              <div
+                key={`new-warn-${i}`}
+                className={cn(
+                  "flex items-start gap-3 px-4 py-3 rounded-2xl border backdrop-blur-sm",
+                  warning.severity === "high"
+                    ? "border-red-500/40 bg-red-950/15"
+                    : "border-orange-500/40 bg-orange-900/15"
+                )}
+              >
+                {warning.type === "allergy" ? (
+                  <AlertTriangle size={18} strokeWidth={2} className={cn("shrink-0 mt-0.5 animate-pulse", warning.severity === "high" ? "text-red-400" : "text-orange-400")} />
+                ) : (
+                  <Activity size={18} strokeWidth={2} className={cn("shrink-0 mt-0.5", warning.severity === "high" ? "text-red-400" : "text-orange-400")} />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className={cn("text-sm font-semibold", warning.severity === "high" ? "text-red-400" : "text-orange-400")}>
+                    {warning.type === "allergy" ? "⚠️" : "🛡️"} {warning.title}
+                  </p>
+                  <p className="text-xs leading-relaxed text-foreground/80 mt-1">
+                    {warning.explanation}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
         {/* ---- Add medication form ---- */}
         <div className={cn(
           "rounded-2xl p-4 space-y-3 border transition-all duration-300",
-          hasAllergyRisk
-            ? "border-orange-500/50 bg-orange-950/10 shadow-[0_0_20px_-5px_hsl(25_95%_53%/0.15)]"
-            : "border-border/20 bg-muted/10"
+          hasHighRisk
+            ? "border-red-500/50 bg-red-950/10 shadow-[0_0_20px_-5px_hsl(0_70%_50%/0.15)]"
+            : hasAnyRisk
+              ? "border-orange-500/50 bg-orange-950/10 shadow-[0_0_20px_-5px_hsl(25_95%_53%/0.15)]"
+              : "border-border/20 bg-muted/10"
         )}>
           <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
             {t("therapy.newMedication")}
@@ -303,17 +286,19 @@ export default function TherapyPanel({
                   placeholder={t("therapy.drugNamePlaceholder")}
                   className={cn(
                     "w-full rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none transition-all duration-300",
-                    hasAllergyRisk
-                      ? "bg-orange-950/20 border border-orange-500/60 ring-1 ring-orange-500/30 focus:ring-orange-500/50"
-                      : "bg-muted/30 focus:ring-1 focus:ring-primary/30"
+                    hasHighRisk
+                      ? "bg-red-950/20 border border-red-500/60 ring-1 ring-red-500/30 focus:ring-red-500/50"
+                      : hasAnyRisk
+                        ? "bg-orange-950/20 border border-orange-500/60 ring-1 ring-orange-500/30 focus:ring-orange-500/50"
+                        : "bg-muted/30 focus:ring-1 focus:ring-primary/30"
                   )}
                 />
-                {checkingAllergy && (
+                {checkingDrug && (
                   <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
                     <div className="w-3.5 h-3.5 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
                   </div>
                 )}
-                {!checkingAllergy && newName.trim() && !hasAllergyRisk && allergies.trim() && (
+                {!checkingDrug && newName.trim() && !hasAnyRisk && (allergies.trim() || chronicDiseases.trim()) && (
                   <CheckCircle2 size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-500/60" />
                 )}
               </div>
@@ -372,23 +357,44 @@ export default function TherapyPanel({
         )}
 
         <div className="space-y-2">
-          {medications.map((med, i) => (
-            <div key={i} className="flex items-center gap-3 bg-muted/15 rounded-xl px-4 py-3 border border-border/10 group">
-              <Pill size={14} strokeWidth={1.5} className="text-primary/60 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{med.name}</p>
-                <p className="text-[10px] text-muted-foreground">
-                  {[med.dose, frequencyOptions.find((f) => f.value === med.frequency)?.label, med.note].filter(Boolean).join(" · ")}
-                </p>
-              </div>
-              <button
-                onClick={() => removeMed(i)}
-                className="opacity-0 group-hover:opacity-100 text-muted-foreground/50 hover:text-destructive transition-all p-1.5 rounded-lg hover:bg-destructive/5"
+          {medications.map((med, i) => {
+            const medWarnings = existingMedWarnings.get(med.name) || [];
+            const medHasRisk = medWarnings.length > 0;
+            const medHighRisk = medWarnings.some(w => w.severity === "high");
+            return (
+              <div
+                key={i}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-4 py-3 border group transition-all duration-300",
+                  medHighRisk
+                    ? "bg-red-950/10 border-red-500/20"
+                    : medHasRisk
+                      ? "bg-orange-950/10 border-orange-500/20"
+                      : "bg-muted/15 border-border/10"
+                )}
               >
-                <Trash2 size={13} strokeWidth={1.8} />
-              </button>
-            </div>
-          ))}
+                <Pill size={14} strokeWidth={1.5} className={cn(
+                  "shrink-0",
+                  medHighRisk ? "text-red-400" : medHasRisk ? "text-orange-400" : "text-primary/60"
+                )} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{med.name}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {[med.dose, frequencyOptions.find((f) => f.value === med.frequency)?.label, med.note].filter(Boolean).join(" · ")}
+                  </p>
+                </div>
+                {medHasRisk && (
+                  <AlertTriangle size={14} className={cn("shrink-0", medHighRisk ? "text-red-400" : "text-orange-400")} />
+                )}
+                <button
+                  onClick={() => removeMed(i)}
+                  className="opacity-0 group-hover:opacity-100 text-muted-foreground/50 hover:text-destructive transition-all p-1.5 rounded-lg hover:bg-destructive/5"
+                >
+                  <Trash2 size={13} strokeWidth={1.8} />
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -416,78 +422,61 @@ export default function TherapyPanel({
           {appointments.map((apt, i) => (
             <div key={i} className="bg-muted/20 rounded-2xl p-3.5 space-y-2.5 border border-border/20">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  {t("therapy.appointment")} #{i + 1}
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => updateApt(i, "priority", apt.priority === "high" ? "normal" : "high")}
-                    className={cn(
-                      "flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full transition-all duration-200",
-                      apt.priority === "high"
-                        ? "bg-destructive/10 text-destructive"
-                        : "bg-muted/40 text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
-                    )}
-                  >
-                    <AlertTriangle size={10} strokeWidth={2} />
-                    {t("therapy.highPriority")}
-                  </button>
-                  <button onClick={() => removeApt(i)} className="text-muted-foreground/50 hover:text-destructive transition-colors p-1 rounded-lg hover:bg-destructive/5">
-                    <Trash2 size={13} strokeWidth={1.8} />
-                  </button>
-                </div>
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{t("therapy.appointment")} {i + 1}</span>
+                <button onClick={() => removeApt(i)} className="text-muted-foreground/50 hover:text-destructive transition-colors p-1">
+                  <Trash2 size={12} strokeWidth={1.8} />
+                </button>
               </div>
 
-              <div className="grid grid-cols-3 gap-2.5">
-                <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("therapy.appointmentTitle")}</label>
-                  <input
-                    value={apt.title}
-                    onChange={(e) => updateApt(i, "title", e.target.value)}
-                    placeholder={t("therapy.appointmentPlaceholder")}
-                    className="w-full bg-muted/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("therapy.date")}</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button className={cn(
-                        "w-full bg-muted/30 rounded-lg px-3 py-2 text-sm text-left focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all",
-                        apt.date ? "text-foreground" : "text-muted-foreground/40"
-                      )}>
-                        {apt.date ? format(apt.date, "dd.MM.yyyy.") : t("therapy.selectDate")}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={apt.date}
-                        onSelect={(date) => updateApt(i, "date", date)}
-                        disabled={(date) => date < new Date(new Date().toISOString().split("T")[0])}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("therapy.time")}</label>
-                  <select
-                    value={apt.time}
-                    onChange={(e) => updateApt(i, "time", e.target.value)}
-                    className={cn(
-                      "w-full bg-muted/30 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all appearance-none cursor-pointer",
-                      apt.time ? "text-foreground" : "text-muted-foreground/40"
-                    )}
-                  >
-                    <option value="">{t("therapy.selectTime")}</option>
-                    {TIME_OPTIONS.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
+              <input
+                value={apt.title}
+                onChange={(e) => updateApt(i, "title", e.target.value)}
+                placeholder={t("therapy.appointmentPlaceholder")}
+                className="w-full bg-muted/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
+              />
+
+              <div className="flex gap-2.5">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="flex-1 flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2 text-sm text-left hover:bg-muted/40 transition-all">
+                      <Clock size={13} strokeWidth={1.5} className="text-muted-foreground/60" />
+                      <span className={apt.date ? "text-foreground" : "text-muted-foreground/40"}>
+                        {apt.date ? format(apt.date, "dd.MM.yyyy") : t("therapy.selectDate")}
+                      </span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-background border-border/30" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={apt.date}
+                      onSelect={(d) => updateApt(i, "date", d)}
+                      disabled={(d) => d < new Date()}
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <select
+                  value={apt.time}
+                  onChange={(e) => updateApt(i, "time", e.target.value)}
+                  className="flex-1 bg-muted/30 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="" disabled>{t("therapy.selectTime")}</option>
+                  {TIME_OPTIONS.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
               </div>
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={apt.priority === "high"}
+                  onChange={(e) => updateApt(i, "priority", e.target.checked ? "high" : "normal")}
+                  className="w-3.5 h-3.5 rounded border-border accent-primary"
+                />
+                <span className="text-[11px] text-muted-foreground">{t("therapy.highPriority")}</span>
+              </label>
             </div>
           ))}
         </div>
