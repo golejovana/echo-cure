@@ -91,7 +91,7 @@ export default function ExaminationDetail() {
 
   if (loading) {
     return (
-      <DashboardLayout role="patient">
+      <DashboardLayout role={role}>
         <div className="flex items-center justify-center py-20">
           <Loader2 className="animate-spin text-primary" size={24} />
         </div>
