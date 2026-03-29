@@ -312,6 +312,10 @@ const fr: Record<string, string | string[]> = {
   "therapy.warningAnticoagBleeding": "{drug} augmente le risque de saignement chez ce patient.",
   "therapy.warningBetaBlockerAsthma": "{drug} est contre-indiqué chez les patients asthmatiques.",
   "therapy.warningAllergy": "Le patient est allergique à {drug} – vérifiez avant de prescrire.",
+  "therapy.allergyBannerTitle": "ATTENTION : Réaction allergique potentielle !",
+  "therapy.allergyBannerBody": "Le patient a une allergie enregistrée à : {allergen}.",
+  "therapy.newMedication": "Nouveau médicament",
+  "therapy.addMedicationBtn": "Ajouter le médicament",
 };
 
 export default fr;

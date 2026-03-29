@@ -312,6 +312,10 @@ const en: Record<string, string | string[]> = {
   "therapy.warningAnticoagBleeding": "{drug} increases bleeding risk for this patient.",
   "therapy.warningBetaBlockerAsthma": "{drug} is contraindicated in patients with asthma.",
   "therapy.warningAllergy": "Patient has a recorded allergy to {drug} – verify before prescribing.",
+  "therapy.allergyBannerTitle": "WARNING: Potential allergic reaction!",
+  "therapy.allergyBannerBody": "Patient has a recorded allergy to: {allergen}.",
+  "therapy.newMedication": "New Medication",
+  "therapy.addMedicationBtn": "Add Medication",
 };
 
 export default en;
