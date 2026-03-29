@@ -299,11 +299,6 @@ const S = {
     gap: "12px",
     flex: "1",
   },
-  logo: {
-    width: "70px",
-    height: "70px",
-    objectFit: "contain" as const,
-  },
   instName: {
     fontSize: "13px",
     fontWeight: "bold" as const,
