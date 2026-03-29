@@ -88,6 +88,36 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
   const [objectiveOpen, setObjectiveOpen] = useState(false);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [plannedAppointments, setPlannedAppointments] = useState<PlannedAppointment[]>([]);
+  const [institutionInfo, setInstitutionInfo] = useState<{
+    institution_name?: string;
+    institution_address?: string;
+    institution_city?: string;
+    institution_logo_url?: string;
+    doctor_name?: string;
+  }>({});
+
+  // Load institution branding
+  useEffect(() => {
+    const loadInstitution = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("institution_name, institution_address, institution_city, institution_logo_url, full_name")
+        .eq("user_id", user.id)
+        .single();
+      if (data) {
+        setInstitutionInfo({
+          institution_name: data.institution_name || undefined,
+          institution_address: data.institution_address || undefined,
+          institution_city: data.institution_city || undefined,
+          institution_logo_url: data.institution_logo_url || undefined,
+          doctor_name: data.full_name || undefined,
+        });
+      }
+    };
+    loadInstitution();
+  }, []);
 
   // Sync planned appointments to shared context as doctor adds them
   useEffect(() => {
