@@ -221,6 +221,14 @@ const fr: Record<string, string | string[]> = {
   "profile.cancel": "Annuler",
   "profile.saveSuccess": "Profil mis à jour avec succès",
   "profile.saveError": "Erreur lors de la sauvegarde du profil",
+  "profile.institutionBranding": "Image de l'établissement",
+  "profile.institutionName": "Nom de l'établissement",
+  "profile.institutionAddress": "Adresse",
+  "profile.institutionCity": "Ville et commune",
+  "profile.institutionLogo": "Logo de l'établissement",
+  "profile.uploadLogo": "Télécharger le logo",
+  "profile.uploading": "Téléchargement...",
+  "profile.logoUploadError": "Erreur lors du téléchargement du logo",
 
   // Examination Detail
   "examDetail.title": "Détails de l'examen",

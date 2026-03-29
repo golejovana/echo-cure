@@ -11,6 +11,7 @@ import { useTranslation } from "@/i18n/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import InstitutionBranding from "@/components/InstitutionBranding";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
