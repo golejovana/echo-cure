@@ -95,6 +95,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
     institution_logo_url?: string;
     doctor_name?: string;
   }>({});
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Load institution branding
   useEffect(() => {
