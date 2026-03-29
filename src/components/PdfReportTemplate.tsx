@@ -299,11 +299,6 @@ const S = {
     gap: "12px",
     flex: "1",
   },
-  logo: {
-    width: "70px",
-    height: "70px",
-    objectFit: "contain" as const,
-  },
   instName: {
     fontSize: "13px",
     fontWeight: "bold" as const,
@@ -358,21 +353,54 @@ const S = {
   footer: {
     display: "flex",
     justifyContent: "space-between",
-    marginTop: "30px",
+    alignItems: "flex-end",
+    marginTop: "60px",
+    paddingTop: "20px",
+    fontSize: "11px",
+    fontFamily: "'Times New Roman', 'Georgia', 'DejaVu Serif', serif",
+  },
+  footerLeft: {
+    flex: "1",
+    fontFamily: "'Times New Roman', 'Georgia', 'DejaVu Serif', serif",
+    fontSize: "11px",
+  },
+  stampBox: {
+    width: "113px",
+    height: "113px",
+    border: "1px dashed #999",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     fontSize: "10px",
+    color: "#999",
+    fontFamily: "'Times New Roman', 'Georgia', 'DejaVu Serif', serif",
+    margin: "0 20px",
+  },
+  footerRight: {
+    textAlign: "center" as const,
+    fontFamily: "'Times New Roman', 'Georgia', 'DejaVu Serif', serif",
+    fontSize: "11px",
   },
   signLine: {
     borderTop: "1px solid #333",
-    width: "180px",
-    marginTop: "30px",
-    paddingTop: "4px",
+    width: "200px",
+    marginTop: "40px",
+    paddingTop: "6px",
     textAlign: "center" as const,
+  },
+  legalNote: {
+    fontSize: "7px",
+    color: "#666",
+    marginTop: "16px",
+    fontFamily: "'Times New Roman', 'Georgia', 'DejaVu Serif', serif",
+    textAlign: "center" as const,
+    fontStyle: "italic" as const,
   },
   consent: {
     fontSize: "8px",
     color: "#444",
     borderTop: "1px solid #999",
-    marginTop: "20px",
+    marginTop: "12px",
     paddingTop: "6px",
     lineHeight: "1.4",
   },
@@ -419,7 +447,7 @@ const PdfReportTemplate: React.FC<Props> = ({ form, lang, institution }) => {
       {/* HEADER */}
       <div style={S.headerRow}>
         <div style={S.headerLeft}>
-          {logoUrl && <img src={logoUrl} style={S.logo} crossOrigin="anonymous" />}
+          
           <div>
             {instName && <div style={S.instName}>{instName}</div>}
             {instAddr && <div style={S.instDetail}>{instAddr}</div>}
@@ -512,16 +540,23 @@ const PdfReportTemplate: React.FC<Props> = ({ form, lang, institution }) => {
 
       {/* FOOTER */}
       <div style={S.footer}>
-        <div>
-          <div>{cityForFooter}, {today()}</div>
+        <div style={S.footerLeft}>
+          <div>У Београду, дана: {today()}</div>
         </div>
-        <div style={{ textAlign: "center" as const }}>{t.stampLabel}</div>
-        <div>
+        <div style={S.stampBox}>
+          {t.stampLabel}
+        </div>
+        <div style={S.footerRight}>
           <div style={S.signLine}>
-            {doctorName && <div>{doctorName}</div>}
             <div>{t.signatureLabel}</div>
+            {doctorName && <div style={{ marginTop: "4px", fontWeight: "bold" as const }}>{doctorName}</div>}
           </div>
         </div>
+      </div>
+
+      {/* LEGAL NOTE */}
+      <div style={S.legalNote}>
+        Овај документ је валидан уз потпис и печат овлашћеног лекара.
       </div>
 
       {/* CONSENT */}
