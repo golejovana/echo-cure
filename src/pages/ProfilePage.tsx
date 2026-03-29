@@ -192,7 +192,8 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Patient Info */}
+        {/* Institution Branding (Doctor only) */}
+        {isDoctor && <InstitutionBranding />}
         {!isDoctor && (
           <div className="led-card p-6 space-y-4">
             <div className="flex items-center justify-between mb-1">
