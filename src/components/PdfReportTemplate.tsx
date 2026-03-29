@@ -540,16 +540,23 @@ const PdfReportTemplate: React.FC<Props> = ({ form, lang, institution }) => {
 
       {/* FOOTER */}
       <div style={S.footer}>
-        <div>
-          <div>{cityForFooter}, {today()}</div>
+        <div style={S.footerLeft}>
+          <div>У Београду, дана: {today()}</div>
         </div>
-        <div style={{ textAlign: "center" as const }}>{t.stampLabel}</div>
-        <div>
+        <div style={S.stampBox}>
+          {t.stampLabel}
+        </div>
+        <div style={S.footerRight}>
           <div style={S.signLine}>
-            {doctorName && <div>{doctorName}</div>}
             <div>{t.signatureLabel}</div>
+            {doctorName && <div style={{ marginTop: "4px", fontWeight: "bold" as const }}>{doctorName}</div>}
           </div>
         </div>
+      </div>
+
+      {/* LEGAL NOTE */}
+      <div style={S.legalNote}>
+        Овај документ је валидан уз потпис и печат овлашћеног лекара.
       </div>
 
       {/* CONSENT */}
