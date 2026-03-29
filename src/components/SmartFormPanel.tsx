@@ -466,7 +466,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
 
       {/* submit */}
       <div className="pt-4 mt-2 border-t border-border/40 flex gap-3">
-        <button onClick={() => generateAnamnezaPdf(form, lang, institutionInfo)} disabled={!hasAnyData} className="flex-1 flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-all duration-200">
+        <button onClick={async () => { try { await generateAnamnezaPdf(form, lang, institutionInfo); } catch(e) { console.error("PDF generation error:", e); } }} disabled={!hasAnyData} className="flex-1 flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-all duration-200">
           <Download size={15} strokeWidth={1.8} />
           {t("form.downloadPdf")}
         </button>
