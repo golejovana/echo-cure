@@ -116,17 +116,23 @@
 
 @layer components {
   .glass-card {
-    @apply bg-card/75 backdrop-blur-2xl border border-border/40 rounded-2xl;
+    @apply backdrop-blur-2xl border rounded-2xl;
+    background-color: hsl(var(--card) / 0.75);
+    border-color: hsl(var(--border) / 0.4);
     box-shadow: var(--shadow-md);
   }
 
   .glass-card-elevated {
-    @apply bg-card/85 backdrop-blur-2xl border border-border/30 rounded-2xl;
+    @apply backdrop-blur-2xl border rounded-2xl;
+    background-color: hsl(var(--card) / 0.85);
+    border-color: hsl(var(--border) / 0.3);
     box-shadow: var(--shadow-lg);
   }
 
   .led-card {
-    @apply bg-card/92 backdrop-blur-2xl border border-border/25 rounded-2xl relative overflow-hidden;
+    @apply backdrop-blur-2xl border rounded-2xl relative overflow-hidden;
+    background-color: hsl(var(--card) / 0.92);
+    border-color: hsl(var(--border) / 0.25);
     box-shadow: var(--shadow-md);
   }
 
