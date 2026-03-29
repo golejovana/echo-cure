@@ -447,7 +447,7 @@ const PdfReportTemplate: React.FC<Props> = ({ form, lang, institution }) => {
       {/* HEADER */}
       <div style={S.headerRow}>
         <div style={S.headerLeft}>
-          {logoUrl && <img src={logoUrl} style={S.logo} crossOrigin="anonymous" />}
+          
           <div>
             {instName && <div style={S.instName}>{instName}</div>}
             {instAddr && <div style={S.instDetail}>{instAddr}</div>}
