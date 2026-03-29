@@ -628,5 +628,5 @@ export async function generateAnamnezaPdf(
 
   /* ===== OPEN IN NEW TAB ===== */
   const blobUrl = doc.output("bloburl");
-  window.open(blobUrl as string, "_blank");
+  window.open(String(blobUrl), "_blank");
 }
