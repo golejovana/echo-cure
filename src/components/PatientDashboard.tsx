@@ -49,6 +49,7 @@ export default function PatientDashboard() {
   const navigate = useNavigate();
   const { appointments: sharedAppointments, loading: aptsLoading } = useAppointments();
   const [examinations, setExaminations] = useState<Examination[]>([]);
+  const [dbAppointments, setDbAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -59,6 +60,26 @@ export default function PatientDashboard() {
       if (exams) {
         setExaminations(exams as unknown as Examination[]);
         setUnreadCount(exams.filter((e: any) => !e.is_read).length);
+
+        // Fetch all appointments linked to the patient's examinations
+        const examIds = exams.map((e: any) => e.id);
+        if (examIds.length > 0) {
+          const { data: apts } = await supabase
+            .from("appointments")
+            .select("*")
+            .in("examination_id", examIds)
+            .order("appointment_date", { ascending: true });
+          if (apts) {
+            setDbAppointments(apts.map((a: any) => ({
+              id: a.id,
+              title: a.title,
+              appointment_date: a.appointment_date,
+              appointment_time: a.appointment_time || null,
+              examination_id: a.examination_id,
+              priority: a.priority,
+            })));
+          }
+        }
       }
       setLoading(false);
     };
@@ -75,8 +96,8 @@ export default function PatientDashboard() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // Map shared appointments to the local Appointment interface
-  const appointments: Appointment[] = sharedAppointments.map((a) => ({
+  // Merge: DB appointments fetched by exam ID + shared context appointments, deduplicated
+  const sharedMapped: Appointment[] = sharedAppointments.map((a) => ({
     id: a.id,
     title: a.title,
     appointment_date: a.appointment_date,
@@ -84,6 +105,13 @@ export default function PatientDashboard() {
     examination_id: a.examination_id || "",
     priority: a.priority,
   }));
+
+  const appointments: Appointment[] = [
+    ...dbAppointments,
+    ...sharedMapped.filter(
+      (sa) => !dbAppointments.some((da) => da.id === sa.id)
+    ),
+  ];
 
   // Reminder notifications for upcoming appointments
   useEffect(() => {
