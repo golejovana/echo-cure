@@ -619,33 +619,43 @@ const PdfReportTemplate: React.FC<Props> = ({ form, lang, institution }) => {
           {instCity && <div style={S.instDetail}>{instCity}</div>}
         </div>
 
-        {/* Right: Patient data table */}
+       {/* Right: Patient data table */}
         <table style={S.patientTable}>
           <tbody>
             <tr>
               <td style={S.ptTdLabel}>{t.nameSurname}</td>
               <td style={S.ptTdVal}>{patientName}</td>
             </tr>
-            <tr>
-              <td style={S.ptTdLabel}>{t.age}</td>
-              <td style={S.ptTdVal}>{patientAge || "—"}</td>
-            </tr>
-            <tr>
-              <td style={S.ptTdLabel}>{t.jmbg}</td>
-              <td style={S.ptTdVal}>{form.jmbg || ""}</td>
-            </tr>
-            <tr>
-              <td style={S.ptTdLabel}>{t.address}</td>
-              <td style={S.ptTdVal}>{form.patientAddress || ""}</td>
-            </tr>
-            <tr>
-              <td style={S.ptTdLabel}>{t.occupation}</td>
-              <td style={S.ptTdVal}>{patientOccupation || "—"}</td>
-            </tr>
-            <tr>
-              <td style={S.ptTdLabel}>{t.historyNo}</td>
-              <td style={S.ptTdVal}>{form.historyNo || ""}</td>
-            </tr>
+            {!isEmpty(patientAge) && (
+              <tr>
+                <td style={S.ptTdLabel}>{t.age}</td>
+                <td style={S.ptTdVal}>{patientAge}</td>
+              </tr>
+            )}
+            {!isEmpty(form.jmbg) && (
+              <tr>
+                <td style={S.ptTdLabel}>{t.jmbg}</td>
+                <td style={S.ptTdVal}>{form.jmbg}</td>
+              </tr>
+            )}
+            {!isEmpty(form.patientAddress) && (
+              <tr>
+                <td style={S.ptTdLabel}>{t.address}</td>
+                <td style={S.ptTdVal}>{form.patientAddress}</td>
+              </tr>
+            )}
+            {!isEmpty(patientOccupation) && (
+              <tr>
+                <td style={S.ptTdLabel}>{t.occupation}</td>
+                <td style={S.ptTdVal}>{patientOccupation}</td>
+              </tr>
+            )}
+            {!isEmpty(form.historyNo) && (
+              <tr>
+                <td style={S.ptTdLabel}>{t.historyNo}</td>
+                <td style={S.ptTdVal}>{form.historyNo}</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
