@@ -1,5 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
+import EchoMedChat from "@/components/EchoMedChat";
 import { motion } from "framer-motion";
 
 interface DashboardLayoutProps {
