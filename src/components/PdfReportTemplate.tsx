@@ -222,6 +222,9 @@ const FR: Translations = {
   statusPraesens: "STATUS PRAESENS — EXAMEN OBJECTIF",
   signatureLabel: "Signature du médecin:",
   date: "Date",
+  legalNote: "Ce document est valide avec la signature et le cachet du médecin autorisé.",
+  footerCity: "À",
+  footerDay: "le:",
 };
 
 function getT(lang: string): Translations {
