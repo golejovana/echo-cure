@@ -106,6 +106,50 @@ export type Database = {
         }
         Relationships: []
       }
+      journal_entries: {
+        Row: {
+          created_at: string
+          examination_id: string | null
+          id: string
+          is_severe: boolean
+          medication_taken: boolean
+          mood: number
+          notes: string | null
+          patient_id: string
+          symptoms: string | null
+        }
+        Insert: {
+          created_at?: string
+          examination_id?: string | null
+          id?: string
+          is_severe?: boolean
+          medication_taken?: boolean
+          mood: number
+          notes?: string | null
+          patient_id: string
+          symptoms?: string | null
+        }
+        Update: {
+          created_at?: string
+          examination_id?: string | null
+          id?: string
+          is_severe?: boolean
+          medication_taken?: boolean
+          mood?: number
+          notes?: string | null
+          patient_id?: string
+          symptoms?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_examination_id_fkey"
+            columns: ["examination_id"]
+            isOneToOne: false
+            referencedRelation: "examinations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
