@@ -69,7 +69,7 @@ export default function DrugTracker({ medications, examinationId }: DrugTrackerP
     if (takenData.date !== today) {
       const fresh = { date: today, records: {} };
       setTakenData(fresh);
-      saveTaken(fresh);
+      saveTaken(examinationId, fresh);
     }
   }, [takenData.date]);
 
