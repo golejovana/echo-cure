@@ -92,8 +92,9 @@ const STAT_CONFIGS = [
 ];
 
 const DEMO_APPOINTMENTS = [
-  { name: "Marko Petrović", time: "09:00", reason: "Sumnja na upalu pluća", status: "completed" as const, priority: "normal" },
-  { name: "Jana Šumonja", time: "11:30", reason: "Kontrola nakon terapije", status: "waiting" as const, priority: "normal" },
+  { name: "Marko Petrović", time: "09:00", reason: "Sumnja na upalu pluća", priority: "completed" },
+  { name: "Jana Šumonja", time: "11:30", reason: "Kontrola nakon terapije", priority: "normal" },
+  { name: "Milan Jovanović", time: "14:00", reason: "Glavobolja i vrtoglavica", priority: "completed" },
 ];
 
 export default function DoctorDashboard() {
