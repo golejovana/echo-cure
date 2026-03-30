@@ -1,15 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Users, FileText, AlertTriangle, Clock, ChevronRight,
-  Loader2, TrendingUp, Zap, Activity, Sparkles, ArrowUpRight,
+  Users, FileText, AlertTriangle, Clock,
+  Loader2, TrendingUp, Zap, Activity, Sparkles, ArrowUpRight, Plus, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
@@ -21,6 +30,7 @@ interface ScheduleRow {
   patient: string;
   reason: string;
   status: "completed" | "waiting" | "priority";
+  examinationId: string;
 }
 
 interface DiagCount {
@@ -81,6 +91,11 @@ const STAT_CONFIGS = [
   },
 ];
 
+const DEMO_APPOINTMENTS = [
+  { name: "Marko Petrović", time: "09:00", reason: "Sumnja na upalu pluća", status: "completed" as const, priority: "normal" },
+  { name: "Jana Šumonja", time: "11:30", reason: "Kontrola nakon terapije", status: "waiting" as const, priority: "normal" },
+];
+
 export default function DoctorDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -88,72 +103,168 @@ export default function DoctorDashboard() {
   const [stats, setStats] = useState({ patients: 0, reports: 0, alerts: 0 });
   const [topDiagnoses, setTopDiagnoses] = useState<DiagCount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({ name: "", time: "", reason: "", status: "waiting" as "completed" | "waiting" | "priority" });
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    const load = async () => {
-      const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0];
 
-      const { data: appts } = await supabase
+  const loadSchedule = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: appts } = await supabase
+      .from("appointments")
+      .select("id, appointment_time, title, priority, examination_id")
+      .eq("appointment_date", today)
+      .order("appointment_time", { ascending: true });
+
+    const { data: exams } = await supabase
+      .from("examinations")
+      .select("id, patient_name, patient_email, diagnosis_codes, created_at, chief_complaints")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    const examMap = new Map<string, any>();
+    exams?.forEach((e: any) => examMap.set(e.id, e));
+
+    // If no appointments exist for today, seed demo data
+    if (!appts || appts.length === 0) {
+      await seedDemoAppointments(user.id);
+      // Reload after seeding
+      const { data: seededAppts } = await supabase
         .from("appointments")
         .select("id, appointment_time, title, priority, examination_id")
         .eq("appointment_date", today)
         .order("appointment_time", { ascending: true });
 
-      const { data: exams } = await supabase
+      const { data: seededExams } = await supabase
         .from("examinations")
         .select("id, patient_name, patient_email, diagnosis_codes, created_at, chief_complaints")
         .order("created_at", { ascending: false })
         .limit(50);
 
-      const examMap = new Map<string, any>();
-      exams?.forEach((e: any) => examMap.set(e.id, e));
+      const seededExamMap = new Map<string, any>();
+      seededExams?.forEach((e: any) => seededExamMap.set(e.id, e));
 
-      const rows: ScheduleRow[] = (appts || []).map((a: any) => {
-        const exam = examMap.get(a.examination_id);
-        const status: ScheduleRow["status"] =
-          a.priority === "high" || a.priority === "urgent" ? "priority" :
-          exam ? "completed" : "waiting";
-        return {
-          id: a.id,
-          time: a.appointment_time || "—",
-          patient: exam?.patient_name || exam?.patient_email || "—",
-          reason: exam?.chief_complaints?.split(",")[0]?.trim() || a.title || "Pregled",
-          status,
-        };
+      buildRows(seededAppts || [], seededExamMap, seededExams || []);
+    } else {
+      buildRows(appts, examMap, exams || []);
+    }
+
+    setLoading(false);
+  }, [today]);
+
+  const buildRows = (appts: any[], examMap: Map<string, any>, exams: any[]) => {
+    const rows: ScheduleRow[] = appts.map((a: any) => {
+      const exam = examMap.get(a.examination_id);
+      const priority = a.priority;
+      const status: ScheduleRow["status"] =
+        priority === "completed" ? "completed" :
+        priority === "high" || priority === "urgent" ? "priority" : "waiting";
+      return {
+        id: a.id,
+        time: a.appointment_time || "—",
+        patient: exam?.patient_name || a.title || "—",
+        reason: exam?.chief_complaints?.split(",")[0]?.trim() || a.title || "Pregled",
+        status,
+        examinationId: a.examination_id,
+      };
+    });
+    setSchedule(rows);
+
+    setStats({
+      patients: rows.length,
+      reports: exams.filter((e: any) => e.created_at?.startsWith(today)).length,
+      alerts: rows.filter(r => r.status === "priority").length,
+    });
+
+    const diagMap = new Map<string, number>();
+    const EXCLUDED_DIAG = ["unspecified", "nije određeno iz transkripta", "nije odredjeno iz transkripta", "nije pomenuto"];
+    exams.forEach((e: any) => {
+      if (e.diagnosis_codes) {
+        e.diagnosis_codes.split(",").forEach((d: string) => {
+          const name = d.trim();
+          if (name && !EXCLUDED_DIAG.some(ex => name.toLowerCase().includes(ex))) {
+            diagMap.set(name, (diagMap.get(name) || 0) + 1);
+          }
+        });
+      }
+    });
+    const sorted = [...diagMap.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([name, count]) => ({ name, count }));
+    setTopDiagnoses(sorted);
+  };
+
+  const seedDemoAppointments = async (doctorId: string) => {
+    for (const demo of DEMO_APPOINTMENTS) {
+      // Create a minimal examination record
+      const { data: exam } = await supabase
+        .from("examinations")
+        .insert({
+          doctor_id: doctorId,
+          patient_email: `${demo.name.toLowerCase().replace(/\s+/g, ".")}@demo.rs`,
+          patient_name: demo.name,
+          chief_complaints: demo.reason,
+          form_data: {},
+        })
+        .select("id")
+        .single();
+
+      if (exam) {
+        await supabase.from("appointments").insert({
+          examination_id: exam.id,
+          appointment_date: today,
+          appointment_time: demo.time,
+          title: demo.reason,
+          priority: demo.status === "completed" ? "completed" : "normal",
+        });
+      }
+    }
+  };
+
+  useEffect(() => {
+    loadSchedule();
+  }, [loadSchedule]);
+
+  const handleAddAppointment = async () => {
+    if (!formData.name.trim() || !formData.time.trim() || !formData.reason.trim()) return;
+    setSubmitting(true);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSubmitting(false); return; }
+
+    // Create examination record
+    const { data: exam } = await supabase
+      .from("examinations")
+      .insert({
+        doctor_id: user.id,
+        patient_email: `${formData.name.toLowerCase().replace(/\s+/g, ".")}@manual.rs`,
+        patient_name: formData.name,
+        chief_complaints: formData.reason,
+        form_data: {},
+      })
+      .select("id")
+      .single();
+
+    if (exam) {
+      const priorityMap: Record<string, string> = { completed: "completed", waiting: "normal", priority: "high" };
+      await supabase.from("appointments").insert({
+        examination_id: exam.id,
+        appointment_date: today,
+        appointment_time: formData.time,
+        title: formData.reason,
+        priority: priorityMap[formData.status] || "normal",
       });
-      setSchedule(rows);
+    }
 
-      const todayExams = exams?.filter((e: any) =>
-        e.created_at?.startsWith(today)
-      ) || [];
-      setStats({
-        patients: rows.length || todayExams.length,
-        reports: todayExams.length,
-        alerts: rows.filter(r => r.status === "priority").length,
-      });
-
-      const diagMap = new Map<string, number>();
-      const EXCLUDED_DIAG = ["unspecified", "nije određeno iz transkripta", "nije odredjeno iz transkripta", "nije pomenuto"];
-      exams?.forEach((e: any) => {
-        if (e.diagnosis_codes) {
-          e.diagnosis_codes.split(",").forEach((d: string) => {
-            const name = d.trim();
-            if (name && !EXCLUDED_DIAG.some(ex => name.toLowerCase().includes(ex))) {
-              diagMap.set(name, (diagMap.get(name) || 0) + 1);
-            }
-          });
-        }
-      });
-      const sorted = [...diagMap.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-        .map(([name, count]) => ({ name, count }));
-      setTopDiagnoses(sorted);
-
-      setLoading(false);
-    };
-    load();
-  }, []);
+    setFormData({ name: "", time: "", reason: "", status: "waiting" });
+    setDialogOpen(false);
+    setSubmitting(false);
+    await loadSchedule();
+  };
 
   if (loading) {
     return (
@@ -231,9 +342,19 @@ export default function DoctorDashboard() {
                   </div>
                   <CardTitle className="text-sm font-bold uppercase tracking-wider">Dnevni raspored</CardTitle>
                 </div>
-                <Badge variant="outline" className="text-[10px] font-semibold bg-primary/5 border-primary/15 text-primary">
-                  {schedule.length} zakazano
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-[10px] font-semibold bg-primary/5 border-primary/15 text-primary">
+                    {schedule.length} zakazano
+                  </Badge>
+                  <Button
+                    size="sm"
+                    onClick={() => setDialogOpen(true)}
+                    className="h-7 px-2.5 text-xs gap-1 rounded-lg"
+                  >
+                    <Plus size={13} />
+                    Novo zakazivanje
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -242,8 +363,8 @@ export default function DoctorDashboard() {
                   <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
                     <Activity size={24} className="text-muted-foreground/30" />
                   </div>
-                  <p className="text-sm text-muted-foreground font-medium">Nema zakazanih pregleda za danas</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Dodajte pregled iz sekcije "Pregled"</p>
+                  <p className="text-sm text-muted-foreground font-medium">Nema zakazanih pacijenata za danas.</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Kliknite "Novo zakazivanje" da dodate pregled</p>
                 </div>
               ) : (
                 <Table>
@@ -256,15 +377,17 @@ export default function DoctorDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {schedule.map((row, idx) => (
+                    {schedule.map((row) => (
                       <TableRow
                         key={row.id}
                         className="cursor-pointer group hover:bg-primary/3 transition-colors duration-200 border-border/15"
-                        onClick={() => navigate("/history")}
+                        onClick={() => navigate(`/examination/${row.examinationId}`)}
                       >
                         <TableCell className="font-bold text-foreground whitespace-nowrap text-sm">{row.time}</TableCell>
                         <TableCell className="text-foreground font-medium">{row.patient}</TableCell>
-                        <TableCell className="text-muted-foreground hidden sm:table-cell text-sm max-w-[200px] truncate">{row.reason.length > 60 ? row.reason.slice(0, 60) + "…" : row.reason}</TableCell>
+                        <TableCell className="text-muted-foreground hidden sm:table-cell text-sm max-w-[200px] truncate">
+                          {row.reason.length > 60 ? row.reason.slice(0, 60) + "…" : row.reason}
+                        </TableCell>
                         <TableCell className="text-right">
                           <Badge variant="outline" className={cn("text-[10px] font-bold border px-2.5 py-0.5", STATUS_STYLES[row.status])}>
                             {STATUS_LABELS[row.status]}
@@ -350,6 +473,71 @@ export default function DoctorDashboard() {
           </Card>
         </motion.div>
       </div>
+
+      {/* New Appointment Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">Novo zakazivanje</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="apt-name">Ime pacijenta</Label>
+              <Input
+                id="apt-name"
+                placeholder="npr. Marko Petrović"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="apt-time">Vreme</Label>
+              <Input
+                id="apt-time"
+                type="time"
+                placeholder="npr. 10:30"
+                value={formData.time}
+                onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="apt-reason">Razlog</Label>
+              <Input
+                id="apt-reason"
+                placeholder="npr. Kontrola pritiska"
+                value={formData.reason}
+                onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, status: v as any }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="waiting">Čeka</SelectItem>
+                  <SelectItem value="completed">Završeno</SelectItem>
+                  <SelectItem value="priority">Prioritet</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Otkaži</Button>
+            <Button
+              onClick={handleAddAppointment}
+              disabled={submitting || !formData.name.trim() || !formData.time.trim() || !formData.reason.trim()}
+            >
+              {submitting ? <Loader2 className="animate-spin mr-2" size={14} /> : <Plus size={14} className="mr-1" />}
+              Zakaži
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
