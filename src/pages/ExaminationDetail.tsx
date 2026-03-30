@@ -11,6 +11,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "@/i18n/LanguageContext";
 import { generateAnamnezaPdf } from "@/lib/generateAnamnezaPdf";
+import TherapyProgressPanel from "@/components/TherapyProgressPanel";
 
 interface Examination {
   id: string;
