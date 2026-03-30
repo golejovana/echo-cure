@@ -16,9 +16,12 @@ interface MedicationData {
 
 interface DrugTrackerProps {
   medications: MedicationData[];
+  examinationId: string;
 }
 
-const LS_KEY = "echocure_med_tracker";
+function getLsKey(examinationId: string) {
+  return `echocure_med_tracker_${examinationId}`;
+}
 
 interface TakenRecord {
   [medKey: string]: string; // medKey → ISO timestamp when taken
@@ -28,12 +31,11 @@ function getTodayKey() {
   return new Date().toISOString().split("T")[0];
 }
 
-function loadTaken(): { date: string; records: TakenRecord } {
+function loadTaken(examinationId: string): { date: string; records: TakenRecord } {
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = localStorage.getItem(getLsKey(examinationId));
     if (!raw) return { date: getTodayKey(), records: {} };
     const parsed = JSON.parse(raw);
-    // Reset if not today
     if (parsed.date !== getTodayKey()) {
       return { date: getTodayKey(), records: {} };
     }
@@ -43,8 +45,8 @@ function loadTaken(): { date: string; records: TakenRecord } {
   }
 }
 
-function saveTaken(data: { date: string; records: TakenRecord }) {
-  localStorage.setItem(LS_KEY, JSON.stringify(data));
+function saveTaken(examinationId: string, data: { date: string; records: TakenRecord }) {
+  localStorage.setItem(getLsKey(examinationId), JSON.stringify(data));
 }
 
 function formatFrequency(freq: string, t: (key: string) => string): string {
@@ -57,9 +59,9 @@ function formatTime(iso: string): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-export default function DrugTracker({ medications }: DrugTrackerProps) {
+export default function DrugTracker({ medications, examinationId }: DrugTrackerProps) {
   const { t } = useTranslation();
-  const [takenData, setTakenData] = useState(loadTaken);
+  const [takenData, setTakenData] = useState(() => loadTaken(examinationId));
 
   // Reset daily
   useEffect(() => {
@@ -67,7 +69,7 @@ export default function DrugTracker({ medications }: DrugTrackerProps) {
     if (takenData.date !== today) {
       const fresh = { date: today, records: {} };
       setTakenData(fresh);
-      saveTaken(fresh);
+      saveTaken(examinationId, fresh);
     }
   }, [takenData.date]);
 
@@ -77,7 +79,7 @@ export default function DrugTracker({ medications }: DrugTrackerProps) {
         ...prev,
         records: { ...prev.records, [medKey]: new Date().toISOString() },
       };
-      saveTaken(next);
+      saveTaken(examinationId, next);
       return next;
     });
   };
