@@ -97,6 +97,8 @@ const fr: Record<string, string | string[]> = {
   "form.patientAge": "Âge / Date de naissance",
   "form.patientOccupation": "Profession",
   "form.patientSocial": "Statut social",
+  "form.patientJmbg": "N° d'identité (JMBG)",
+  "form.patientAddress": "Adresse",
   "form.fromTranscript": "De la transcription…",
   "form.anamnesis": "Anamnèse",
   "form.workingDiagnosis": "Diagnostics de travail (CIM-10)",

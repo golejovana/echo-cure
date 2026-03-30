@@ -72,6 +72,9 @@ interface Translations {
   occupation: string;
   socialStatus: string;
   drug: string;
+  legalNote: string;
+  footerCity: string;
+  footerDay: string;
 }
 
 const SR: Translations = {
@@ -136,6 +139,9 @@ const SR: Translations = {
   occupation: "Занимање:",
   socialStatus: "Социјални статус:",
   drug: "Лек:",
+  legalNote: "Овај документ је валидан уз потпис и печат овлашћеног лекара.",
+  footerCity: "У",
+  footerDay: "дана:",
 };
 
 const EN: Translations = {
@@ -200,6 +206,9 @@ const EN: Translations = {
   occupation: "Occupation:",
   socialStatus: "Social Status:",
   drug: "Drug:",
+  legalNote: "This document is valid with the signature and stamp of the authorized physician.",
+  footerCity: "In",
+  footerDay: "on:",
 };
 
 const FR: Translations = {
@@ -213,6 +222,9 @@ const FR: Translations = {
   statusPraesens: "STATUS PRAESENS — EXAMEN OBJECTIF",
   signatureLabel: "Signature du médecin:",
   date: "Date",
+  legalNote: "Ce document est valide avec la signature et le cachet du médecin autorisé.",
+  footerCity: "À",
+  footerDay: "le:",
 };
 
 function getT(lang: string): Translations {
@@ -544,7 +556,7 @@ const S = {
     fontFamily: "'Times New Roman', 'Georgia', 'DejaVu Serif', serif",
     textAlign: "center" as const,
     fontStyle: "italic" as const,
-  },
+  } as React.CSSProperties,
   consent: {
     fontSize: "7.5px",
     color: "#444",
@@ -755,7 +767,7 @@ const PdfReportTemplate: React.FC<Props> = ({ form, lang, institution }) => {
       {/* ===== FOOTER ===== */}
       <div style={S.footer}>
         <div style={S.footerLeft}>
-          <div>У {cityForFooter === "Beograd" ? "Београду" : cityForFooter}, дана: {today()}</div>
+          <div>{t.footerCity} {cityForFooter}, {t.footerDay} {today()}</div>
         </div>
         <div style={S.stampBox}>
           {t.stampLabel}
@@ -770,7 +782,7 @@ const PdfReportTemplate: React.FC<Props> = ({ form, lang, institution }) => {
 
       {/* LEGAL NOTE */}
       <div style={S.legalNote}>
-        Овај документ је валидан уз потпис и печат овлашћеног лекара.
+        {t.legalNote}
       </div>
 
       {/* CONSENT */}

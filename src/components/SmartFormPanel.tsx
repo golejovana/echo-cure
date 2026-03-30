@@ -306,6 +306,8 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
               { key: "patientAge", labelKey: "form.patientAge" },
               { key: "patientOccupation", labelKey: "form.patientOccupation" },
               { key: "patientSocialStatus", labelKey: "form.patientSocial" },
+              { key: "jmbg", labelKey: "form.patientJmbg" },
+              { key: "patientAddress", labelKey: "form.patientAddress" },
             ].map((f) => (
               <div key={f.key}>
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t(f.labelKey)}</label>

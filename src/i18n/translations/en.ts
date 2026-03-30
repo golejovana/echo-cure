@@ -97,6 +97,8 @@ const en: Record<string, string | string[]> = {
   "form.patientAge": "Age / Date of Birth",
   "form.patientOccupation": "Occupation",
   "form.patientSocial": "Social Status",
+  "form.patientJmbg": "National ID (JMBG)",
+  "form.patientAddress": "Address",
   "form.fromTranscript": "From transcript…",
   "form.anamnesis": "Anamnesis",
   "form.workingDiagnosis": "Working Diagnoses (ICD-10)",

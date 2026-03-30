@@ -97,6 +97,8 @@ const sr = {
   "form.patientAge": "Godište / Starost",
   "form.patientOccupation": "Zanimanje",
   "form.patientSocial": "Socijalni status",
+  "form.patientJmbg": "JMBG",
+  "form.patientAddress": "Adresa",
   "form.fromTranscript": "Iz transkripta…",
   "form.anamnesis": "Anamneza",
   "form.workingDiagnosis": "Radne dijagnoze (ICD-10)",
