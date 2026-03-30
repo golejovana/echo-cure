@@ -331,6 +331,43 @@ const sr = {
   "therapy.allergyBannerBody": "Pacijent ima evidentiranu alergiju na: {allergen}.",
   "therapy.newMedication": "Novi lek",
   "therapy.addMedicationBtn": "Dodaj lek",
+
+  // Journal
+  "journal.title": "Moj dnevnik terapije",
+  "journal.subtitle": "Svakodnevno praćenje simptoma i raspoloženja",
+  "journal.howFeeling": "Kako se osećate danas?",
+  "journal.symptoms": "Simptomi",
+  "journal.symptomsPlaceholder": "npr. mučnina, glavobolja, bolje mi je...",
+  "journal.medQuestion": "Da li ste popili današnju terapiju?",
+  "journal.additionalNotes": "Dodatne napomene",
+  "journal.notesPlaceholder": "Bilo šta što želite da podelite sa lekarom...",
+  "journal.submit": "Sačuvaj unos",
+  "journal.saved": "Unos sačuvan ✓",
+  "journal.savedDesc": "Vaš dnevni unos je uspešno zabeležen.",
+  "journal.error": "Greška pri čuvanju",
+  "journal.selectMood": "Molimo izaberite raspoloženje",
+  "journal.alreadySubmitted": "Danas ste već popunili dnevnik ✓",
+  "journal.comeBackTomorrow": "Vratite se sutra za novi unos.",
+  "journal.recentEntries": "Prethodni unosi",
+  "journal.medTaken": "Lek popijen",
+  "journal.severe": "Ozbiljno",
+
+  // Progress Panel
+  "progress.title": "Tok terapije",
+  "progress.mood": "Raspoloženje",
+  "progress.avgMood": "Prosek",
+  "progress.adherence": "Adherencija",
+  "progress.alerts": "Upozorenja",
+  "progress.noEntries": "Pacijent još nije počeo da vodi dnevnik terapije.",
+  "progress.recentEntries": "Poslednji unosi",
+  "progress.aiTitle": "AI Procena uspešnosti",
+  "progress.analyzeBtn": "Analiziraj tok terapije",
+  "progress.analyzing": "Analiza u toku…",
+  "progress.analysisError": "Greška pri analizi",
+  "progress.needMore": "Potrebno je najmanje 2 unosa za analizu",
+
+  // Nav
+  "nav.journal": "Dnevnik",
 };
 
 export default sr;

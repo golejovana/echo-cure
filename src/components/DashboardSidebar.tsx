@@ -1,4 +1,4 @@
-import { Home, History, User, LogOut, Stethoscope, HeartPulse, Sparkles } from "lucide-react";
+import { Home, History, User, LogOut, Stethoscope, HeartPulse, Sparkles, BookOpen } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +29,7 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
 
   const patientNav = [
     { title: t("nav.dashboard"), url: "/", icon: Home },
+    { title: t("nav.journal"), url: "/journal", icon: BookOpen },
     { title: t("nav.history"), url: "/history", icon: History },
     { title: t("nav.profile"), url: "/profile", icon: User },
   ];

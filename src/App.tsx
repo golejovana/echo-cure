@@ -13,6 +13,7 @@ import Examination from "./pages/Examination.tsx";
 import ExaminationDetail from "./pages/ExaminationDetail.tsx";
 import HistoryPage from "./pages/HistoryPage.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
+import JournalPage from "./pages/JournalPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/examination" element={<ProtectedRoute><Examination /></ProtectedRoute>} />
               <Route path="/examination/:id" element={<ProtectedRoute><ExaminationDetail /></ProtectedRoute>} />
               <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
+              <Route path="/journal" element={<ProtectedRoute><JournalPage /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

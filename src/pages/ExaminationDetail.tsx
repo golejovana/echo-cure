@@ -4,13 +4,14 @@ import { motion } from "framer-motion";
 import {
   FileText, Sparkles, Loader2, HeartPulse, Calendar,
   Clock, Activity, ClipboardList, Shield, Pill, AlertTriangle,
-  User, Heart, Stethoscope, Droplets, Brain, Thermometer, Home, Download,
+  User, Heart, Stethoscope, Droplets, Brain, Thermometer, Home, Download, TrendingUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "@/i18n/LanguageContext";
 import { generateAnamnezaPdf } from "@/lib/generateAnamnezaPdf";
+import TherapyProgressPanel from "@/components/TherapyProgressPanel";
 
 interface Examination {
   id: string;
@@ -397,6 +398,8 @@ export default function ExaminationDetail() {
                   </div>
                 )}
               </div>
+              {/* Therapy Progress */}
+              <TherapyProgressPanel examinationId={exam.id} patientName={exam.patient_name || undefined} />
             </div>
           </div>
         </motion.div>

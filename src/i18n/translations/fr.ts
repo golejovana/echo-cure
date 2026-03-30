@@ -326,6 +326,43 @@ const fr: Record<string, string | string[]> = {
   "therapy.allergyBannerBody": "Le patient a une allergie enregistrée à : {allergen}.",
   "therapy.newMedication": "Nouveau médicament",
   "therapy.addMedicationBtn": "Ajouter le médicament",
+
+  // Journal
+  "journal.title": "Mon journal de thérapie",
+  "journal.subtitle": "Suivi quotidien des symptômes et de l'humeur",
+  "journal.howFeeling": "Comment vous sentez-vous aujourd'hui ?",
+  "journal.symptoms": "Symptômes",
+  "journal.symptomsPlaceholder": "ex. nausée, maux de tête, je me sens mieux...",
+  "journal.medQuestion": "Avez-vous pris vos médicaments aujourd'hui ?",
+  "journal.additionalNotes": "Notes supplémentaires",
+  "journal.notesPlaceholder": "Tout ce que vous souhaitez partager avec votre médecin...",
+  "journal.submit": "Enregistrer",
+  "journal.saved": "Entrée enregistrée ✓",
+  "journal.savedDesc": "Votre entrée quotidienne a été enregistrée.",
+  "journal.error": "Erreur de sauvegarde",
+  "journal.selectMood": "Veuillez sélectionner votre humeur",
+  "journal.alreadySubmitted": "Vous avez déjà soumis l'entrée d'aujourd'hui ✓",
+  "journal.comeBackTomorrow": "Revenez demain pour une nouvelle entrée.",
+  "journal.recentEntries": "Entrées récentes",
+  "journal.medTaken": "Méd. pris",
+  "journal.severe": "Grave",
+
+  // Progress Panel
+  "progress.title": "Suivi de thérapie",
+  "progress.mood": "Humeur",
+  "progress.avgMood": "Moy. humeur",
+  "progress.adherence": "Adhérence",
+  "progress.alerts": "Alertes",
+  "progress.noEntries": "Le patient n'a pas encore commencé son journal de thérapie.",
+  "progress.recentEntries": "Entrées récentes",
+  "progress.aiTitle": "Analyse AI du succès",
+  "progress.analyzeBtn": "Analyser le progrès",
+  "progress.analyzing": "Analyse en cours…",
+  "progress.analysisError": "Erreur d'analyse",
+  "progress.needMore": "Au moins 2 entrées nécessaires pour l'analyse",
+
+  // Nav
+  "nav.journal": "Journal",
 };
 
 export default fr;
