@@ -159,10 +159,10 @@ export default function DoctorDashboard() {
   const buildRows = (appts: any[], examMap: Map<string, any>, exams: any[]) => {
     const rows: ScheduleRow[] = appts.map((a: any) => {
       const exam = examMap.get(a.examination_id);
-      const priority = a.priority;
+      const pri = a.priority;
       const status: ScheduleRow["status"] =
-        priority === "completed" ? "completed" :
-        priority === "high" || priority === "urgent" ? "priority" : "waiting";
+        pri === "completed" ? "completed" :
+        pri === "high" || pri === "urgent" ? "priority" : "waiting";
       return {
         id: a.id,
         time: a.appointment_time || "—",
@@ -174,9 +174,12 @@ export default function DoctorDashboard() {
     });
     setSchedule(rows);
 
+    // "Pacijenata danas" = total scheduled appointments
+    // "Generisanih nalaza" = only appointments with priority="completed" (PDF was generated)
+    const completedCount = rows.filter(r => r.status === "completed").length;
     setStats({
       patients: rows.length,
-      reports: exams.filter((e: any) => e.created_at?.startsWith(today)).length,
+      reports: completedCount,
       alerts: rows.filter(r => r.status === "priority").length,
     });
 
