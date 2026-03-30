@@ -1,4 +1,4 @@
-import { Home, History, User, LogOut, Stethoscope, HeartPulse, Sparkles } from "lucide-react";
+import { Home, History, User, LogOut, Stethoscope, HeartPulse, Sparkles, BookOpen } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
