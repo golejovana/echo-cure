@@ -40,6 +40,7 @@ export function AppointmentsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refreshFromDb = useCallback(async () => {
+    // RLS already filters by user, but we order for display
     const { data } = await supabase
       .from("appointments")
       .select("*")
