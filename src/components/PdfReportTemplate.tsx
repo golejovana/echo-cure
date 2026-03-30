@@ -782,7 +782,7 @@ const PdfReportTemplate: React.FC<Props> = ({ form, lang, institution }) => {
 
       {/* LEGAL NOTE */}
       <div style={S.legalNote}>
-        Овај документ је валидан уз потпис и печат овлашћеног лекара.
+        {t.legalNote}
       </div>
 
       {/* CONSENT */}
