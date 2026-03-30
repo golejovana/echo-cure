@@ -199,7 +199,7 @@ export default function DoctorDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {STAT_CONFIGS.map((s, i) => (
           <motion.div key={i} variants={item}>
-            <div className={cn("stat-card border-l-[3px]", s.borderAccent)}>
+            <div className={cn("stat-card border-l-[3px] border", s.borderAccent, s.cardBorder)}>
               <div className={cn("absolute inset-0 rounded-2xl bg-gradient-to-br opacity-50", s.gradient)} />
               <div className="relative flex items-center gap-4">
                 <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center", s.iconBg)}>
