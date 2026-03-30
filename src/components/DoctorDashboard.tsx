@@ -204,7 +204,6 @@ export default function DoctorDashboard() {
 
   const seedDemoAppointments = async (doctorId: string) => {
     for (const demo of DEMO_APPOINTMENTS) {
-      // Create a minimal examination record
       const { data: exam } = await supabase
         .from("examinations")
         .insert({
@@ -223,7 +222,7 @@ export default function DoctorDashboard() {
           appointment_date: today,
           appointment_time: demo.time,
           title: demo.reason,
-          priority: demo.status === "completed" ? "completed" : "normal",
+          priority: demo.priority,
         });
       }
     }
