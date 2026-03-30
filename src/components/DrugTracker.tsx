@@ -59,9 +59,9 @@ function formatTime(iso: string): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-export default function DrugTracker({ medications }: DrugTrackerProps) {
+export default function DrugTracker({ medications, examinationId }: DrugTrackerProps) {
   const { t } = useTranslation();
-  const [takenData, setTakenData] = useState(loadTaken);
+  const [takenData, setTakenData] = useState(() => loadTaken(examinationId));
 
   // Reset daily
   useEffect(() => {
