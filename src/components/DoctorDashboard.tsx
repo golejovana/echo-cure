@@ -92,8 +92,9 @@ const STAT_CONFIGS = [
 ];
 
 const DEMO_APPOINTMENTS = [
-  { name: "Marko Petrović", time: "09:00", reason: "Sumnja na upalu pluća", status: "completed" as const, priority: "normal" },
-  { name: "Jana Šumonja", time: "11:30", reason: "Kontrola nakon terapije", status: "waiting" as const, priority: "normal" },
+  { name: "Marko Petrović", time: "09:00", reason: "Sumnja na upalu pluća", priority: "completed" },
+  { name: "Jana Šumonja", time: "11:30", reason: "Kontrola nakon terapije", priority: "normal" },
+  { name: "Milan Jovanović", time: "14:00", reason: "Glavobolja i vrtoglavica", priority: "completed" },
 ];
 
 export default function DoctorDashboard() {
@@ -158,10 +159,10 @@ export default function DoctorDashboard() {
   const buildRows = (appts: any[], examMap: Map<string, any>, exams: any[]) => {
     const rows: ScheduleRow[] = appts.map((a: any) => {
       const exam = examMap.get(a.examination_id);
-      const priority = a.priority;
+      const pri = a.priority;
       const status: ScheduleRow["status"] =
-        priority === "completed" ? "completed" :
-        priority === "high" || priority === "urgent" ? "priority" : "waiting";
+        pri === "completed" ? "completed" :
+        pri === "high" || pri === "urgent" ? "priority" : "waiting";
       return {
         id: a.id,
         time: a.appointment_time || "—",
@@ -173,9 +174,12 @@ export default function DoctorDashboard() {
     });
     setSchedule(rows);
 
+    // "Pacijenata danas" = total scheduled appointments
+    // "Generisanih nalaza" = only appointments with priority="completed" (PDF was generated)
+    const completedCount = rows.filter(r => r.status === "completed").length;
     setStats({
       patients: rows.length,
-      reports: exams.filter((e: any) => e.created_at?.startsWith(today)).length,
+      reports: completedCount,
       alerts: rows.filter(r => r.status === "priority").length,
     });
 
@@ -200,7 +204,6 @@ export default function DoctorDashboard() {
 
   const seedDemoAppointments = async (doctorId: string) => {
     for (const demo of DEMO_APPOINTMENTS) {
-      // Create a minimal examination record
       const { data: exam } = await supabase
         .from("examinations")
         .insert({
@@ -219,7 +222,7 @@ export default function DoctorDashboard() {
           appointment_date: today,
           appointment_time: demo.time,
           title: demo.reason,
-          priority: demo.status === "completed" ? "completed" : "normal",
+          priority: demo.priority,
         });
       }
     }
@@ -451,13 +454,13 @@ export default function DoctorDashboard() {
             <CardContent className="space-y-4 pt-1">
               <div className="flex items-baseline gap-2">
                 <span className="text-5xl font-extrabold gradient-text tracking-tight">
-                  {stats.reports * 5 + 12}
+                  {stats.reports * 17}
                 </span>
                 <span className="text-sm text-muted-foreground font-medium">min uštede</span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 AI asistent je ubrzao dokumentaciju za{" "}
-                <span className="font-bold text-accent">{stats.reports}</span> pregled danas, štedeći 17 minuta.
+                <span className="font-bold text-accent">{stats.reports}</span> pregled{stats.reports !== 1 ? "a" : ""} danas, štedeći {stats.reports * 17} minuta.
               </p>
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div className="rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/10 p-3 text-center">
