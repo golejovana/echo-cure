@@ -227,7 +227,7 @@ export default function PatientDashboard() {
       {/* Drug Tracker */}
       {latestExam?.form_data && ((latestExam.form_data as any)?._medications?.length > 0) && (
         <motion.div variants={item}>
-          <DrugTracker medications={(latestExam.form_data as any)._medications} />
+          <DrugTracker medications={(latestExam.form_data as any)._medications} examinationId={latestExam.id} />
         </motion.div>
       )}
 

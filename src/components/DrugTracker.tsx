@@ -79,7 +79,7 @@ export default function DrugTracker({ medications, examinationId }: DrugTrackerP
         ...prev,
         records: { ...prev.records, [medKey]: new Date().toISOString() },
       };
-      saveTaken(next);
+      saveTaken(examinationId, next);
       return next;
     });
   };
