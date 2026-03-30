@@ -767,7 +767,7 @@ const PdfReportTemplate: React.FC<Props> = ({ form, lang, institution }) => {
       {/* ===== FOOTER ===== */}
       <div style={S.footer}>
         <div style={S.footerLeft}>
-          <div>У {cityForFooter === "Beograd" ? "Београду" : cityForFooter}, дана: {today()}</div>
+          <div>{t.footerCity} {cityForFooter}, {t.footerDay} {today()}</div>
         </div>
         <div style={S.stampBox}>
           {t.stampLabel}
