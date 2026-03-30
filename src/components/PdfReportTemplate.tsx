@@ -72,6 +72,9 @@ interface Translations {
   occupation: string;
   socialStatus: string;
   drug: string;
+  legalNote: string;
+  footerCity: string;
+  footerDay: string;
 }
 
 const SR: Translations = {
