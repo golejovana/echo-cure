@@ -326,6 +326,43 @@ const en: Record<string, string | string[]> = {
   "therapy.allergyBannerBody": "Patient has a recorded allergy to: {allergen}.",
   "therapy.newMedication": "New Medication",
   "therapy.addMedicationBtn": "Add Medication",
+
+  // Journal
+  "journal.title": "My Therapy Journal",
+  "journal.subtitle": "Daily symptom and mood tracking",
+  "journal.howFeeling": "How are you feeling today?",
+  "journal.symptoms": "Symptoms",
+  "journal.symptomsPlaceholder": "e.g. nausea, headache, feeling better...",
+  "journal.medQuestion": "Did you take today's medication?",
+  "journal.additionalNotes": "Additional notes",
+  "journal.notesPlaceholder": "Anything you'd like to share with your doctor...",
+  "journal.submit": "Save entry",
+  "journal.saved": "Entry saved ✓",
+  "journal.savedDesc": "Your daily entry has been recorded.",
+  "journal.error": "Error saving",
+  "journal.selectMood": "Please select your mood",
+  "journal.alreadySubmitted": "You've already submitted today's entry ✓",
+  "journal.comeBackTomorrow": "Come back tomorrow for a new entry.",
+  "journal.recentEntries": "Recent entries",
+  "journal.medTaken": "Med taken",
+  "journal.severe": "Severe",
+
+  // Progress Panel
+  "progress.title": "Therapy Progress",
+  "progress.mood": "Mood",
+  "progress.avgMood": "Avg Mood",
+  "progress.adherence": "Adherence",
+  "progress.alerts": "Alerts",
+  "progress.noEntries": "Patient hasn't started their therapy journal yet.",
+  "progress.recentEntries": "Recent entries",
+  "progress.aiTitle": "AI Success Analysis",
+  "progress.analyzeBtn": "Analyze therapy progress",
+  "progress.analyzing": "Analyzing…",
+  "progress.analysisError": "Analysis error",
+  "progress.needMore": "At least 2 entries needed for analysis",
+
+  // Nav
+  "nav.journal": "Journal",
 };
 
 export default en;

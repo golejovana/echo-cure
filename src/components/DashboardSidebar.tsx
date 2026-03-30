@@ -29,6 +29,7 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
 
   const patientNav = [
     { title: t("nav.dashboard"), url: "/", icon: Home },
+    { title: t("nav.journal"), url: "/journal", icon: BookOpen },
     { title: t("nav.history"), url: "/history", icon: History },
     { title: t("nav.profile"), url: "/profile", icon: User },
   ];
