@@ -16,9 +16,12 @@ interface MedicationData {
 
 interface DrugTrackerProps {
   medications: MedicationData[];
+  examinationId: string;
 }
 
-const LS_KEY = "echocure_med_tracker";
+function getLsKey(examinationId: string) {
+  return `echocure_med_tracker_${examinationId}`;
+}
 
 interface TakenRecord {
   [medKey: string]: string; // medKey → ISO timestamp when taken
