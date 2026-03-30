@@ -485,6 +485,26 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
               setPdfLoading(true);
               try {
                 await generateAnamnezaPdf(form, lang, institutionInfo);
+                // If this form was opened from a saved examination, flip its appointment status
+                const patientEmail = form.patientName?.toLowerCase().replace(/\s+/g, ".") + "@manual.rs";
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                  // Find any examination matching this patient for today
+                  const { data: exams } = await supabase
+                    .from("examinations")
+                    .select("id")
+                    .eq("doctor_id", user.id)
+                    .eq("patient_name", form.patientName || "")
+                    .order("created_at", { ascending: false })
+                    .limit(1);
+                  if (exams && exams.length > 0) {
+                    await supabase
+                      .from("appointments")
+                      .update({ priority: "completed" } as any)
+                      .eq("examination_id", exams[0].id);
+                  }
+                }
+                toast({ title: "PDF generisan", description: "Nalaz je generisan i status pacijenta je ažuriran." });
               } catch (e) {
                 console.error("PDF generation error:", e);
                 toast({ title: "PDF Error", description: e instanceof Error ? e.message : "Failed to generate PDF", variant: "destructive" });
