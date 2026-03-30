@@ -139,6 +139,9 @@ const SR: Translations = {
   occupation: "Занимање:",
   socialStatus: "Социјални статус:",
   drug: "Лек:",
+  legalNote: "Овај документ је валидан уз потпис и печат овлашћеног лекара.",
+  footerCity: "У",
+  footerDay: "дана:",
 };
 
 const EN: Translations = {
