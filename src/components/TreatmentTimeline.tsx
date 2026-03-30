@@ -80,7 +80,21 @@ export default function TreatmentTimeline({ examDate, appointments }: TreatmentT
     return all;
   }, [examDate, appointments, t]);
 
-  if (steps.length === 0) return null;
+  if (steps.length <= 1 && appointments.length === 0) {
+    return (
+      <div className="glass-card-elevated p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Activity size={18} strokeWidth={1.5} className="text-primary" />
+          <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
+            {t("timeline.title")}
+          </h3>
+        </div>
+        <p className="text-sm text-muted-foreground text-center py-4">
+          Nema planiranih aktivnosti za ovog pacijenta.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="glass-card-elevated p-6 space-y-4">
