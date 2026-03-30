@@ -206,6 +206,9 @@ const EN: Translations = {
   occupation: "Occupation:",
   socialStatus: "Social Status:",
   drug: "Drug:",
+  legalNote: "This document is valid with the signature and stamp of the authorized physician.",
+  footerCity: "In",
+  footerDay: "on:",
 };
 
 const FR: Translations = {
