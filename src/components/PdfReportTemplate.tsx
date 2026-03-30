@@ -237,7 +237,8 @@ function isEmpty(val: string | undefined): boolean {
   if (!val || !val.trim()) return true;
   const lower = val.trim().toLowerCase();
   const skip = [
-    "nije pomenuto", "not mentioned", "non mentionné",
+    "nije pomenuto", "nije pomenuto u transkriptu",
+    "not mentioned", "non mentionné",
     "negativno", "negative", "denied", "negira",
     "nije pregledano", "not examined", "nije određeno", "___",
   ];
