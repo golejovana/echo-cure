@@ -48,21 +48,20 @@ serve(async (req) => {
       ...messages.map((m: any) => ({ role: m.role, content: m.content })),
     ];
 
-    const gatewayUrl = Deno.env.get("LOVABLE_AI_GATEWAY_URL");
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
 
-    if (!gatewayUrl || !apiKey) {
-      throw new Error("AI Gateway not configured");
+    if (!apiKey) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const response = await fetch(`${gatewayUrl}/chat/completions`, {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: apiMessages,
         max_tokens: 800,
         temperature: 0.7,
@@ -70,6 +69,16 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Previše zahteva, pokušajte ponovo za minut." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "Potrebno je dopuniti kredite." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const errText = await response.text();
       throw new Error(`AI API error: ${response.status} ${errText}`);
     }
