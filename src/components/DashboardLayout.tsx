@@ -37,6 +37,7 @@ export default function DashboardLayout({ role, children }: DashboardLayoutProps
             </motion.div>
           </main>
         </div>
+        <EchoMedChat userRole={role} />
       </div>
     </SidebarProvider>
   );
