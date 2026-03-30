@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   FileText, Sparkles, Loader2, HeartPulse, Calendar,
   Clock, Activity, ClipboardList, Shield, Pill, AlertTriangle,
-  User, Heart, Stethoscope, Droplets, Brain, Thermometer, Home, Download,
+  User, Heart, Stethoscope, Droplets, Brain, Thermometer, Home, Download, TrendingUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
