@@ -398,6 +398,8 @@ export default function ExaminationDetail() {
                   </div>
                 )}
               </div>
+              {/* Therapy Progress */}
+              <TherapyProgressPanel examinationId={exam.id} patientName={exam.patient_name || undefined} />
             </div>
           </div>
         </motion.div>
