@@ -130,17 +130,20 @@ export default function DoctorDashboard() {
       });
 
       const diagMap = new Map<string, number>();
+      const EXCLUDED_DIAG = ["unspecified", "nije određeno iz transkripta", "nije odredjeno iz transkripta", "nije pomenuto"];
       exams?.forEach((e: any) => {
         if (e.diagnosis_codes) {
           e.diagnosis_codes.split(",").forEach((d: string) => {
             const name = d.trim();
-            if (name) diagMap.set(name, (diagMap.get(name) || 0) + 1);
+            if (name && !EXCLUDED_DIAG.some(ex => name.toLowerCase().includes(ex))) {
+              diagMap.set(name, (diagMap.get(name) || 0) + 1);
+            }
           });
         }
       });
       const sorted = [...diagMap.entries()]
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
+        .slice(0, 3)
         .map(([name, count]) => ({ name, count }));
       setTopDiagnoses(sorted);
 
