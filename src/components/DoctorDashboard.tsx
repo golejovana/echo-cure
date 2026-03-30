@@ -454,13 +454,13 @@ export default function DoctorDashboard() {
             <CardContent className="space-y-4 pt-1">
               <div className="flex items-baseline gap-2">
                 <span className="text-5xl font-extrabold gradient-text tracking-tight">
-                  {stats.reports * 5 + 12}
+                  {stats.reports * 17}
                 </span>
                 <span className="text-sm text-muted-foreground font-medium">min uštede</span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 AI asistent je ubrzao dokumentaciju za{" "}
-                <span className="font-bold text-accent">{stats.reports}</span> pregled danas, štedeći 17 minuta.
+                <span className="font-bold text-accent">{stats.reports}</span> pregled{stats.reports !== 1 ? "a" : ""} danas, štedeći {stats.reports * 17} minuta.
               </p>
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div className="rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/10 p-3 text-center">

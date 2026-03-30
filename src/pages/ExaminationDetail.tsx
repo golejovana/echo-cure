@@ -177,6 +177,14 @@ export default function ExaminationDetail() {
     setPdfLoading(true);
     try {
       await generateAnamnezaPdf(exam.form_data as Record<string, string>, "sr", institutionInfo);
+      // Flip appointment status to "completed"
+      if (id) {
+        await supabase
+          .from("appointments")
+          .update({ priority: "completed" } as any)
+          .eq("examination_id", id);
+      }
+      toast({ title: "PDF generisan", description: "Nalaz je generisan i status je ažuriran." });
     } catch (e) {
       console.error("PDF error:", e);
       toast({ title: "PDF greška", description: e instanceof Error ? e.message : "Neuspešno generisanje", variant: "destructive" });
