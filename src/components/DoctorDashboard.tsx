@@ -187,7 +187,7 @@ export default function DoctorDashboard() {
           </div>
           <p className="text-sm text-muted-foreground ml-10">Pregled aktivnosti i kliničkih podataka</p>
         </div>
-        <div className="text-xs text-muted-foreground font-medium bg-muted/50 px-3 py-1.5 rounded-full">
+        <div className="text-xs text-foreground font-bold bg-muted/50 px-3 py-1.5 rounded-full">
           {new Date().toLocaleDateString("sr-RS", { weekday: "long", day: "numeric", month: "long" })}
         </div>
       </motion.div>
