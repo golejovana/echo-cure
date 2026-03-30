@@ -263,6 +263,15 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
 
   const hasAnyData = Object.values(form).some((v) => v && !v.startsWith("Nije pomenuto") && !v.startsWith("Not mentioned") && !v.startsWith("Non mentionné"));
 
+  const requiredPatientFields = ["patientName", "patientAge", "patientAddress", "jmbg"] as const;
+  const requiredFieldsFilled = requiredPatientFields.every(
+    (k) => form[k]?.trim() && !form[k].startsWith("Nije pomenuto") && !form[k].startsWith("Not mentioned") && !form[k].startsWith("Non mentionné")
+  );
+  const canSubmit = hasAnyData && requiredFieldsFilled;
+  const disabledTooltip = !requiredFieldsFilled
+    ? "Molimo unesite osnovne podatke o pacijentu (Ime, JMBG, Adresa) da biste generisali nalaz."
+    : undefined;
+
   return (
     <div className="flex flex-col h-full">
       {/* top bar */}
