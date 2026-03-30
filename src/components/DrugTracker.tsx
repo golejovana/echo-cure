@@ -31,12 +31,11 @@ function getTodayKey() {
   return new Date().toISOString().split("T")[0];
 }
 
-function loadTaken(): { date: string; records: TakenRecord } {
+function loadTaken(examinationId: string): { date: string; records: TakenRecord } {
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = localStorage.getItem(getLsKey(examinationId));
     if (!raw) return { date: getTodayKey(), records: {} };
     const parsed = JSON.parse(raw);
-    // Reset if not today
     if (parsed.date !== getTodayKey()) {
       return { date: getTodayKey(), records: {} };
     }
@@ -46,8 +45,8 @@ function loadTaken(): { date: string; records: TakenRecord } {
   }
 }
 
-function saveTaken(data: { date: string; records: TakenRecord }) {
-  localStorage.setItem(LS_KEY, JSON.stringify(data));
+function saveTaken(examinationId: string, data: { date: string; records: TakenRecord }) {
+  localStorage.setItem(getLsKey(examinationId), JSON.stringify(data));
 }
 
 function formatFrequency(freq: string, t: (key: string) => string): string {
