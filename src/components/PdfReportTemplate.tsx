@@ -228,8 +228,8 @@ const FR: Translations = {
 };
 
 function getT(lang: string): Translations {
-  if (lang === "sr") return SR;
-  if (lang === "fr") return FR;
+  if (lang === "sr" || lang.startsWith("sr")) return SR;
+  if (lang === "fr" || lang.startsWith("fr")) return FR;
   return EN;
 }
 
