@@ -544,7 +544,7 @@ const S = {
     fontFamily: "'Times New Roman', 'Georgia', 'DejaVu Serif', serif",
     textAlign: "center" as const,
     fontStyle: "italic" as const,
-  },
+  } as React.CSSProperties,
   consent: {
     fontSize: "7.5px",
     color: "#444",
