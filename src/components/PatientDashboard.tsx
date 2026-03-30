@@ -97,14 +97,18 @@ export default function PatientDashboard() {
   }, []);
 
   // Merge: DB appointments fetched by exam ID + shared context appointments, deduplicated
-  const sharedMapped: Appointment[] = sharedAppointments.map((a) => ({
-    id: a.id,
-    title: a.title,
-    appointment_date: a.appointment_date,
-    appointment_time: a.appointment_time || null,
-    examination_id: a.examination_id || "",
-    priority: a.priority,
-  }));
+  // Filter shared appointments to only those belonging to this patient's examinations
+  const examIds = examinations.map((e) => e.id);
+  const sharedMapped: Appointment[] = sharedAppointments
+    .filter((a) => a.examination_id && examIds.includes(a.examination_id))
+    .map((a) => ({
+      id: a.id,
+      title: a.title,
+      appointment_date: a.appointment_date,
+      appointment_time: a.appointment_time || null,
+      examination_id: a.examination_id || "",
+      priority: a.priority,
+    }));
 
   const appointments: Appointment[] = [
     ...dbAppointments,
