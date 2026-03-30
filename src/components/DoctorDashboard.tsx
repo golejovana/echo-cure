@@ -53,28 +53,31 @@ const STAT_CONFIGS = [
     key: "patients",
     label: "Pacijenata danas",
     icon: Users,
-    gradient: "from-primary/15 to-primary/5",
-    iconBg: "bg-primary/12",
-    iconColor: "text-primary",
-    borderAccent: "border-l-primary",
+    gradient: "from-blue-500/15 to-blue-500/5",
+    iconBg: "bg-blue-500/12",
+    iconColor: "text-blue-500",
+    borderAccent: "border-l-blue-500",
+    cardBorder: "border-blue-500/20",
   },
   {
     key: "reports",
     label: "Generisanih nalaza",
     icon: FileText,
-    gradient: "from-accent/15 to-accent/5",
-    iconBg: "bg-accent/12",
-    iconColor: "text-accent",
-    borderAccent: "border-l-accent",
+    gradient: "from-emerald-500/15 to-emerald-500/5",
+    iconBg: "bg-emerald-500/12",
+    iconColor: "text-emerald-500",
+    borderAccent: "border-l-emerald-500",
+    cardBorder: "border-emerald-500/20",
   },
   {
     key: "alerts",
     label: "Upozorenja",
     icon: AlertTriangle,
-    gradient: "from-warning/15 to-warning/5",
-    iconBg: "bg-warning/12",
-    iconColor: "text-warning",
-    borderAccent: "border-l-warning",
+    gradient: "from-amber-500/15 to-amber-500/5",
+    iconBg: "bg-amber-500/12",
+    iconColor: "text-amber-500",
+    borderAccent: "border-l-amber-500",
+    cardBorder: "border-amber-500/20",
   },
 ];
 
@@ -130,17 +133,20 @@ export default function DoctorDashboard() {
       });
 
       const diagMap = new Map<string, number>();
+      const EXCLUDED_DIAG = ["unspecified", "nije određeno iz transkripta", "nije odredjeno iz transkripta", "nije pomenuto"];
       exams?.forEach((e: any) => {
         if (e.diagnosis_codes) {
           e.diagnosis_codes.split(",").forEach((d: string) => {
             const name = d.trim();
-            if (name) diagMap.set(name, (diagMap.get(name) || 0) + 1);
+            if (name && !EXCLUDED_DIAG.some(ex => name.toLowerCase().includes(ex))) {
+              diagMap.set(name, (diagMap.get(name) || 0) + 1);
+            }
           });
         }
       });
       const sorted = [...diagMap.entries()]
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
+        .slice(0, 3)
         .map(([name, count]) => ({ name, count }));
       setTopDiagnoses(sorted);
 
@@ -184,7 +190,7 @@ export default function DoctorDashboard() {
           </div>
           <p className="text-sm text-muted-foreground ml-10">Pregled aktivnosti i kliničkih podataka</p>
         </div>
-        <div className="text-xs text-muted-foreground font-medium bg-muted/50 px-3 py-1.5 rounded-full">
+        <div className="text-xs text-foreground font-bold bg-muted/50 px-3 py-1.5 rounded-full">
           {new Date().toLocaleDateString("sr-RS", { weekday: "long", day: "numeric", month: "long" })}
         </div>
       </motion.div>
@@ -193,7 +199,7 @@ export default function DoctorDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {STAT_CONFIGS.map((s, i) => (
           <motion.div key={i} variants={item}>
-            <div className={cn("stat-card border-l-[3px]", s.borderAccent)}>
+            <div className={cn("stat-card border-l-[3px] border", s.borderAccent, s.cardBorder)}>
               <div className={cn("absolute inset-0 rounded-2xl bg-gradient-to-br opacity-50", s.gradient)} />
               <div className="relative flex items-center gap-4">
                 <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center", s.iconBg)}>
@@ -258,7 +264,7 @@ export default function DoctorDashboard() {
                       >
                         <TableCell className="font-bold text-foreground whitespace-nowrap text-sm">{row.time}</TableCell>
                         <TableCell className="text-foreground font-medium">{row.patient}</TableCell>
-                        <TableCell className="text-muted-foreground hidden sm:table-cell text-sm">{row.reason}</TableCell>
+                        <TableCell className="text-muted-foreground hidden sm:table-cell text-sm max-w-[200px] truncate">{row.reason.length > 60 ? row.reason.slice(0, 60) + "…" : row.reason}</TableCell>
                         <TableCell className="text-right">
                           <Badge variant="outline" className={cn("text-[10px] font-bold border px-2.5 py-0.5", STATUS_STYLES[row.status])}>
                             {STATUS_LABELS[row.status]}
@@ -321,14 +327,14 @@ export default function DoctorDashboard() {
             </CardHeader>
             <CardContent className="space-y-4 pt-1">
               <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-extrabold gradient-text tracking-tight">
+                <span className="text-5xl font-extrabold gradient-text tracking-tight">
                   {stats.reports * 5 + 12}
                 </span>
                 <span className="text-sm text-muted-foreground font-medium">min uštede</span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                AI anamneza i klinička podrška ubrzali su dokumentaciju za{" "}
-                <span className="font-bold text-accent">{stats.reports}</span> pregleda danas.
+                AI asistent je ubrzao dokumentaciju za{" "}
+                <span className="font-bold text-accent">{stats.reports}</span> pregled danas, štedeći 17 minuta.
               </p>
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div className="rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/10 p-3 text-center">
