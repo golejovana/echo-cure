@@ -17,15 +17,8 @@ const LANG_LABELS: Record<Lang, string> = {
 
 const RECONNECT_DELAY = 200;
 
-const DOCTOR_PATTERNS = /^(da li|imate|koliko|kada|gde|od kada|recite|otvorite|udahnite|pokažite|opišite|how|do you|when|where|does it|can you|please|tell me|show me|breathe)/i;
-
-function labelSpeaker(text: string): string {
-  const trimmed = text.trim();
-  if (!trimmed) return "";
-  if (DOCTOR_PATTERNS.test(trimmed) || trimmed.endsWith("?")) {
-    return `Doktor: ${trimmed}`;
-  }
-  return `Pacijent: ${trimmed}`;
+function cleanSegment(text: string): string {
+  return text.trim();
 }
 
 const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps) => {
@@ -65,7 +58,7 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
   }, [transcript, interimText]);
 
   const pushSegment = useCallback((raw: string) => {
-    const labeled = labelSpeaker(raw);
+    const labeled = cleanSegment(raw);
     if (!labeled) return;
     const prev = transcriptRef.current;
     const next = prev ? `${prev}\n${labeled}` : labeled;
