@@ -19,6 +19,7 @@ const FIELDS = [
   "livingConditions", "smokingAlcohol", "epidemiological",
   "bloodPressure", "pulse", "temperature", "respiration",
   "lungSounds", "heartSounds", "abdominalExam", "skinExam", "meningealSigns", "otherFindings",
+  "diarizedTranscript",
 ];
 
 serve(async (req) => {
