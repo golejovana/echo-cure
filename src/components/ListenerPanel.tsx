@@ -58,7 +58,7 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
   }, [transcript, interimText]);
 
   const pushSegment = useCallback((raw: string) => {
-    const labeled = labelSpeaker(raw);
+    const labeled = cleanSegment(raw);
     if (!labeled) return;
     const prev = transcriptRef.current;
     const next = prev ? `${prev}\n${labeled}` : labeled;
