@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Mic, MicOff, Pause, Play, Globe } from "lucide-react";
 import { useTranslation } from "@/i18n/LanguageContext";
 import AudioWaveform from "@/components/AudioWaveform";
@@ -15,127 +15,153 @@ const LANG_LABELS: Record<Lang, string> = {
   "sr-RS": "Srpski",
 };
 
-const MAX_RECONNECT_ATTEMPTS = 50;
-const RECONNECT_DELAY = 300;
+const RECONNECT_DELAY = 200;
+
+const DOCTOR_PATTERNS = /^(da li|imate|koliko|kada|gde|od kada|recite|otvorite|udahnite|pokažite|opišite|how|do you|when|where|does it|can you|please|tell me|show me|breathe)/i;
+
+function labelSpeaker(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return "";
+  if (DOCTOR_PATTERNS.test(trimmed) || trimmed.endsWith("?")) {
+    return `Doktor: ${trimmed}`;
+  }
+  return `Pacijent: ${trimmed}`;
+}
 
 const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps) => {
   const { t } = useTranslation();
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [lines, setLines] = useState<string[]>([]);
+  const [transcript, setTranscript] = useState("");
   const [interimText, setInterimText] = useState("");
   const [lang, setLang] = useState<Lang>("sr-RS");
   const [supported, setSupported] = useState(true);
-  const recognitionRef = useRef<any>(null);
+
+  const recRef = useRef<any>(null);
+  const manualStopRef = useRef(false);
+  const transcriptRef = useRef("");
   const scrollRef = useRef<HTMLDivElement>(null);
-  const shouldBeRecording = useRef(false);
-  const reconnectAttempts = useRef(0);
-  const isManuallyStopped = useRef(false);
 
   useEffect(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) setSupported(false);
   }, []);
 
-  const stopRecognition = useCallback(() => {
-    isManuallyStopped.current = true;
-    shouldBeRecording.current = false;
-    reconnectAttempts.current = 0;
-    if (recognitionRef.current) {
-      recognitionRef.current.onresult = null;
-      recognitionRef.current.onerror = null;
-      recognitionRef.current.onend = null;
-      try { recognitionRef.current.stop(); } catch {}
-      recognitionRef.current = null;
+  // Keep ref in sync with state
+  useEffect(() => {
+    transcriptRef.current = transcript;
+  }, [transcript]);
+
+  // Notify parent
+  useEffect(() => {
+    onTranscriptUpdate(transcript);
+  }, [transcript, onTranscriptUpdate]);
+
+  // Auto-scroll
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-    setIsRecording(false);
-    setIsPaused(false);
-    setInterimText("");
+  }, [transcript, interimText]);
+
+  const pushSegment = useCallback((raw: string) => {
+    const labeled = labelSpeaker(raw);
+    if (!labeled) return;
+    const prev = transcriptRef.current;
+    const next = prev ? `${prev}\n${labeled}` : labeled;
+    transcriptRef.current = next;
+    setTranscript(next);
   }, []);
 
   const startRecognition = useCallback(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return;
 
-    // Clean up any existing instance
-    if (recognitionRef.current) {
-      recognitionRef.current.onresult = null;
-      recognitionRef.current.onerror = null;
-      recognitionRef.current.onend = null;
-      try { recognitionRef.current.stop(); } catch {}
-      recognitionRef.current = null;
+    // Cleanup previous
+    if (recRef.current) {
+      recRef.current.onresult = null;
+      recRef.current.onerror = null;
+      recRef.current.onend = null;
+      try { recRef.current.stop(); } catch {}
+      recRef.current = null;
     }
 
-    const recognition = new SR();
-    recognition.lang = lang;
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
+    const rec = new SR();
+    rec.lang = lang;
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    rec.onresult = (e: SpeechRecognitionEvent) => {
       let interim = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          setLines((prev) => [...prev, transcript.trim()]);
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const txt = e.results[i][0].transcript;
+        if (e.results[i].isFinal) {
+          // Immediately flush final result to permanent state
+          pushSegment(txt);
           setInterimText("");
         } else {
-          interim += transcript;
+          interim += txt;
         }
       }
       if (interim) setInterimText(interim);
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.warn("Speech recognition error:", event.error);
-      // For "no-speech" and "audio-capture" errors, just let onend handle reconnection
-      // Don't stop — the onend handler will auto-resume
-      if (event.error === "aborted") {
-        // Browser killed it, onend will fire
+    rec.onerror = (e: SpeechRecognitionErrorEvent) => {
+      console.warn("STT error:", e.error);
+      // Let onend handle auto-restart
+      if (e.error !== "aborted") {
+        try { rec.stop(); } catch {}
       }
     };
 
-    recognition.onend = () => {
-      // Auto-resume if we should still be recording (not manually stopped, not paused)
-      if (shouldBeRecording.current && !isManuallyStopped.current) {
-        if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
-          reconnectAttempts.current++;
-          setTimeout(() => {
-            if (shouldBeRecording.current && !isManuallyStopped.current) {
-              startRecognition();
-            }
-          }, RECONNECT_DELAY);
-        } else {
-          console.error("Max reconnect attempts reached");
-          stopRecognition();
-        }
+    rec.onend = () => {
+      // Silent auto-restart unless manually stopped
+      if (!manualStopRef.current) {
+        setTimeout(() => {
+          if (!manualStopRef.current) {
+            startRecognition();
+          }
+        }, RECONNECT_DELAY);
       }
     };
 
-    recognitionRef.current = recognition;
+    recRef.current = rec;
     try {
-      recognition.start();
-      isManuallyStopped.current = false;
-      shouldBeRecording.current = true;
-      reconnectAttempts.current = 0;
+      rec.start();
+      manualStopRef.current = false;
       setIsRecording(true);
-    } catch (e) {
-      console.error("Failed to start recognition:", e);
-      // Retry after delay
+    } catch (err) {
+      console.error("STT start failed:", err);
       setTimeout(() => {
-        if (shouldBeRecording.current) startRecognition();
+        if (!manualStopRef.current) startRecognition();
       }, RECONNECT_DELAY);
     }
-  }, [lang, stopRecognition]);
+  }, [lang, pushSegment]);
+
+  const stopRecognition = useCallback(() => {
+    manualStopRef.current = true;
+    if (recRef.current) {
+      recRef.current.onresult = null;
+      recRef.current.onerror = null;
+      recRef.current.onend = null;
+      try { recRef.current.stop(); } catch {}
+      recRef.current = null;
+    }
+    setIsRecording(false);
+    setIsPaused(false);
+    setInterimText("");
+  }, []);
 
   const toggleRecording = useCallback(() => {
     if (isRecording) {
       stopRecognition();
     } else {
-      setLines([]);
+      // Reset for new session
+      transcriptRef.current = "";
+      setTranscript("");
       setInterimText("");
       setIsPaused(false);
-      isManuallyStopped.current = false;
       startRecognition();
     }
   }, [isRecording, stopRecognition, startRecognition]);
@@ -143,35 +169,26 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
   const togglePause = useCallback(() => {
     if (!isRecording) return;
     if (isPaused) {
-      isManuallyStopped.current = false;
+      manualStopRef.current = false;
       startRecognition();
       setIsPaused(false);
     } else {
-      shouldBeRecording.current = false;
-      if (recognitionRef.current) {
-        recognitionRef.current.onend = null;
-        try { recognitionRef.current.stop(); } catch {}
-        recognitionRef.current = null;
+      manualStopRef.current = true;
+      if (recRef.current) {
+        recRef.current.onend = null;
+        try { recRef.current.stop(); } catch {}
+        recRef.current = null;
       }
       setIsPaused(true);
       setInterimText("");
     }
   }, [isRecording, isPaused, startRecognition]);
 
-  const fullText = lines.join(" ");
-
-  useEffect(() => { onTranscriptUpdate(fullText); }, [fullText, onTranscriptUpdate]);
-
   const handleManualEdit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newText = e.target.value;
-    setLines(newText ? newText.split(/(?<=\.)\s+|(?<=\n)/).filter(Boolean) : []);
+    const val = e.target.value;
+    transcriptRef.current = val;
+    setTranscript(val);
   };
-
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [lines, interimText]);
-
-  useEffect(() => { return () => { shouldBeRecording.current = false; stopRecognition(); }; }, [stopRecognition]);
 
   const toggleLang = () => {
     const wasRecording = isRecording;
@@ -181,8 +198,11 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
       onLangChange?.(next);
       return next;
     });
-    if (wasRecording) setTimeout(() => { isManuallyStopped.current = false; startRecognition(); }, 200);
+    if (wasRecording) setTimeout(() => startRecognition(), 250);
   };
+
+  // Cleanup on unmount
+  useEffect(() => () => { manualStopRef.current = true; stopRecognition(); }, [stopRecognition]);
 
   if (!supported) {
     return (
@@ -193,6 +213,7 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
   }
 
   const activeListening = isRecording && !isPaused;
+  const displayText = transcript + (interimText ? (transcript ? "\n" : "") + `... ${interimText}` : "");
 
   return (
     <div className="flex flex-col h-full">
@@ -230,7 +251,6 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
         )}
       </div>
 
-      {/* Waveform animation */}
       <div className="flex justify-center mb-4 h-6">
         <AudioWaveform isActive={activeListening} barCount={7} />
       </div>
@@ -241,7 +261,7 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto pr-1">
         <textarea
-          value={fullText + (interimText ? (fullText ? " " : "") + interimText : "")}
+          value={displayText}
           onChange={handleManualEdit}
           placeholder={t("listener.placeholder")}
           className="w-full h-full min-h-[120px] bg-transparent text-sm leading-relaxed text-foreground/85 placeholder:text-muted-foreground/50 placeholder:italic resize-none focus:outline-none"
