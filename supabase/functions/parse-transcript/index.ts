@@ -134,6 +134,7 @@ EXTRACTION RULES:
                   skinExam: { type: "string", description: "Skin examination findings" },
                   meningealSigns: { type: "string", description: "Meningeal signs assessment" },
                   otherFindings: { type: "string", description: "Any other objective findings" },
+                  diarizedTranscript: { type: "string", description: "Full transcript reformatted as a dialogue with 'Doktor:' and 'Pacijent:' labels on each line" },
                 },
                 required: FIELDS,
                 additionalProperties: false,
