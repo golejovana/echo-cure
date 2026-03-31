@@ -25,7 +25,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { transcript, lang } = await req.json();
+    const { transcript, lang, diarize } = await req.json();
     const outputLang = lang === "sr-RS" ? "Serbian" : "English";
     if (!transcript?.trim()) {
       return new Response(JSON.stringify({ error: "No transcript provided" }), {
