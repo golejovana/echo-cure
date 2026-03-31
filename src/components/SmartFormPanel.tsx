@@ -147,10 +147,15 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
     setFilling(true);
     setForm({});
     try {
-      const { data, error } = await supabase.functions.invoke("parse-transcript", { body: { transcript, lang } });
+      const { data, error } = await supabase.functions.invoke("parse-transcript", { body: { transcript, lang, diarize: true } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const fd = data.formData as FormData;
+
+      // Store diarized transcript if available
+      if (fd.diarizedTranscript) {
+        setForm((prev) => ({ ...prev, _diarizedTranscript: fd.diarizedTranscript }));
+      }
 
       setOpenSections(SYSTEM_CATEGORIES.map((c) => c.id));
       setObjectiveOpen(true);
