@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Mic, MicOff, Pause, Play, Globe } from "lucide-react";
 import { useTranslation } from "@/i18n/LanguageContext";
+import AudioWaveform from "@/components/AudioWaveform";
 
 export type Lang = "en-US" | "sr-RS";
 
@@ -14,6 +15,9 @@ const LANG_LABELS: Record<Lang, string> = {
   "sr-RS": "Srpski",
 };
 
+const MAX_RECONNECT_ATTEMPTS = 50;
+const RECONNECT_DELAY = 300;
+
 const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps) => {
   const { t } = useTranslation();
   const [isRecording, setIsRecording] = useState(false);
@@ -24,6 +28,9 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
   const [supported, setSupported] = useState(true);
   const recognitionRef = useRef<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const shouldBeRecording = useRef(false);
+  const reconnectAttempts = useRef(0);
+  const isManuallyStopped = useRef(false);
 
   useEffect(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -31,11 +38,14 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
   }, []);
 
   const stopRecognition = useCallback(() => {
+    isManuallyStopped.current = true;
+    shouldBeRecording.current = false;
+    reconnectAttempts.current = 0;
     if (recognitionRef.current) {
       recognitionRef.current.onresult = null;
       recognitionRef.current.onerror = null;
       recognitionRef.current.onend = null;
-      recognitionRef.current.stop();
+      try { recognitionRef.current.stop(); } catch {}
       recognitionRef.current = null;
     }
     setIsRecording(false);
@@ -46,10 +56,21 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
   const startRecognition = useCallback(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return;
+
+    // Clean up any existing instance
+    if (recognitionRef.current) {
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.onerror = null;
+      recognitionRef.current.onend = null;
+      try { recognitionRef.current.stop(); } catch {}
+      recognitionRef.current = null;
+    }
+
     const recognition = new SR();
     recognition.lang = lang;
     recognition.continuous = true;
     recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interim = "";
@@ -66,34 +87,70 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error("Speech recognition error:", event.error);
-      if (event.error !== "no-speech") stopRecognition();
+      console.warn("Speech recognition error:", event.error);
+      // For "no-speech" and "audio-capture" errors, just let onend handle reconnection
+      // Don't stop — the onend handler will auto-resume
+      if (event.error === "aborted") {
+        // Browser killed it, onend will fire
+      }
     };
 
     recognition.onend = () => {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.start(); } catch { stopRecognition(); }
+      // Auto-resume if we should still be recording (not manually stopped, not paused)
+      if (shouldBeRecording.current && !isManuallyStopped.current) {
+        if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
+          reconnectAttempts.current++;
+          setTimeout(() => {
+            if (shouldBeRecording.current && !isManuallyStopped.current) {
+              startRecognition();
+            }
+          }, RECONNECT_DELAY);
+        } else {
+          console.error("Max reconnect attempts reached");
+          stopRecognition();
+        }
       }
     };
 
     recognitionRef.current = recognition;
-    recognition.start();
-    setIsRecording(true);
+    try {
+      recognition.start();
+      isManuallyStopped.current = false;
+      shouldBeRecording.current = true;
+      reconnectAttempts.current = 0;
+      setIsRecording(true);
+    } catch (e) {
+      console.error("Failed to start recognition:", e);
+      // Retry after delay
+      setTimeout(() => {
+        if (shouldBeRecording.current) startRecognition();
+      }, RECONNECT_DELAY);
+    }
   }, [lang, stopRecognition]);
 
   const toggleRecording = useCallback(() => {
-    if (isRecording) { stopRecognition(); } else { setLines([]); setInterimText(""); setIsPaused(false); startRecognition(); }
+    if (isRecording) {
+      stopRecognition();
+    } else {
+      setLines([]);
+      setInterimText("");
+      setIsPaused(false);
+      isManuallyStopped.current = false;
+      startRecognition();
+    }
   }, [isRecording, stopRecognition, startRecognition]);
 
   const togglePause = useCallback(() => {
     if (!isRecording) return;
     if (isPaused) {
+      isManuallyStopped.current = false;
       startRecognition();
       setIsPaused(false);
     } else {
+      shouldBeRecording.current = false;
       if (recognitionRef.current) {
         recognitionRef.current.onend = null;
-        recognitionRef.current.stop();
+        try { recognitionRef.current.stop(); } catch {}
         recognitionRef.current = null;
       }
       setIsPaused(true);
@@ -114,7 +171,7 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [lines, interimText]);
 
-  useEffect(() => { return () => stopRecognition(); }, [stopRecognition]);
+  useEffect(() => { return () => { shouldBeRecording.current = false; stopRecognition(); }; }, [stopRecognition]);
 
   const toggleLang = () => {
     const wasRecording = isRecording;
@@ -124,7 +181,7 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
       onLangChange?.(next);
       return next;
     });
-    if (wasRecording) setTimeout(() => startRecognition(), 100);
+    if (wasRecording) setTimeout(() => { isManuallyStopped.current = false; startRecognition(); }, 200);
   };
 
   if (!supported) {
@@ -134,6 +191,8 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
       </div>
     );
   }
+
+  const activeListening = isRecording && !isPaused;
 
   return (
     <div className="flex flex-col h-full">
@@ -145,9 +204,9 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
         </button>
       </div>
 
-      <div className="flex justify-center items-center gap-4 mb-8">
+      <div className="flex justify-center items-center gap-4 mb-4">
         <button onClick={toggleRecording} className="relative group active:scale-[0.95] transition-transform duration-150">
-          {isRecording && !isPaused && (
+          {activeListening && (
             <>
               <span className="absolute inset-0 rounded-full bg-destructive/30" style={{ animation: "pulse-ring 1.5s ease-out infinite" }} />
               <span className="absolute inset-0 rounded-full bg-destructive/20" style={{ animation: "pulse-ring 1.5s ease-out infinite 0.4s" }} />
@@ -169,6 +228,11 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
             </div>
           </button>
         )}
+      </div>
+
+      {/* Waveform animation */}
+      <div className="flex justify-center mb-4 h-6">
+        <AudioWaveform isActive={activeListening} barCount={7} />
       </div>
 
       <p className="text-center text-xs text-muted-foreground mb-6">
