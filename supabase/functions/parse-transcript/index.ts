@@ -19,13 +19,14 @@ const FIELDS = [
   "livingConditions", "smokingAlcohol", "epidemiological",
   "bloodPressure", "pulse", "temperature", "respiration",
   "lungSounds", "heartSounds", "abdominalExam", "skinExam", "meningealSigns", "otherFindings",
+  "diarizedTranscript",
 ];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { transcript, lang } = await req.json();
+    const { transcript, lang, diarize } = await req.json();
     const outputLang = lang === "sr-RS" ? "Serbian" : "English";
     if (!transcript?.trim()) {
       return new Response(JSON.stringify({ error: "No transcript provided" }), {
@@ -82,7 +83,9 @@ EXTRACTION RULES:
 
 10. STATUS PRAESENS / OBJECTIVE FINDINGS: If clinical examination findings are mentioned (temperature, BP, pulse, respiration/SpO2, lung auscultation, heart sounds, abdominal exam, skin, meningeal signs), extract them precisely. Use exact values when given (e.g. "TA 160/100 mmHg", "T: 38.2°C", "SpO2: 95%"). If not mentioned, "${outputLang === "Serbian" ? "Nije pregledano / Nije pomenuto" : "Not examined / Not mentioned"}".
 
-11. FORMATTING: Be concise and clinical. Use standard medical abbreviations where appropriate. Write narratives as coherent paragraphs, not bullet points.`,
+11. FORMATTING: Be concise and clinical. Use standard medical abbreviations where appropriate. Write narratives as coherent paragraphs, not bullet points.
+
+12. SPEAKER DIARIZATION: Analyze the transcript and identify which parts were spoken by the Doctor and which by the Patient. Use contextual clues: questions, instructions, and clinical observations are typically from the Doctor; symptom descriptions, answers, and personal history are from the Patient. Format the diarized transcript as a dialogue with "Doktor:" and "Pacijent:" labels, each on a new line. If you cannot distinguish speakers for a segment, label it "Doktor:" by default since it's the doctor's recording.`,
           },
           {
             role: "user",
@@ -131,6 +134,7 @@ EXTRACTION RULES:
                   skinExam: { type: "string", description: "Skin examination findings" },
                   meningealSigns: { type: "string", description: "Meningeal signs assessment" },
                   otherFindings: { type: "string", description: "Any other objective findings" },
+                  diarizedTranscript: { type: "string", description: "Full transcript reformatted as a dialogue with 'Doktor:' and 'Pacijent:' labels on each line" },
                 },
                 required: FIELDS,
                 additionalProperties: false,

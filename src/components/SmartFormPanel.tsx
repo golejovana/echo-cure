@@ -147,10 +147,15 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
     setFilling(true);
     setForm({});
     try {
-      const { data, error } = await supabase.functions.invoke("parse-transcript", { body: { transcript, lang } });
+      const { data, error } = await supabase.functions.invoke("parse-transcript", { body: { transcript, lang, diarize: true } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const fd = data.formData as FormData;
+
+      // Store diarized transcript if available
+      if (fd.diarizedTranscript) {
+        setForm((prev) => ({ ...prev, _diarizedTranscript: fd.diarizedTranscript }));
+      }
 
       setOpenSections(SYSTEM_CATEGORIES.map((c) => c.id));
       setObjectiveOpen(true);
@@ -334,6 +339,46 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
             ))}
           </div>
         </div>
+
+        {/* ===== DIARIZED TRANSCRIPT ===== */}
+        {form._diarizedTranscript && (
+          <div className="glass-card p-5 space-y-3">
+            <div className="flex items-center gap-2 mb-1">
+              <ClipboardList size={16} strokeWidth={1.5} className="text-muted-foreground" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Dijalog — Transkript</h3>
+            </div>
+            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+              {form._diarizedTranscript.split("\n").filter(Boolean).map((line: string, i: number) => {
+                const isDoctor = line.startsWith("Doktor:");
+                const isPatient = line.startsWith("Pacijent:");
+                const content = isDoctor ? line.slice(7).trim() : isPatient ? line.slice(9).trim() : line.trim();
+                const speaker = isDoctor ? "Doktor" : isPatient ? "Pacijent" : null;
+                return (
+                  <div key={i} className={`flex gap-2 ${isPatient ? "justify-end" : ""}`}>
+                    {!isPatient && (
+                      <div className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${isDoctor ? "bg-primary/10" : "bg-muted"}`}>
+                        <span className="text-[9px] font-bold text-primary">{speaker ? speaker[0] : "?"}</span>
+                      </div>
+                    )}
+                    <div className={`rounded-2xl px-3 py-2 text-xs max-w-[85%] ${
+                      isDoctor ? "rounded-tl-sm bg-primary/5 border border-primary/10 text-foreground"
+                        : isPatient ? "rounded-tr-sm bg-secondary text-secondary-foreground"
+                        : "bg-muted/50 text-muted-foreground"
+                    }`}>
+                      {speaker && <span className="font-semibold text-[10px] text-muted-foreground block mb-0.5">{speaker}</span>}
+                      {content}
+                    </div>
+                    {isPatient && (
+                      <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center shrink-0 mt-0.5">
+                        <span className="text-[9px] font-bold text-muted-foreground">P</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ===== ANAMNEZA title ===== */}
         <div className="text-center py-2">
