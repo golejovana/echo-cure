@@ -82,7 +82,9 @@ EXTRACTION RULES:
 
 10. STATUS PRAESENS / OBJECTIVE FINDINGS: If clinical examination findings are mentioned (temperature, BP, pulse, respiration/SpO2, lung auscultation, heart sounds, abdominal exam, skin, meningeal signs), extract them precisely. Use exact values when given (e.g. "TA 160/100 mmHg", "T: 38.2°C", "SpO2: 95%"). If not mentioned, "${outputLang === "Serbian" ? "Nije pregledano / Nije pomenuto" : "Not examined / Not mentioned"}".
 
-11. FORMATTING: Be concise and clinical. Use standard medical abbreviations where appropriate. Write narratives as coherent paragraphs, not bullet points.`,
+11. FORMATTING: Be concise and clinical. Use standard medical abbreviations where appropriate. Write narratives as coherent paragraphs, not bullet points.
+
+12. SPEAKER DIARIZATION: Analyze the transcript and identify which parts were spoken by the Doctor and which by the Patient. Use contextual clues: questions, instructions, and clinical observations are typically from the Doctor; symptom descriptions, answers, and personal history are from the Patient. Format the diarized transcript as a dialogue with "Doktor:" and "Pacijent:" labels, each on a new line. If you cannot distinguish speakers for a segment, label it "Doktor:" by default since it's the doctor's recording.`,
           },
           {
             role: "user",
