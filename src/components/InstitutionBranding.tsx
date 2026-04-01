@@ -33,7 +33,7 @@ export default function InstitutionBranding() {
       if (!user) return;
       const { data: profile } = await supabase
         .from("profiles")
-        .select("institution_name, institution_address, institution_city, institution_logo_url")
+        .select("institution_name, institution_address, institution_city, institution_country, institution_logo_url")
         .eq("user_id", user.id)
         .single();
       if (profile) {
@@ -41,6 +41,7 @@ export default function InstitutionBranding() {
           institution_name: profile.institution_name || "",
           institution_address: profile.institution_address || "",
           institution_city: profile.institution_city || "",
+          institution_country: (profile as any).institution_country || "",
           institution_logo_url: profile.institution_logo_url || "",
         };
         setData(d);
