@@ -345,7 +345,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
           <div className="glass-card p-5 space-y-3">
             <div className="flex items-center gap-2 mb-1">
               <ClipboardList size={16} strokeWidth={1.5} className="text-muted-foreground" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Dijalog — Transkript</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("form.diarizedTitle")}</h3>
             </div>
             <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
               {form._diarizedTranscript.split("\n").filter(Boolean).map((line: string, i: number) => {
