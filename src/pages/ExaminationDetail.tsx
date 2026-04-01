@@ -255,7 +255,7 @@ export default function ExaminationDetail() {
 
               {/* Patient info */}
               {(fd.patientName || fd.patientAge || fd.patientOccupation) && (
-                <Section icon={User} title="Podaci o pacijentu">
+                <Section icon={User} title={t("examDetail.patientData")}>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
                     {fd.patientName && <Field label="Ime" value={fd.patientName} />}
                     {fd.patientAge && <Field label="Starost" value={fd.patientAge} />}
