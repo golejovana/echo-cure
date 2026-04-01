@@ -39,6 +39,9 @@ const en: Record<string, string | string[]> = {
   "nav.logout": "Log Out",
   "nav.doctor": "Doctor",
   "nav.patient": "Patient",
+  "nav.journal": "Journal",
+  "nav.aiPowered": "AI Powered",
+  "nav.aiSupport": "Clinical AI support active",
 
   // Doctor Dashboard
   "doctor.welcome": "Welcome, Doctor 👋",
@@ -61,6 +64,42 @@ const en: Record<string, string | string[]> = {
   "doctor.statusWaiting": "Awaiting results",
   "doctor.statusFollowUp": "Follow-up",
 
+  // Dashboard
+  "dashboard.title": "Clinical Intelligence Hub",
+  "dashboard.subtitle": "Overview of activity and clinical data",
+  "dashboard.loading": "Loading...",
+  "dashboard.patientsToday": "Patients today",
+  "dashboard.generatedReports": "Generated reports",
+  "dashboard.warnings": "Warnings",
+  "dashboard.dailySchedule": "Daily Schedule",
+  "dashboard.scheduled": "scheduled",
+  "dashboard.newAppointment": "New appointment",
+  "dashboard.noPatients": "No scheduled patients for today.",
+  "dashboard.clickToAdd": "Click \"New appointment\" to add an examination",
+  "dashboard.time": "Time",
+  "dashboard.patient": "Patient",
+  "dashboard.reason": "Reason",
+  "dashboard.status": "Status",
+  "dashboard.statusCompleted": "Completed",
+  "dashboard.statusWaiting": "Waiting",
+  "dashboard.statusPriority": "Priority",
+  "dashboard.topDiagnoses": "Top Diagnoses",
+  "dashboard.noData": "No data",
+  "dashboard.aiEfficiency": "AI Efficiency",
+  "dashboard.minSaved": "min saved",
+  "dashboard.aiEfficiencyDesc": "AI assistant accelerated documentation for",
+  "dashboard.examsToday": "exams today, saving",
+  "dashboard.minutes": "minutes.",
+  "dashboard.aiReports": "AI reports",
+  "dashboard.dialogTitle": "New Appointment",
+  "dashboard.patientName": "Patient name",
+  "dashboard.patientNamePlaceholder": "e.g. John Smith",
+  "dashboard.timePlaceholder": "e.g. 10:30",
+  "dashboard.reasonLabel": "Reason",
+  "dashboard.reasonPlaceholder": "e.g. Blood pressure check",
+  "dashboard.cancel": "Cancel",
+  "dashboard.schedule": "Schedule",
+
   // Patient Dashboard
   "patient.welcome": "Hello! 💙",
   "patient.subtitle": "Here you can track your diagnosis, treatment plan, and scheduled appointments.",
@@ -82,6 +121,9 @@ const en: Record<string, string | string[]> = {
   "patient.scheduledEvent": "Scheduled appointment",
   "patient.months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
   "patient.days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  "patient.reminderTomorrow": "Reminder: appointment is tomorrow",
+  "patient.reminderToday": "Reminder: appointment is today",
+  "patient.atTime": "at",
 
   // Smart Form Panel
   "form.title": "Anamnesis & Status Praesens",
@@ -169,6 +211,14 @@ const en: Record<string, string | string[]> = {
   "form.skinExam": "Skin",
   "form.meningealSigns": "Meningeal Signs",
   "form.otherFindings": "Other Findings",
+  "form.generating": "Generating...",
+  "form.pdfGenerated": "PDF Generated",
+  "form.pdfGeneratedDesc": "Report has been generated and patient status updated.",
+  "form.pdfError": "PDF Error",
+  "form.pdfErrorDesc": "Failed to generate PDF",
+  "form.requiredFieldsTooltip": "Please enter basic patient data (Name, ID, Address) to generate a report.",
+  "form.diarizedTitle": "Dialogue — Transcript",
+  "form.stampPlaceholder": "Stamp",
 
   // Listener Panel
   "listener.title": "Live Transcript",
@@ -251,6 +301,17 @@ const en: Record<string, string | string[]> = {
   "examDetail.notSpecified": "Not specified",
   "examDetail.error": "Error",
   "examDetail.errorDesc": "Unable to generate explanation.",
+  "examDetail.detailedAnamnesis": "Detailed Anamnesis",
+  "examDetail.generatePdf": "Generate PDF",
+  "examDetail.patientData": "Patient Data",
+  "examDetail.nameLabel": "Name",
+  "examDetail.ageLabel": "Age",
+  "examDetail.occupationLabel": "Occupation",
+  "examDetail.socialStatusLabel": "Social status",
+  "examDetail.emailLabel": "Email",
+  "examDetail.clinicalTimeline": "Clinical Course",
+  "examDetail.socialHistory": "Socio-epidemiological History",
+  "examDetail.statusPraesens": "STATUS PRAESENS — Objective Findings",
 
   // Top Nav
   "topnav.gdpr": "GDPR Compliant",
@@ -291,29 +352,6 @@ const en: Record<string, string | string[]> = {
   "therapy.medicationsLabel": "Prescribed Medications",
   "therapy.timesDaily": "x daily",
   "therapy.asNeeded": "as needed",
-
-  // Patient reminders
-  "patient.reminderTomorrow": "Reminder: appointment is tomorrow",
-  "patient.reminderToday": "Reminder: appointment is today",
-  "patient.atTime": "at",
-
-  // Language names
-  "lang.sr": "Srpski",
-  "lang.en": "English",
-  "lang.fr": "Français",
-
-  // Timeline
-  "timeline.title": "Treatment Timeline",
-  "timeline.initialExam": "Initial Exam",
-
-  // Drug Tracker
-  "drugTracker.title": "Drug Tracker & Reminders",
-  "drugTracker.taken": "taken",
-  "drugTracker.markTaken": "Mark as Taken",
-  "drugTracker.takenAt": "Taken at",
-  "drugTracker.instruction": "Instruction",
-
-  // Safety Check
   "therapy.safetyNote": "Note:",
   "therapy.warningNsaidDiabetes": "Check compatibility of {drug} with patient's insulin resistance / diabetes diagnosis.",
   "therapy.warningNsaidGastric": "{drug} may worsen the patient's gastrointestinal conditions.",
@@ -346,6 +384,11 @@ const en: Record<string, string | string[]> = {
   "journal.recentEntries": "Recent entries",
   "journal.medTaken": "Med taken",
   "journal.severe": "Severe",
+  "journal.mood1": "Very bad",
+  "journal.mood2": "Bad",
+  "journal.mood3": "Average",
+  "journal.mood4": "Good",
+  "journal.mood5": "Excellent",
 
   // Progress Panel
   "progress.title": "Therapy Progress",
@@ -361,8 +404,32 @@ const en: Record<string, string | string[]> = {
   "progress.analysisError": "Analysis error",
   "progress.needMore": "At least 2 entries needed for analysis",
 
-  // Nav
-  "nav.journal": "Journal",
+  // Language names
+  "lang.sr": "Srpski",
+  "lang.en": "English",
+  "lang.fr": "Français",
+
+  // Timeline
+  "timeline.title": "Treatment Timeline",
+  "timeline.initialExam": "Initial Exam",
+  "timeline.noActivities": "No planned activities for this patient.",
+
+  // Drug Tracker
+  "drugTracker.title": "Drug Tracker & Reminders",
+  "drugTracker.taken": "taken",
+  "drugTracker.markTaken": "Mark as Taken",
+  "drugTracker.takenAt": "Taken at",
+  "drugTracker.instruction": "Instruction",
+
+  // Chat
+  "chat.greeting.doctor": "Hello! I am EchoMed AI. How can I help you with your work today?",
+  "chat.greeting.patient": "Hello! I am EchoMed AI. How can I help you?",
+  "chat.placeholder": "Ask a question...",
+  "chat.subtitle": "Your digital assistant",
+  "chat.errorConnect": "Sorry, I can't connect. Please try again.",
+  "chat.errorDefault": "Sorry, an error occurred.",
+  "chat.rateLimited": "Too many requests, please try again in a minute.",
+  "chat.creditsNeeded": "Credits need to be topped up.",
 };
 
 export default en;
