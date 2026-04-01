@@ -168,7 +168,7 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
     };
 
     rec.onend = () => {
-      if (!manualStopRef.current && recordingState === "recording") {
+      if (!manualStopRef.current && recordingStateRef.current === "recording") {
         setTimeout(() => {
           if (!manualStopRef.current) startRecognition();
         }, RECONNECT_DELAY);
