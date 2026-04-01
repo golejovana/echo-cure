@@ -161,7 +161,7 @@ export default function HistoryPage() {
                   <span className="text-sm font-medium text-foreground">{row.name}</span>
                   <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${statusColor(row.status)}`}>{row.status}</span>
                 </div>
-                <p className="text-xs text-foreground/70 truncate">{row.diagnosis}</p>
+                <p className="text-xs text-foreground/70 truncate">{diagTranslations[row.diagnosis] || row.diagnosis}</p>
                 <span className="text-[10px] text-muted-foreground">{row.date}</span>
               </button>
             ))}
