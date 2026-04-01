@@ -10,9 +10,10 @@ interface ListenerPanelProps {
   onLangChange?: (lang: Lang) => void;
 }
 
-const LANG_LABELS: Record<Lang, string> = {
-  "en-US": "English",
-  "sr-RS": "Srpski",
+const LANG_MAP: Record<string, Lang> = {
+  sr: "sr-RS",
+  en: "en-US",
+  fr: "en-US", // fallback for French STT
 };
 
 const RECONNECT_DELAY = 200;
@@ -22,12 +23,13 @@ function cleanSegment(text: string): string {
 }
 
 const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const sttLang = LANG_MAP[language] || "sr-RS";
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [interimText, setInterimText] = useState("");
-  const [lang, setLang] = useState<Lang>("sr-RS");
+  const [lang, setLang] = useState<Lang>(sttLang);
   const [supported, setSupported] = useState(true);
 
   const recRef = useRef<any>(null);
