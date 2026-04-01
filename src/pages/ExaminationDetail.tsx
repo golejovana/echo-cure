@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -12,6 +12,8 @@ import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "@/i18n/LanguageContext";
 import { generateAnamnezaPdf } from "@/lib/generateAnamnezaPdf";
 import TherapyProgressPanel from "@/components/TherapyProgressPanel";
+import { useExamContentTranslation } from "@/hooks/useExamContentTranslation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Examination {
   id: string;
@@ -116,6 +118,23 @@ export default function ExaminationDetail() {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [institutionInfo, setInstitutionInfo] = useState<Record<string, string | undefined>>({});
 
+  // Hooks must be called before any early returns
+  const translatableFields = useMemo(() => {
+    if (!exam) return {};
+    const fd = exam.form_data || {};
+    return {
+      diagnosis: exam.diagnosis_codes,
+      chiefComplaints: exam.chief_complaints,
+      presentIllness: exam.present_illness,
+      allergies: fd.allergies as string | undefined,
+      chronicDiseases: fd.chronicDiseases as string | undefined,
+      medications: fd.medications as string | undefined,
+      simplified: simplified,
+    } as Record<string, string | null | undefined>;
+  }, [exam, simplified]);
+
+  const { translated: tr, loading: trLoading, errors: trErrors } = useExamContentTranslation(exam?.id, translatableFields);
+
   useEffect(() => {
     if (!id) return;
     const load = async () => {
@@ -132,7 +151,6 @@ export default function ExaminationDetail() {
         if (!e.is_read) {
           await supabase.from("examinations").update({ is_read: true } as any).eq("id", id);
         }
-        // Load doctor's institution info for PDF
         const { data: docProfile } = await supabase.from("profiles")
           .select("institution_name, institution_address, institution_city, full_name")
           .eq("user_id", e.doctor_id).single();
@@ -177,12 +195,8 @@ export default function ExaminationDetail() {
     setPdfLoading(true);
     try {
       await generateAnamnezaPdf(exam.form_data as Record<string, string>, "sr", institutionInfo);
-      // Flip appointment status to "completed"
       if (id) {
-        await supabase
-          .from("appointments")
-          .update({ priority: "completed" } as any)
-          .eq("examination_id", id);
+        await supabase.from("appointments").update({ priority: "completed" } as any).eq("examination_id", id);
       }
       toast({ title: t("form.pdfGenerated"), description: t("form.pdfGeneratedDesc") });
     } catch (e) {
@@ -196,6 +210,11 @@ export default function ExaminationDetail() {
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}.`;
+  };
+
+  const tv = (key: string, original: string | null | undefined): string => {
+    if (!original) return "";
+    return tr[key] || original;
   };
 
   if (loading) {
@@ -416,6 +435,7 @@ export default function ExaminationDetail() {
   }
 
   /* ======================== PATIENT VIEW ======================== */
+
   return (
     <DashboardLayout role="patient">
       <motion.div
@@ -434,27 +454,45 @@ export default function ExaminationDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
             <Section icon={Activity} title={t("examDetail.diagnosis")}>
-              <p className="text-sm font-medium text-foreground">{exam.diagnosis_codes || t("examDetail.notSpecified")}</p>
+              <TranslatedContent loading={trLoading} failed={trErrors.has("diagnosis")}>
+                <p className="text-sm font-medium text-foreground">{tv("diagnosis", exam.diagnosis_codes) || t("examDetail.notSpecified")}</p>
+              </TranslatedContent>
             </Section>
 
             {!isEmpty(exam.chief_complaints) && (
               <Section icon={ClipboardList} title={t("examDetail.chiefComplaints")}>
-                <p className="text-sm text-foreground/80 leading-relaxed">{exam.chief_complaints}</p>
+                <TranslatedContent loading={trLoading} failed={trErrors.has("chiefComplaints")}>
+                  <p className="text-sm text-foreground/80 leading-relaxed">{tv("chiefComplaints", exam.chief_complaints)}</p>
+                </TranslatedContent>
               </Section>
             )}
 
             {!isEmpty(exam.present_illness) && (
               <Section icon={FileText} title={t("examDetail.presentIllness")}>
-                <p className="text-sm text-foreground/80 leading-relaxed">{exam.present_illness}</p>
+                <TranslatedContent loading={trLoading} failed={trErrors.has("presentIllness")}>
+                  <p className="text-sm text-foreground/80 leading-relaxed">{tv("presentIllness", exam.present_illness)}</p>
+                </TranslatedContent>
               </Section>
             )}
 
             {(fd.allergies || fd.chronicDiseases || fd.medications) && (
               <Section icon={Shield} title={t("examDetail.personalHistory")}>
                 <div className="space-y-2 text-sm text-foreground/80">
-                  {!isEmpty(fd.allergies) && <p><span className="font-medium text-foreground">{t("examDetail.allergies")}</span> {fd.allergies}</p>}
-                  {!isEmpty(fd.chronicDiseases) && <p><span className="font-medium text-foreground">{t("examDetail.chronicDiseases")}</span> {fd.chronicDiseases}</p>}
-                  {!isEmpty(fd.medications) && <p><span className="font-medium text-foreground">{t("examDetail.therapy")}</span> {fd.medications}</p>}
+                  {!isEmpty(fd.allergies) && (
+                    <TranslatedContent loading={trLoading} failed={trErrors.has("allergies")} inline>
+                      <p><span className="font-medium text-foreground">{t("examDetail.allergies")}</span> {tv("allergies", fd.allergies)}</p>
+                    </TranslatedContent>
+                  )}
+                  {!isEmpty(fd.chronicDiseases) && (
+                    <TranslatedContent loading={trLoading} failed={trErrors.has("chronicDiseases")} inline>
+                      <p><span className="font-medium text-foreground">{t("examDetail.chronicDiseases")}</span> {tv("chronicDiseases", fd.chronicDiseases)}</p>
+                    </TranslatedContent>
+                  )}
+                  {!isEmpty(fd.medications) && (
+                    <TranslatedContent loading={trLoading} failed={trErrors.has("medications")} inline>
+                      <p><span className="font-medium text-foreground">{t("examDetail.therapy")}</span> {tv("medications", fd.medications)}</p>
+                    </TranslatedContent>
+                  )}
                 </div>
               </Section>
             )}
@@ -467,7 +505,9 @@ export default function ExaminationDetail() {
               </div>
               {simplified ? (
                 <div className="bg-accent/5 border border-accent/20 rounded-2xl p-4">
-                  <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-line">{simplified}</p>
+                  <TranslatedContent loading={trLoading} failed={trErrors.has("simplified")}>
+                    <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-line">{tv("simplified", simplified)}</p>
+                  </TranslatedContent>
                 </div>
               ) : (
                 <button onClick={handleSimplify} disabled={simplifying}
@@ -557,5 +597,25 @@ function Field({ label, value }: { label: string; value: string }) {
       <span className="font-medium text-foreground">{label}: </span>
       <span className="text-foreground/80">{value}</span>
     </p>
+  );
+}
+
+/* ---- Translation wrapper with skeleton/error states ---- */
+function TranslatedContent({ loading, failed, inline, children }: { loading: boolean; failed: boolean; inline?: boolean; children: React.ReactNode }) {
+  if (loading) {
+    return (
+      <div className={inline ? "" : "space-y-1.5"}>
+        <Skeleton className={inline ? "h-4 w-3/4" : "h-4 w-full"} />
+        {!inline && <Skeleton className="h-4 w-1/2" />}
+      </div>
+    );
+  }
+  return (
+    <div>
+      {children}
+      {failed && (
+        <p className="text-[10px] text-muted-foreground mt-1">⚠ Translation unavailable</p>
+      )}
+    </div>
   );
 }
