@@ -8,6 +8,7 @@ interface InstitutionData {
   institution_name: string;
   institution_address: string;
   institution_city: string;
+  institution_country: string;
   institution_logo_url: string;
 }
 
@@ -18,6 +19,7 @@ export default function InstitutionBranding() {
     institution_name: "",
     institution_address: "",
     institution_city: "",
+    institution_country: "",
     institution_logo_url: "",
   });
   const [editing, setEditing] = useState(false);
@@ -31,7 +33,7 @@ export default function InstitutionBranding() {
       if (!user) return;
       const { data: profile } = await supabase
         .from("profiles")
-        .select("institution_name, institution_address, institution_city, institution_logo_url")
+        .select("institution_name, institution_address, institution_city, institution_country, institution_logo_url")
         .eq("user_id", user.id)
         .single();
       if (profile) {
@@ -39,6 +41,7 @@ export default function InstitutionBranding() {
           institution_name: profile.institution_name || "",
           institution_address: profile.institution_address || "",
           institution_city: profile.institution_city || "",
+          institution_country: (profile as any).institution_country || "",
           institution_logo_url: profile.institution_logo_url || "",
         };
         setData(d);
@@ -68,6 +71,7 @@ export default function InstitutionBranding() {
         institution_name: draft.institution_name.trim() || null,
         institution_address: draft.institution_address.trim() || null,
         institution_city: draft.institution_city.trim() || null,
+        institution_country: draft.institution_country.trim() || null,
         institution_logo_url: draft.institution_logo_url || null,
       } as any)
       .eq("user_id", user.id);
@@ -117,6 +121,7 @@ export default function InstitutionBranding() {
     { key: "institution_name" as const, label: t("profile.institutionName"), icon: Building2, placeholder: "Univerzitetski Klinički Centar Srbije" },
     { key: "institution_address" as const, label: t("profile.institutionAddress"), icon: MapPin, placeholder: "Pasterova 2" },
     { key: "institution_city" as const, label: t("profile.institutionCity"), icon: MapPin, placeholder: "Savski venac, 11000 Beograd" },
+    { key: "institution_country" as const, label: t("profile.institutionCountry"), icon: MapPin, placeholder: "Republika Srbija" },
   ];
 
   const logoUrl = editing ? draft.institution_logo_url : data.institution_logo_url;

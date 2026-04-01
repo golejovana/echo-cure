@@ -277,6 +277,7 @@ const en: Record<string, string | string[]> = {
   "profile.institutionName": "Institution Name",
   "profile.institutionAddress": "Address",
   "profile.institutionCity": "City & Municipality",
+  "profile.institutionCountry": "Country",
   "profile.institutionLogo": "Institution Logo",
   "profile.uploadLogo": "Upload Logo",
   "profile.uploading": "Uploading...",

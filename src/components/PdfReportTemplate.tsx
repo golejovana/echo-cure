@@ -6,6 +6,7 @@ interface InstitutionInfo {
   institution_name?: string;
   institution_address?: string;
   institution_city?: string;
+  institution_country?: string;
   institution_logo_url?: string;
   doctor_name?: string;
 }
@@ -579,6 +580,7 @@ const PdfReportTemplate: React.FC<Props> = ({ form, lang, institution }) => {
   const instName = institution?.institution_name || "";
   const instAddr = institution?.institution_address || "";
   const instCity = institution?.institution_city || "";
+  const instCountry = institution?.institution_country || t.country;
   const doctorName = institution?.doctor_name || "";
   const cityForFooter = instCity ? (instCity.split(",").pop()?.trim() || "Beograd") : "Beograd";
 
@@ -613,7 +615,7 @@ const PdfReportTemplate: React.FC<Props> = ({ form, lang, institution }) => {
       <div style={S.headerWrap}>
         {/* Left: Institution */}
         <div style={S.instBlock}>
-          <div style={S.instCountry}>{t.country}</div>
+          <div style={S.instCountry}>{instCountry}</div>
           {instName && <div style={S.instName}>{instName}</div>}
           {instAddr && <div style={S.instDetail}>{instAddr}</div>}
           {instCity && <div style={S.instDetail}>{instCity}</div>}

@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN institution_country text DEFAULT NULL;
