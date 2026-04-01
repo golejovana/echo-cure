@@ -71,6 +71,7 @@ export default function InstitutionBranding() {
         institution_name: draft.institution_name.trim() || null,
         institution_address: draft.institution_address.trim() || null,
         institution_city: draft.institution_city.trim() || null,
+        institution_country: draft.institution_country.trim() || null,
         institution_logo_url: draft.institution_logo_url || null,
       } as any)
       .eq("user_id", user.id);
