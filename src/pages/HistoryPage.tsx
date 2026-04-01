@@ -18,7 +18,7 @@ interface ExamRow {
 }
 
 export default function HistoryPage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [role, setRole] = useState<AppRole>("doctor");
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
