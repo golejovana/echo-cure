@@ -105,7 +105,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
       if (!user) return;
       const { data } = await supabase
         .from("profiles")
-        .select("institution_name, institution_address, institution_city, institution_logo_url, full_name")
+        .select("institution_name, institution_address, institution_city, institution_country, institution_logo_url, full_name")
         .eq("user_id", user.id)
         .single();
       if (data) {
@@ -113,6 +113,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
           institution_name: data.institution_name || undefined,
           institution_address: data.institution_address || undefined,
           institution_city: data.institution_city || undefined,
+          institution_country: (data as any).institution_country || undefined,
           institution_logo_url: data.institution_logo_url || undefined,
           doctor_name: data.full_name || undefined,
         });
