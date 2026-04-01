@@ -287,7 +287,7 @@ export default function ExaminationDetail() {
 
               {/* Clinical timeline */}
               {!isEmpty(exam.clinical_timeline) && (
-                <Section icon={Clock} title="Klinički tok bolesti">
+                <Section icon={Clock} title={t("examDetail.clinicalTimeline")}>
                   <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">{exam.clinical_timeline}</p>
                 </Section>
               )}
