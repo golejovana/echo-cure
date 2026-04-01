@@ -57,10 +57,13 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
     if (!SR) setSupported(false);
   }, []);
 
-  // Sync ref
+  // Sync refs
   useEffect(() => {
     segmentsRef.current = segments;
   }, [segments]);
+  useEffect(() => {
+    recordingStateRef.current = recordingState;
+  }, [recordingState]);
 
   // Notify parent with full text
   useEffect(() => {
