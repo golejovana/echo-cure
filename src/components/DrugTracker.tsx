@@ -23,15 +23,22 @@ function getLsKey(examinationId: string) {
   return `echocure_med_tracker_${examinationId}`;
 }
 
-interface TakenRecord {
-  [medKey: string]: string; // medKey → ISO timestamp when taken
+/** Each med stores an array of ISO timestamps (one per dose taken today). */
+interface DoseRecord {
+  [medKey: string]: string[];
 }
 
 function getTodayKey() {
   return new Date().toISOString().split("T")[0];
 }
 
-function loadTaken(examinationId: string): { date: string; records: TakenRecord } {
+function parseRequiredDoses(frequency: string): number {
+  if (frequency === "pp") return Infinity; // as-needed, unlimited
+  const match = frequency.match(/^(\d+)/);
+  return match ? parseInt(match[1], 10) : 1;
+}
+
+function loadTaken(examinationId: string): { date: string; records: DoseRecord } {
   try {
     const raw = localStorage.getItem(getLsKey(examinationId));
     if (!raw) return { date: getTodayKey(), records: {} };
@@ -39,13 +46,18 @@ function loadTaken(examinationId: string): { date: string; records: TakenRecord 
     if (parsed.date !== getTodayKey()) {
       return { date: getTodayKey(), records: {} };
     }
-    return parsed;
+    // Migrate old format (string → string[])
+    const records: DoseRecord = {};
+    for (const [k, v] of Object.entries(parsed.records)) {
+      records[k] = Array.isArray(v) ? (v as string[]) : [v as string];
+    }
+    return { date: parsed.date, records };
   } catch {
     return { date: getTodayKey(), records: {} };
   }
 }
 
-function saveTaken(examinationId: string, data: { date: string; records: TakenRecord }) {
+function saveTaken(examinationId: string, data: { date: string; records: DoseRecord }) {
   localStorage.setItem(getLsKey(examinationId), JSON.stringify(data));
 }
 
@@ -67,25 +79,36 @@ export default function DrugTracker({ medications, examinationId }: DrugTrackerP
   useEffect(() => {
     const today = getTodayKey();
     if (takenData.date !== today) {
-      const fresh = { date: today, records: {} };
+      const fresh = { date: today, records: {} as DoseRecord };
       setTakenData(fresh);
       saveTaken(examinationId, fresh);
     }
   }, [takenData.date]);
 
-  const handleMarkTaken = (medKey: string) => {
+  const handleMarkTaken = (medKey: string, requiredDoses: number) => {
     setTakenData((prev) => {
+      const existing = prev.records[medKey] || [];
+      // Prevent overcounting
+      if (existing.length >= requiredDoses) return prev;
       const next = {
         ...prev,
-        records: { ...prev.records, [medKey]: new Date().toISOString() },
+        records: {
+          ...prev.records,
+          [medKey]: [...existing, new Date().toISOString()],
+        },
       };
       saveTaken(examinationId, next);
       return next;
     });
   };
 
-  const takenCount = useMemo(() => {
-    return medications.filter((_, i) => takenData.records[`med-${i}`]).length;
+  // Count fully completed medications
+  const completedCount = useMemo(() => {
+    return medications.filter((med, i) => {
+      const required = parseRequiredDoses(med.frequency);
+      const taken = (takenData.records[`med-${i}`] || []).length;
+      return required === Infinity ? taken > 0 : taken >= required;
+    }).length;
   }, [medications, takenData.records]);
 
   if (medications.length === 0) return null;
@@ -102,7 +125,7 @@ export default function DrugTracker({ medications, examinationId }: DrugTrackerP
             </h3>
           </div>
           <span className="text-[10px] font-semibold text-muted-foreground bg-muted/40 px-2.5 py-1 rounded-full">
-            {takenCount}/{medications.length} {t("drugTracker.taken")}
+            {completedCount}/{medications.length} {t("drugTracker.taken")}
           </span>
         </div>
 
@@ -111,8 +134,13 @@ export default function DrugTracker({ medications, examinationId }: DrugTrackerP
           <AnimatePresence mode="popLayout">
             {medications.map((med, i) => {
               const medKey = `med-${i}`;
-              const isTaken = !!takenData.records[medKey];
-              const takenAt = takenData.records[medKey];
+              const requiredDoses = parseRequiredDoses(med.frequency);
+              const doses = takenData.records[medKey] || [];
+              const takenCount = doses.length;
+              const isAsNeeded = requiredDoses === Infinity;
+              const isCompleted = isAsNeeded ? false : takenCount >= requiredDoses;
+              const isPartial = takenCount > 0 && !isCompleted;
+              const lastTakenAt = doses.length > 0 ? doses[doses.length - 1] : null;
 
               return (
                 <motion.div
@@ -123,31 +151,30 @@ export default function DrugTracker({ medications, examinationId }: DrugTrackerP
                   transition={{ delay: i * 0.05, duration: 0.3 }}
                   className={cn(
                     "relative rounded-2xl border p-4 transition-all duration-300",
-                    isTaken
+                    isCompleted
                       ? "bg-accent/5 border-accent/20 opacity-70"
-                      : "bg-background border-border/30 shadow-sm hover:shadow-md hover:border-primary/20"
+                      : isPartial
+                        ? "bg-primary/5 border-primary/20 shadow-sm"
+                        : "bg-background border-border/30 shadow-sm hover:shadow-md hover:border-primary/20"
                   )}
                 >
-                  {/* Pulse indicator for not-taken */}
-                  {!isTaken && (
-                    <span className="absolute top-3 right-3">
-                      <Bell size={14} strokeWidth={1.5} className="text-primary animate-pulse" />
-                    </span>
-                  )}
-
-                  {/* Taken checkmark */}
-                  {isTaken && (
+                  {/* Top-right indicator */}
+                  {isCompleted ? (
                     <span className="absolute top-3 right-3">
                       <CheckCircle2 size={16} strokeWidth={2} className="text-accent" />
                     </span>
-                  )}
+                  ) : takenCount === 0 && !isAsNeeded ? (
+                    <span className="absolute top-3 right-3">
+                      <Bell size={14} strokeWidth={1.5} className="text-primary animate-pulse" />
+                    </span>
+                  ) : null}
 
                   {/* Drug info */}
                   <div className="space-y-2 pr-6">
                     <div>
                       <p className={cn(
                         "text-sm font-semibold",
-                        isTaken ? "text-accent" : "text-foreground"
+                        isCompleted ? "text-accent" : "text-foreground"
                       )}>
                         {med.name}
                       </p>
@@ -156,7 +183,29 @@ export default function DrugTracker({ medications, examinationId }: DrugTrackerP
                       </p>
                     </div>
 
-                    {/* Note tooltip / subtext */}
+                    {/* Dose progress (non-pp meds with >1 dose) */}
+                    {!isAsNeeded && requiredDoses > 1 && (
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-medium text-muted-foreground">
+                            {takenCount}/{requiredDoses} {t("drugTracker.taken")}
+                          </span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-muted/40 overflow-hidden">
+                          <motion.div
+                            className={cn(
+                              "h-full rounded-full",
+                              isCompleted ? "bg-accent" : "bg-primary"
+                            )}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.min((takenCount / requiredDoses) * 100, 100)}%` }}
+                            transition={{ duration: 0.4, ease: "easeOut" }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Note tooltip */}
                     {med.note && (
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -171,15 +220,18 @@ export default function DrugTracker({ medications, examinationId }: DrugTrackerP
                       </Tooltip>
                     )}
 
-                    {/* Taken status or button */}
-                    {isTaken ? (
+                    {/* Last taken timestamp */}
+                    {lastTakenAt && (
                       <div className="flex items-center gap-1.5 text-[10px] text-accent font-medium">
                         <Clock size={10} strokeWidth={1.5} />
-                        {t("drugTracker.takenAt")} {formatTime(takenAt)}
+                        {t("drugTracker.takenAt")} {formatTime(lastTakenAt)}
                       </div>
-                    ) : (
+                    )}
+
+                    {/* Action button */}
+                    {!isCompleted && (
                       <button
-                        onClick={() => handleMarkTaken(medKey)}
+                        onClick={() => handleMarkTaken(medKey, requiredDoses)}
                         className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-primary bg-primary/5 hover:bg-primary/10 px-3 py-1.5 rounded-full transition-all duration-200 active:scale-[0.96]"
                       >
                         <CheckCircle2 size={12} strokeWidth={2} />
