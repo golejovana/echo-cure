@@ -233,7 +233,7 @@ export default function ExaminationDetail() {
             <div>
               <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <HeartPulse size={22} strokeWidth={1.5} className="text-primary" />
-                Detaljna anamneza
+                {t("examDetail.detailedAnamnesis")}
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
                 {t("examDetail.examFrom")} {formatDate(exam.created_at)}
