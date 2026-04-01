@@ -393,7 +393,7 @@ export default function DoctorDashboard() {
                         <TableCell className="font-bold text-foreground whitespace-nowrap text-sm">{row.time}</TableCell>
                         <TableCell className="text-foreground font-medium">{row.patient}</TableCell>
                         <TableCell className="text-muted-foreground hidden sm:table-cell text-sm max-w-[200px] truncate">
-                          {row.reason.length > 60 ? row.reason.slice(0, 60) + "…" : row.reason}
+                          {(() => { const r = reasonTranslations[row.reason] || row.reason; return r.length > 60 ? r.slice(0, 60) + "…" : r; })()}
                         </TableCell>
                         <TableCell className="text-right">
                           <Badge variant="outline" className={cn("text-[10px] font-bold border px-2.5 py-0.5", STATUS_STYLES[row.status])}>
