@@ -507,7 +507,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
             <div className="space-y-1">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("form.institutionStamp")}</p>
               <div className="w-24 h-24 border border-dashed border-border/60 rounded-lg flex items-center justify-center">
-                <span className="text-[10px] text-muted-foreground/40 italic">Stamp</span>
+                <span className="text-[10px] text-muted-foreground/40 italic">{t("form.stampPlaceholder")}</span>
               </div>
             </div>
             <div className="text-right space-y-1">
