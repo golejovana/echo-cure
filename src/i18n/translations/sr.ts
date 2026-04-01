@@ -277,6 +277,7 @@ const sr: Record<string, string | string[]> = {
   "profile.institutionName": "Naziv ustanove",
   "profile.institutionAddress": "Adresa",
   "profile.institutionCity": "Opština i grad",
+  "profile.institutionCountry": "Država",
   "profile.institutionLogo": "Logo ustanove",
   "profile.uploadLogo": "Otpremi logo",
   "profile.uploading": "Otpremam...",

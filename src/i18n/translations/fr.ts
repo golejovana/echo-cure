@@ -227,6 +227,7 @@ const fr: Record<string, string | string[]> = {
   "profile.institutionName": "Nom de l'établissement",
   "profile.institutionAddress": "Adresse",
   "profile.institutionCity": "Ville et commune",
+  "profile.institutionCountry": "Pays",
   "profile.institutionLogo": "Logo de l'établissement",
   "profile.uploadLogo": "Télécharger le logo",
   "profile.uploading": "Téléchargement...",
