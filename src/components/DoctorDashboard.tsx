@@ -267,6 +267,11 @@ export default function DoctorDashboard() {
     setSubmitting(false);
     await loadSchedule();
   };
+  // Translate dynamic reason texts (hooks must be before any early return)
+  const reasonTexts = schedule.map((r) => r.reason);
+  const diagTexts = topDiagnoses.map((d) => d.name);
+  const reasonTranslations = useTranslateText(reasonTexts);
+  const diagTranslations = useTranslateText(diagTexts);
 
   if (loading) {
     return (
@@ -285,12 +290,6 @@ export default function DoctorDashboard() {
   }
 
   const maxDiag = topDiagnoses.length ? Math.max(...topDiagnoses.map(d => d.count)) : 1;
-
-  // Translate dynamic reason texts
-  const reasonTexts = schedule.map((r) => r.reason);
-  const diagTexts = topDiagnoses.map((d) => d.name);
-  const reasonTranslations = useTranslateText(reasonTexts);
-  const diagTranslations = useTranslateText(diagTexts);
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-7xl mx-auto relative">
