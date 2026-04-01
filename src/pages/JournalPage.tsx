@@ -8,12 +8,12 @@ import { toast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const MOOD_OPTIONS = [
-  { value: 1, emoji: "😞", label: "Veoma loše" },
-  { value: 2, emoji: "😔", label: "Loše" },
-  { value: 3, emoji: "😐", label: "Srednje" },
-  { value: 4, emoji: "🙂", label: "Dobro" },
-  { value: 5, emoji: "😊", label: "Odlično" },
+const MOOD_EMOJIS = [
+  { value: 1, emoji: "😞", labelKey: "journal.mood1" },
+  { value: 2, emoji: "😔", labelKey: "journal.mood2" },
+  { value: 3, emoji: "😐", labelKey: "journal.mood3" },
+  { value: 4, emoji: "🙂", labelKey: "journal.mood4" },
+  { value: 5, emoji: "😊", labelKey: "journal.mood5" },
 ];
 
 interface JournalEntry {
@@ -164,7 +164,7 @@ export default function JournalPage() {
             <div className="space-y-3">
               <label className="text-sm font-semibold text-foreground">{t("journal.howFeeling")}</label>
               <div className="flex items-center justify-center gap-3">
-                {MOOD_OPTIONS.map((opt) => (
+                {MOOD_EMOJIS.map((opt) => (
                   <button
                     key={opt.value}
                     onClick={() => setMood(opt.value)}
@@ -175,7 +175,7 @@ export default function JournalPage() {
                     }`}
                   >
                     <span className="text-2xl">{opt.emoji}</span>
-                    <span className="text-[9px] font-medium text-muted-foreground">{opt.value}</span>
+                    <span className="text-[9px] font-medium text-muted-foreground">{t(opt.labelKey)}</span>
                   </button>
                 ))}
               </div>
@@ -256,7 +256,7 @@ export default function JournalPage() {
                     entry.is_severe ? "border-l-4 border-l-destructive" : ""
                   }`}
                 >
-                  <span className="text-2xl">{MOOD_OPTIONS.find((m) => m.value === entry.mood)?.emoji || "😐"}</span>
+                  <span className="text-2xl">{MOOD_EMOJIS.find((m) => m.value === entry.mood)?.emoji || "😐"}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs text-muted-foreground">{formatDate(entry.created_at)}</span>

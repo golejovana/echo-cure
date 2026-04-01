@@ -10,9 +10,10 @@ interface ListenerPanelProps {
   onLangChange?: (lang: Lang) => void;
 }
 
-const LANG_LABELS: Record<Lang, string> = {
-  "en-US": "English",
-  "sr-RS": "Srpski",
+const LANG_MAP: Record<string, Lang> = {
+  sr: "sr-RS",
+  en: "en-US",
+  fr: "en-US", // fallback for French STT
 };
 
 const RECONNECT_DELAY = 200;
@@ -22,12 +23,13 @@ function cleanSegment(text: string): string {
 }
 
 const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const sttLang = LANG_MAP[language] || "sr-RS";
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [interimText, setInterimText] = useState("");
-  const [lang, setLang] = useState<Lang>("sr-RS");
+  const [lang, setLang] = useState<Lang>(sttLang);
   const [supported, setSupported] = useState(true);
 
   const recRef = useRef<any>(null);
@@ -183,6 +185,18 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
     setTranscript(val);
   };
 
+  // Sync STT language with global language context
+  useEffect(() => {
+    const newLang = LANG_MAP[language] || "sr-RS";
+    if (newLang !== lang) {
+      const wasRecording = isRecording;
+      if (wasRecording) stopRecognition();
+      setLang(newLang);
+      onLangChange?.(newLang);
+      if (wasRecording) setTimeout(() => startRecognition(), 250);
+    }
+  }, [language]);
+
   const toggleLang = () => {
     const wasRecording = isRecording;
     if (wasRecording) stopRecognition();
@@ -214,7 +228,7 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
         <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">{t("listener.title")}</h2>
         <button onClick={toggleLang} className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 active:scale-[0.96] px-2.5 py-1.5 rounded-full bg-muted/40">
           <Globe size={13} strokeWidth={1.8} />
-          {LANG_LABELS[lang]}
+          {lang === "en-US" ? t("listener.english") : t("listener.serbian")}
         </button>
       </div>
 

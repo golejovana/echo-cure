@@ -18,7 +18,7 @@ interface ExamRow {
 }
 
 export default function HistoryPage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [role, setRole] = useState<AppRole>("doctor");
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -56,9 +56,10 @@ export default function HistoryPage() {
           }
         }
 
+        const dateLocale = language === "en" ? "en-US" : language === "fr" ? "fr-FR" : "sr-Latn";
         setRows(exams.map((e: any) => ({
           id: e.id,
-          date: new Date(e.created_at).toLocaleDateString("sr-Latn", { day: "2-digit", month: "2-digit", year: "numeric" }) + ".",
+          date: new Date(e.created_at).toLocaleDateString(dateLocale, { day: "2-digit", month: "2-digit", year: "numeric" }) + ".",
           name: userRole === "doctor" ? (e.patient_name || e.patient_email) : (`Dr. ${doctorNames[e.doctor_id] || ""}`),
           diagnosis: e.diagnosis_codes || t("patient.notSpecified"),
           status: e.is_read ? statusDone : statusNew,

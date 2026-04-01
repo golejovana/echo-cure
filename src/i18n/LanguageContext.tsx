@@ -24,6 +24,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored && (stored === "sr" || stored === "en" || stored === "fr")) return stored;
     } catch {}
+    // Auto-detect browser language
+    try {
+      const browserLang = navigator.language?.substring(0, 2);
+      if (browserLang === "en") return "en";
+      if (browserLang === "fr") return "fr";
+    } catch {}
     return "sr";
   });
 
