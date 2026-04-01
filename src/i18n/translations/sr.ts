@@ -251,6 +251,16 @@ const sr: Record<string, string | string[]> = {
   "history.open": "Otvori",
   "history.empty": "Nema pregleda u istoriji.",
   "history.noResults": "Nema rezultata za",
+  "history.edit": "Izmeni",
+  "history.delete": "Obriši",
+  "history.deleted": "Obrisano",
+  "history.deletedDesc": "Anamneza je uspešno obrisana.",
+  "history.updated": "Sačuvano",
+  "history.updatedDesc": "Dijagnoza je ažurirana.",
+  "history.deleteConfirmTitle": "Brisanje anamneze",
+  "history.deleteConfirmDesc": "Da li ste sigurni da želite da obrišete ovu anamnezu? Ova radnja se ne može poništiti.",
+  "history.cancel": "Otkaži",
+  "history.confirmDelete": "Obriši",
 
   // Profile Page
   "profile.specialist": "Lekar specijalista",
