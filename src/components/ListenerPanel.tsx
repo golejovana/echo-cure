@@ -156,14 +156,15 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
     };
 
     rec.onerror = (e: SpeechRecognitionErrorEvent) => {
-      console.warn("STT error:", e.error);
-      if (e.error !== "aborted") {
-        try { rec.stop(); } catch {}
+      const ignorable = ["no-speech", "network", "aborted"];
+      if (!ignorable.includes(e.error)) {
+        console.warn("STT fatal error:", e.error);
       }
+      // Don't call rec.stop() here — let onend handle restart naturally
     };
 
     rec.onend = () => {
-      if (!manualStopRef.current) {
+      if (!manualStopRef.current && recordingState === "recording") {
         setTimeout(() => {
           if (!manualStopRef.current) startRecognition();
         }, RECONNECT_DELAY);
