@@ -184,10 +184,10 @@ export default function ExaminationDetail() {
           .update({ priority: "completed" } as any)
           .eq("examination_id", id);
       }
-      toast({ title: "PDF generisan", description: "Nalaz je generisan i status je ažuriran." });
+      toast({ title: t("form.pdfGenerated"), description: t("form.pdfGeneratedDesc") });
     } catch (e) {
       console.error("PDF error:", e);
-      toast({ title: "PDF greška", description: e instanceof Error ? e.message : "Neuspešno generisanje", variant: "destructive" });
+      toast({ title: t("form.pdfError"), description: e instanceof Error ? e.message : t("form.pdfErrorDesc"), variant: "destructive" });
     } finally {
       setPdfLoading(false);
     }
