@@ -5,6 +5,7 @@ import { History, Search, Eye, Calendar, FileText, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useTranslation } from "@/i18n/LanguageContext";
+import { useTranslateText } from "@/hooks/useTranslateText";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -80,6 +81,8 @@ export default function HistoryPage() {
   }
 
   const isDoctor = role === "doctor";
+  const diagnosisTexts = rows.map((r) => r.diagnosis);
+  const diagTranslations = useTranslateText(diagnosisTexts);
   const filtered = rows.filter((row) =>
     `${row.name} ${row.diagnosis}`.toLowerCase().includes(search.toLowerCase())
   );
@@ -134,7 +137,7 @@ export default function HistoryPage() {
                   <tr key={row.id} className="border-b border-border/20 hover:bg-muted/20 transition-colors duration-150 group">
                     <td className="px-5 py-4 text-sm text-foreground font-medium">{row.date}</td>
                     <td className="px-5 py-4 text-sm text-foreground">{row.name}</td>
-                    <td className="px-5 py-4 text-sm text-foreground/80 max-w-xs truncate">{row.diagnosis}</td>
+                    <td className="px-5 py-4 text-sm text-foreground/80 max-w-xs truncate">{diagTranslations[row.diagnosis] || row.diagnosis}</td>
                     <td className="px-5 py-4">
                       <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full ${statusColor(row.status)}`}>{row.status}</span>
                     </td>
@@ -158,7 +161,7 @@ export default function HistoryPage() {
                   <span className="text-sm font-medium text-foreground">{row.name}</span>
                   <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${statusColor(row.status)}`}>{row.status}</span>
                 </div>
-                <p className="text-xs text-foreground/70 truncate">{row.diagnosis}</p>
+                <p className="text-xs text-foreground/70 truncate">{diagTranslations[row.diagnosis] || row.diagnosis}</p>
                 <span className="text-[10px] text-muted-foreground">{row.date}</span>
               </button>
             ))}

@@ -6,6 +6,7 @@ import {
   Loader2, TrendingUp, Zap, Activity, Sparkles, ArrowUpRight, Plus, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslateText } from "@/hooks/useTranslateText";
 import { useTranslation } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -285,6 +286,12 @@ export default function DoctorDashboard() {
 
   const maxDiag = topDiagnoses.length ? Math.max(...topDiagnoses.map(d => d.count)) : 1;
 
+  // Translate dynamic reason texts
+  const reasonTexts = schedule.map((r) => r.reason);
+  const diagTexts = topDiagnoses.map((d) => d.name);
+  const reasonTranslations = useTranslateText(reasonTexts);
+  const diagTranslations = useTranslateText(diagTexts);
+
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-7xl mx-auto relative">
       <div className="floating-dot w-32 h-32 bg-primary/30 -top-10 -right-10 blur-3xl" />
@@ -386,7 +393,7 @@ export default function DoctorDashboard() {
                         <TableCell className="font-bold text-foreground whitespace-nowrap text-sm">{row.time}</TableCell>
                         <TableCell className="text-foreground font-medium">{row.patient}</TableCell>
                         <TableCell className="text-muted-foreground hidden sm:table-cell text-sm max-w-[200px] truncate">
-                          {row.reason.length > 60 ? row.reason.slice(0, 60) + "…" : row.reason}
+                          {(() => { const r = reasonTranslations[row.reason] || row.reason; return r.length > 60 ? r.slice(0, 60) + "…" : r; })()}
                         </TableCell>
                         <TableCell className="text-right">
                           <Badge variant="outline" className={cn("text-[10px] font-bold border px-2.5 py-0.5", STATUS_STYLES[row.status])}>
@@ -421,7 +428,7 @@ export default function DoctorDashboard() {
                 topDiagnoses.map((d, i) => (
                   <div key={i} className="space-y-1.5">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-foreground font-semibold truncate pr-2">{d.name}</span>
+                      <span className="text-sm text-foreground font-semibold truncate pr-2">{diagTranslations[d.name] || d.name}</span>
                       <span className="text-xs text-muted-foreground font-bold shrink-0 bg-muted/50 px-2 py-0.5 rounded-full">{d.count}</span>
                     </div>
                     <div className="h-2 rounded-full bg-muted/60 overflow-hidden">
