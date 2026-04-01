@@ -49,6 +49,7 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
 
   const recRef = useRef<any>(null);
   const manualStopRef = useRef(false);
+  const recordingStateRef = useRef<RecordingState>(recordingState);
   const segmentsRef = useRef<TranscriptSegment[]>([]);
 
   useEffect(() => {
@@ -56,10 +57,13 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
     if (!SR) setSupported(false);
   }, []);
 
-  // Sync ref
+  // Sync refs
   useEffect(() => {
     segmentsRef.current = segments;
   }, [segments]);
+  useEffect(() => {
+    recordingStateRef.current = recordingState;
+  }, [recordingState]);
 
   // Notify parent with full text
   useEffect(() => {
@@ -156,14 +160,15 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
     };
 
     rec.onerror = (e: SpeechRecognitionErrorEvent) => {
-      console.warn("STT error:", e.error);
-      if (e.error !== "aborted") {
-        try { rec.stop(); } catch {}
+      const ignorable = ["no-speech", "network", "aborted"];
+      if (!ignorable.includes(e.error)) {
+        console.warn("STT fatal error:", e.error);
       }
+      // Don't call rec.stop() here — let onend handle restart naturally
     };
 
     rec.onend = () => {
-      if (!manualStopRef.current) {
+      if (!manualStopRef.current && recordingStateRef.current === "recording") {
         setTimeout(() => {
           if (!manualStopRef.current) startRecognition();
         }, RECONNECT_DELAY);
