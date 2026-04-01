@@ -245,7 +245,7 @@ export default function ExaminationDetail() {
               className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground shadow-md hover:shadow-lg disabled:opacity-60 active:scale-[0.97] transition-all duration-200"
             >
               {pdfLoading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
-              {pdfLoading ? "Generisanje..." : "Generiši PDF"}
+              {pdfLoading ? t("form.generating") : t("examDetail.generatePdf")}
             </button>
           </div>
 
