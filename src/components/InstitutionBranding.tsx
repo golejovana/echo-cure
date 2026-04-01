@@ -8,6 +8,7 @@ interface InstitutionData {
   institution_name: string;
   institution_address: string;
   institution_city: string;
+  institution_country: string;
   institution_logo_url: string;
 }
 
