@@ -5,6 +5,7 @@ import { History, Search, Eye, Calendar, FileText, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useTranslation } from "@/i18n/LanguageContext";
+import { useTranslateText } from "@/hooks/useTranslateText";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
