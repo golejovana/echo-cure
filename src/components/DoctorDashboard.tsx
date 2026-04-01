@@ -6,6 +6,7 @@ import {
   Loader2, TrendingUp, Zap, Activity, Sparkles, ArrowUpRight, Plus, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslateText } from "@/hooks/useTranslateText";
 import { useTranslation } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
