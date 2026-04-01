@@ -164,7 +164,7 @@ export default function JournalPage() {
             <div className="space-y-3">
               <label className="text-sm font-semibold text-foreground">{t("journal.howFeeling")}</label>
               <div className="flex items-center justify-center gap-3">
-                {MOOD_OPTIONS.map((opt) => (
+                {MOOD_EMOJIS.map((opt) => (
                   <button
                     key={opt.value}
                     onClick={() => setMood(opt.value)}
@@ -175,7 +175,7 @@ export default function JournalPage() {
                     }`}
                   >
                     <span className="text-2xl">{opt.emoji}</span>
-                    <span className="text-[9px] font-medium text-muted-foreground">{opt.value}</span>
+                    <span className="text-[9px] font-medium text-muted-foreground">{t(opt.labelKey)}</span>
                   </button>
                 ))}
               </div>
