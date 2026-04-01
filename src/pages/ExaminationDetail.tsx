@@ -341,7 +341,7 @@ export default function ExaminationDetail() {
 
               {/* Status Praesens (Objective findings) */}
               {OBJECTIVE_FIELDS.some(f => !isEmpty(fd[f.key])) && (
-                <Section icon={Thermometer} title="STATUS PRAESENS — Objektivni nalaz">
+                <Section icon={Thermometer} title={t("examDetail.statusPraesens")}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
                     {OBJECTIVE_FIELDS.map(f => !isEmpty(fd[f.key]) && (
                       <div key={f.key} className="bg-muted/20 rounded-xl px-3.5 py-2.5">
