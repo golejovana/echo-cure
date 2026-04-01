@@ -172,8 +172,9 @@ const fr: Record<string, string | string[]> = {
 
   // Listener Panel
   "listener.title": "Transcription en direct",
-  "listener.listening": "Écoute…",
+  "listener.listening": "Écoute en cours…",
   "listener.paused": "En pause",
+  "listener.processing": "Traitement en cours…",
   "listener.pause": "Pause",
   "listener.resume": "Reprendre",
   "listener.tapToRecord": "Appuyez pour enregistrer",
@@ -181,6 +182,11 @@ const fr: Record<string, string | string[]> = {
   "listener.unsupported": "Votre navigateur ne prend pas en charge la reconnaissance vocale. Utilisez Chrome ou Edge.",
   "listener.english": "English",
   "listener.serbian": "Srpski",
+  "listener.french": "Français",
+  "listener.clearRestart": "Effacer et recommencer",
+  "listener.insertNote": "Insérer une note",
+  "listener.addNote": "Ajouter",
+  "listener.manualNotePlaceholder": "Tapez une note manuelle…",
 
   // History Page
   "history.title": "Historique des examens",

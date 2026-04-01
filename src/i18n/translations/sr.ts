@@ -224,6 +224,7 @@ const sr: Record<string, string | string[]> = {
   "listener.title": "Transkript uživo",
   "listener.listening": "Slušam…",
   "listener.paused": "Pauzirano",
+  "listener.processing": "Obrađujem…",
   "listener.pause": "Pauziraj",
   "listener.resume": "Nastavi",
   "listener.tapToRecord": "Dodirnite za snimanje",
@@ -231,6 +232,11 @@ const sr: Record<string, string | string[]> = {
   "listener.unsupported": "Vaš pregledač ne podržava prepoznavanje govora. Koristite Chrome ili Edge.",
   "listener.english": "English",
   "listener.serbian": "Srpski",
+  "listener.french": "Français",
+  "listener.clearRestart": "Obriši i ponovo",
+  "listener.insertNote": "Umetni belešku",
+  "listener.addNote": "Dodaj",
+  "listener.manualNotePlaceholder": "Unesite ručnu belešku…",
 
   // History Page
   "history.title": "Istorija pregleda",
