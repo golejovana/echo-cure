@@ -256,7 +256,7 @@ export default function JournalPage() {
                     entry.is_severe ? "border-l-4 border-l-destructive" : ""
                   }`}
                 >
-                  <span className="text-2xl">{MOOD_OPTIONS.find((m) => m.value === entry.mood)?.emoji || "😐"}</span>
+                  <span className="text-2xl">{MOOD_EMOJIS.find((m) => m.value === entry.mood)?.emoji || "😐"}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs text-muted-foreground">{formatDate(entry.created_at)}</span>

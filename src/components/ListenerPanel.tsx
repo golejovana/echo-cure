@@ -228,7 +228,7 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
         <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">{t("listener.title")}</h2>
         <button onClick={toggleLang} className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 active:scale-[0.96] px-2.5 py-1.5 rounded-full bg-muted/40">
           <Globe size={13} strokeWidth={1.8} />
-          {LANG_LABELS[lang]}
+          {lang === "en-US" ? t("listener.english") : t("listener.serbian")}
         </button>
       </div>
 
