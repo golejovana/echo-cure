@@ -251,6 +251,16 @@ const en: Record<string, string | string[]> = {
   "history.open": "Open",
   "history.empty": "No examinations in history.",
   "history.noResults": "No results for",
+  "history.edit": "Edit",
+  "history.delete": "Delete",
+  "history.deleted": "Deleted",
+  "history.deletedDesc": "Examination has been successfully deleted.",
+  "history.updated": "Saved",
+  "history.updatedDesc": "Diagnosis has been updated.",
+  "history.deleteConfirmTitle": "Delete Examination",
+  "history.deleteConfirmDesc": "Are you sure you want to delete this examination? This action cannot be undone.",
+  "history.cancel": "Cancel",
+  "history.confirmDelete": "Delete",
 
   // Profile Page
   "profile.specialist": "Medical Specialist",

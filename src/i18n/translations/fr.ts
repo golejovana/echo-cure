@@ -201,6 +201,16 @@ const fr: Record<string, string | string[]> = {
   "history.open": "Ouvrir",
   "history.empty": "Aucun examen dans l'historique.",
   "history.noResults": "Aucun résultat pour",
+  "history.edit": "Modifier",
+  "history.delete": "Supprimer",
+  "history.deleted": "Supprimé",
+  "history.deletedDesc": "L'examen a été supprimé avec succès.",
+  "history.updated": "Enregistré",
+  "history.updatedDesc": "Le diagnostic a été mis à jour.",
+  "history.deleteConfirmTitle": "Supprimer l'examen",
+  "history.deleteConfirmDesc": "Êtes-vous sûr de vouloir supprimer cet examen ? Cette action est irréversible.",
+  "history.cancel": "Annuler",
+  "history.confirmDelete": "Supprimer",
 
   // Profile Page
   "profile.specialist": "Médecin spécialiste",
