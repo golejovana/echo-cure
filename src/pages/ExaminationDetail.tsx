@@ -436,27 +436,6 @@ export default function ExaminationDetail() {
 
   /* ======================== PATIENT VIEW ======================== */
 
-  // Collect all translatable dynamic content fields
-  const translatableFields = useMemo(() => {
-    const f: Record<string, string | null | undefined> = {
-      diagnosis: exam.diagnosis_codes,
-      chiefComplaints: exam.chief_complaints,
-      presentIllness: exam.present_illness,
-      allergies: fd.allergies,
-      chronicDiseases: fd.chronicDiseases,
-      medications: fd.medications,
-      simplified: simplified,
-    };
-    return f;
-  }, [exam.diagnosis_codes, exam.chief_complaints, exam.present_illness, fd.allergies, fd.chronicDiseases, fd.medications, simplified]);
-
-  const { translated: tr, loading: trLoading, errors: trErrors } = useExamContentTranslation(exam.id, translatableFields);
-
-  const tv = (key: string, original: string | null | undefined): string => {
-    if (!original) return "";
-    return tr[key] || original;
-  };
-
   return (
     <DashboardLayout role="patient">
       <motion.div
