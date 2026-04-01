@@ -72,6 +72,10 @@ export default function HistoryPage() {
     fetchData();
   }, []);
 
+  const isDoctor = role === "doctor";
+  const diagnosisTexts = rows.map((r) => r.diagnosis);
+  const diagTranslations = useTranslateText(diagnosisTexts);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -80,9 +84,6 @@ export default function HistoryPage() {
     );
   }
 
-  const isDoctor = role === "doctor";
-  const diagnosisTexts = rows.map((r) => r.diagnosis);
-  const diagTranslations = useTranslateText(diagnosisTexts);
   const filtered = rows.filter((row) =>
     `${row.name} ${row.diagnosis}`.toLowerCase().includes(search.toLowerCase())
   );
