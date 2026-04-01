@@ -224,6 +224,7 @@ const en: Record<string, string | string[]> = {
   "listener.title": "Live Transcript",
   "listener.listening": "Listening…",
   "listener.paused": "Paused",
+  "listener.processing": "Processing…",
   "listener.pause": "Pause",
   "listener.resume": "Resume",
   "listener.tapToRecord": "Tap to begin recording",
@@ -231,6 +232,11 @@ const en: Record<string, string | string[]> = {
   "listener.unsupported": "Your browser does not support Speech Recognition. Please use Chrome or Edge.",
   "listener.english": "English",
   "listener.serbian": "Srpski",
+  "listener.french": "Français",
+  "listener.clearRestart": "Clear & Restart",
+  "listener.insertNote": "Insert Note",
+  "listener.addNote": "Add",
+  "listener.manualNotePlaceholder": "Type a manual note…",
 
   // History Page
   "history.title": "Examination History",
