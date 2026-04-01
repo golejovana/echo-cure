@@ -257,11 +257,11 @@ export default function ExaminationDetail() {
               {(fd.patientName || fd.patientAge || fd.patientOccupation) && (
                 <Section icon={User} title={t("examDetail.patientData")}>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                    {fd.patientName && <Field label="Ime" value={fd.patientName} />}
-                    {fd.patientAge && <Field label="Starost" value={fd.patientAge} />}
-                    {fd.patientOccupation && <Field label="Zanimanje" value={fd.patientOccupation} />}
-                    {fd.patientSocialStatus && <Field label="Socijalni status" value={fd.patientSocialStatus} />}
-                    {exam.patient_email && <Field label="Email" value={exam.patient_email} />}
+                    {fd.patientName && <Field label={t("examDetail.nameLabel")} value={fd.patientName} />}
+                    {fd.patientAge && <Field label={t("examDetail.ageLabel")} value={fd.patientAge} />}
+                    {fd.patientOccupation && <Field label={t("examDetail.occupationLabel")} value={fd.patientOccupation} />}
+                    {fd.patientSocialStatus && <Field label={t("examDetail.socialStatusLabel")} value={fd.patientSocialStatus} />}
+                    {exam.patient_email && <Field label={t("examDetail.emailLabel")} value={exam.patient_email} />}
                   </div>
                 </Section>
               )}
