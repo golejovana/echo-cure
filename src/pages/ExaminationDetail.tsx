@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -12,6 +12,8 @@ import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "@/i18n/LanguageContext";
 import { generateAnamnezaPdf } from "@/lib/generateAnamnezaPdf";
 import TherapyProgressPanel from "@/components/TherapyProgressPanel";
+import { useExamContentTranslation } from "@/hooks/useExamContentTranslation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Examination {
   id: string;
