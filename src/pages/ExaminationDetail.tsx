@@ -599,3 +599,23 @@ function Field({ label, value }: { label: string; value: string }) {
     </p>
   );
 }
+
+/* ---- Translation wrapper with skeleton/error states ---- */
+function TranslatedContent({ loading, failed, inline, children }: { loading: boolean; failed: boolean; inline?: boolean; children: React.ReactNode }) {
+  if (loading) {
+    return (
+      <div className={inline ? "" : "space-y-1.5"}>
+        <Skeleton className={inline ? "h-4 w-3/4" : "h-4 w-full"} />
+        {!inline && <Skeleton className="h-4 w-1/2" />}
+      </div>
+    );
+  }
+  return (
+    <div>
+      {children}
+      {failed && (
+        <p className="text-[10px] text-muted-foreground mt-1">⚠ Translation unavailable</p>
+      )}
+    </div>
+  );
+}
