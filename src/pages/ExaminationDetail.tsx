@@ -118,6 +118,23 @@ export default function ExaminationDetail() {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [institutionInfo, setInstitutionInfo] = useState<Record<string, string | undefined>>({});
 
+  // Hooks must be called before any early returns
+  const translatableFields = useMemo(() => {
+    if (!exam) return {};
+    const fd = exam.form_data || {};
+    return {
+      diagnosis: exam.diagnosis_codes,
+      chiefComplaints: exam.chief_complaints,
+      presentIllness: exam.present_illness,
+      allergies: fd.allergies as string | undefined,
+      chronicDiseases: fd.chronicDiseases as string | undefined,
+      medications: fd.medications as string | undefined,
+      simplified: simplified,
+    } as Record<string, string | null | undefined>;
+  }, [exam, simplified]);
+
+  const { translated: tr, loading: trLoading, errors: trErrors } = useExamContentTranslation(exam?.id, translatableFields);
+
   useEffect(() => {
     if (!id) return;
     const load = async () => {
@@ -134,7 +151,6 @@ export default function ExaminationDetail() {
         if (!e.is_read) {
           await supabase.from("examinations").update({ is_read: true } as any).eq("id", id);
         }
-        // Load doctor's institution info for PDF
         const { data: docProfile } = await supabase.from("profiles")
           .select("institution_name, institution_address, institution_city, full_name")
           .eq("user_id", e.doctor_id).single();
@@ -179,12 +195,8 @@ export default function ExaminationDetail() {
     setPdfLoading(true);
     try {
       await generateAnamnezaPdf(exam.form_data as Record<string, string>, "sr", institutionInfo);
-      // Flip appointment status to "completed"
       if (id) {
-        await supabase
-          .from("appointments")
-          .update({ priority: "completed" } as any)
-          .eq("examination_id", id);
+        await supabase.from("appointments").update({ priority: "completed" } as any).eq("examination_id", id);
       }
       toast({ title: t("form.pdfGenerated"), description: t("form.pdfGeneratedDesc") });
     } catch (e) {
@@ -198,6 +210,11 @@ export default function ExaminationDetail() {
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}.`;
+  };
+
+  const tv = (key: string, original: string | null | undefined): string => {
+    if (!original) return "";
+    return tr[key] || original;
   };
 
   if (loading) {
