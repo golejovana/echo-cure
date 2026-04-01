@@ -33,12 +33,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   const t = (key: string): string => {
-    const val = translations[language]?.[key] ?? translations.sr[key];
+    const val = translations[language]?.[key] ?? translations.en[key] ?? translations.sr[key];
     return typeof val === "string" ? val : (Array.isArray(val) ? val.join(", ") : key);
   };
 
   const tArray = (key: string): string[] => {
-    const val = translations[language]?.[key] ?? translations.sr[key];
+    const val = translations[language]?.[key] ?? translations.en[key] ?? translations.sr[key];
     return Array.isArray(val) ? val : [];
   };
 

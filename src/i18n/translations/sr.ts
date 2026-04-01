@@ -1,4 +1,4 @@
-const sr = {
+const sr: Record<string, string | string[]> = {
   // Auth
   "auth.login": "Prijavite se",
   "auth.signup": "Kreirajte nalog",
@@ -39,6 +39,9 @@ const sr = {
   "nav.logout": "Odjavi se",
   "nav.doctor": "Doktor",
   "nav.patient": "Pacijent",
+  "nav.journal": "Dnevnik",
+  "nav.aiPowered": "AI Powered",
+  "nav.aiSupport": "Klinička AI podrška aktivna",
 
   // Doctor Dashboard
   "doctor.welcome": "Dobro došli, doktore 👋",
@@ -61,6 +64,42 @@ const sr = {
   "doctor.statusWaiting": "Čeka nalaze",
   "doctor.statusFollowUp": "Kontrola",
 
+  // Dashboard
+  "dashboard.title": "Clinical Intelligence Hub",
+  "dashboard.subtitle": "Pregled aktivnosti i kliničkih podataka",
+  "dashboard.loading": "Učitavanje...",
+  "dashboard.patientsToday": "Pacijenata danas",
+  "dashboard.generatedReports": "Generisanih nalaza",
+  "dashboard.warnings": "Upozorenja",
+  "dashboard.dailySchedule": "Dnevni raspored",
+  "dashboard.scheduled": "zakazano",
+  "dashboard.newAppointment": "Novo zakazivanje",
+  "dashboard.noPatients": "Nema zakazanih pacijenata za danas.",
+  "dashboard.clickToAdd": "Kliknite \"Novo zakazivanje\" da dodate pregled",
+  "dashboard.time": "Vreme",
+  "dashboard.patient": "Pacijent",
+  "dashboard.reason": "Razlog",
+  "dashboard.status": "Status",
+  "dashboard.statusCompleted": "Završeno",
+  "dashboard.statusWaiting": "Čeka",
+  "dashboard.statusPriority": "Prioritet",
+  "dashboard.topDiagnoses": "Top dijagnoze",
+  "dashboard.noData": "Nema podataka",
+  "dashboard.aiEfficiency": "AI efikasnost",
+  "dashboard.minSaved": "min uštede",
+  "dashboard.aiEfficiencyDesc": "AI asistent je ubrzao dokumentaciju za",
+  "dashboard.examsToday": "pregleda danas, štedeći",
+  "dashboard.minutes": "minuta.",
+  "dashboard.aiReports": "AI nalaza",
+  "dashboard.dialogTitle": "Novo zakazivanje",
+  "dashboard.patientName": "Ime pacijenta",
+  "dashboard.patientNamePlaceholder": "npr. Marko Petrović",
+  "dashboard.timePlaceholder": "npr. 10:30",
+  "dashboard.reasonLabel": "Razlog",
+  "dashboard.reasonPlaceholder": "npr. Kontrola pritiska",
+  "dashboard.cancel": "Otkaži",
+  "dashboard.schedule": "Zakaži",
+
   // Patient Dashboard
   "patient.welcome": "Zdravo! 💙",
   "patient.subtitle": "Ovde možete pratiti svoju dijagnozu, plan lečenja i zakazane termine.",
@@ -82,6 +121,9 @@ const sr = {
   "patient.scheduledEvent": "Zakazan termin",
   "patient.months": ["Januar", "Februar", "Mart", "April", "Maj", "Jun", "Jul", "Avgust", "Septembar", "Oktobar", "Novembar", "Decembar"],
   "patient.days": ["Pon", "Uto", "Sre", "Čet", "Pet", "Sub", "Ned"],
+  "patient.reminderTomorrow": "Podsetnik: kontrola je sutra",
+  "patient.reminderToday": "Podsetnik: kontrola je danas",
+  "patient.atTime": "u",
 
   // Smart Form Panel
   "form.title": "Anamneza i Status Praesens",
@@ -140,30 +182,25 @@ const sr = {
   "form.presentIllnessPlaceholder": "Detaljni narativ sadašnje bolesti…",
   "form.timelinePlaceholder": "Početak, bolnice, terapije, procedure…",
   "form.familyHistoryPlaceholder": "Hronične bolesti u porodici…",
-  // Cardiovascular
   "form.cardiovascular": "Kardiovaskularni / Respiratorni",
-  "form.chestPain": "Bol u grudima / Chest Pain",
-  "form.swelling": "Otoci / Swelling",
-  "form.pressure": "Pritisak / Pressure sensation",
-  "form.veins": "Vene / Veins",
-  // GIT
+  "form.chestPain": "Bol u grudima",
+  "form.swelling": "Otoci",
+  "form.pressure": "Pritisak",
+  "form.veins": "Vene",
   "form.gastrointestinal": "Gastrointestinalni (GIT)",
-  "form.appetite": "Apetit / Appetite",
-  "form.nausea": "Mučnina / Nausea",
-  "form.swallowing": "Gutanje / Swallowing",
-  "form.bloating": "Nadutost / Bloating",
-  "form.stool": "Stolica / Stool",
-  // URO
+  "form.appetite": "Apetit",
+  "form.nausea": "Mučnina",
+  "form.swallowing": "Gutanje",
+  "form.bloating": "Nadutost",
+  "form.stool": "Stolica",
   "form.urogenital": "Urogenitalni (URO)",
-  "form.urination": "Mokrenje / Urination",
-  "form.flankPain": "Bol u slabinama / Flank Pain",
-  // Locomotor
+  "form.urination": "Mokrenje",
+  "form.flankPain": "Bol u slabinama",
   "form.locomotor": "Lokomotorni & CNS",
-  "form.jointPain": "Bol u zglobovima / Joint Pain",
+  "form.jointPain": "Bol u zglobovima",
   "form.visionHearing": "Vid / Sluh",
-  "form.dizziness": "Vrtoglavica / Dizziness",
-  "form.headaches": "Glavobolje / Headaches",
-  // Objective fields
+  "form.dizziness": "Vrtoglavica",
+  "form.headaches": "Glavobolje",
   "form.bloodPressure": "TA (krvni pritisak)",
   "form.pulse": "Puls",
   "form.temperature": "Temperatura",
@@ -171,9 +208,17 @@ const sr = {
   "form.lungSounds": "Auskultacija pluća",
   "form.heartSounds": "Srčani tonovi",
   "form.abdominalExam": "Pregled abdomena",
-  "form.skinExam": "Koža / Skin",
+  "form.skinExam": "Koža",
   "form.meningealSigns": "Meningealni znaci",
   "form.otherFindings": "Ostali nalazi",
+  "form.generating": "Generisanje...",
+  "form.pdfGenerated": "PDF generisan",
+  "form.pdfGeneratedDesc": "Nalaz je generisan i status pacijenta je ažuriran.",
+  "form.pdfError": "PDF greška",
+  "form.pdfErrorDesc": "Neuspešno generisanje PDF-a",
+  "form.requiredFieldsTooltip": "Molimo unesite osnovne podatke o pacijentu (Ime, JMBG, Adresa) da biste generisali nalaz.",
+  "form.diarizedTitle": "Dijalog — Transkript",
+  "form.stampPlaceholder": "Pečat",
 
   // Listener Panel
   "listener.title": "Transkript uživo",
@@ -256,6 +301,17 @@ const sr = {
   "examDetail.notSpecified": "Nije navedeno",
   "examDetail.error": "Greška",
   "examDetail.errorDesc": "Nije moguće generisati objašnjenje.",
+  "examDetail.detailedAnamnesis": "Detaljna anamneza",
+  "examDetail.generatePdf": "Generiši PDF",
+  "examDetail.patientData": "Podaci o pacijentu",
+  "examDetail.nameLabel": "Ime",
+  "examDetail.ageLabel": "Starost",
+  "examDetail.occupationLabel": "Zanimanje",
+  "examDetail.socialStatusLabel": "Socijalni status",
+  "examDetail.emailLabel": "Email",
+  "examDetail.clinicalTimeline": "Klinički tok bolesti",
+  "examDetail.socialHistory": "Socijalno-epidemiološka anamneza",
+  "examDetail.statusPraesens": "STATUS PRAESENS — Objektivni nalaz",
 
   // Top Nav
   "topnav.gdpr": "GDPR Compliant",
@@ -296,29 +352,6 @@ const sr = {
   "therapy.medicationsLabel": "Propisani lekovi",
   "therapy.timesDaily": "x dnevno",
   "therapy.asNeeded": "po potrebi",
-
-  // Patient reminders
-  "patient.reminderTomorrow": "Podsetnik: kontrola je sutra",
-  "patient.reminderToday": "Podsetnik: kontrola je danas",
-  "patient.atTime": "u",
-
-  // Language names
-  "lang.sr": "Srpski",
-  "lang.en": "English",
-  "lang.fr": "Français",
-
-  // Timeline
-  "timeline.title": "Linija terapije",
-  "timeline.initialExam": "Inicijalni pregled",
-
-  // Drug Tracker
-  "drugTracker.title": "Praćenje lekova",
-  "drugTracker.taken": "popijeno",
-  "drugTracker.markTaken": "Popio/la sam lek",
-  "drugTracker.takenAt": "Popijeno u",
-  "drugTracker.instruction": "Uputstvo",
-
-  // Safety Check
   "therapy.safetyNote": "Napomena:",
   "therapy.warningNsaidDiabetes": "Proverite kompatibilnost leka {drug} sa dijagnozom insulinske rezistencije / dijabetesa.",
   "therapy.warningNsaidGastric": "Lek {drug} može pogoršati gastrointestinalne tegobe pacijenta.",
@@ -351,6 +384,11 @@ const sr = {
   "journal.recentEntries": "Prethodni unosi",
   "journal.medTaken": "Lek popijen",
   "journal.severe": "Ozbiljno",
+  "journal.mood1": "Veoma loše",
+  "journal.mood2": "Loše",
+  "journal.mood3": "Srednje",
+  "journal.mood4": "Dobro",
+  "journal.mood5": "Odlično",
 
   // Progress Panel
   "progress.title": "Tok terapije",
@@ -366,8 +404,32 @@ const sr = {
   "progress.analysisError": "Greška pri analizi",
   "progress.needMore": "Potrebno je najmanje 2 unosa za analizu",
 
-  // Nav
-  "nav.journal": "Dnevnik",
+  // Language names
+  "lang.sr": "Srpski",
+  "lang.en": "English",
+  "lang.fr": "Français",
+
+  // Timeline
+  "timeline.title": "Linija terapije",
+  "timeline.initialExam": "Inicijalni pregled",
+  "timeline.noActivities": "Nema planiranih aktivnosti za ovog pacijenta.",
+
+  // Drug Tracker
+  "drugTracker.title": "Praćenje lekova",
+  "drugTracker.taken": "popijeno",
+  "drugTracker.markTaken": "Popio/la sam lek",
+  "drugTracker.takenAt": "Popijeno u",
+  "drugTracker.instruction": "Uputstvo",
+
+  // Chat
+  "chat.greeting.doctor": "Zdravo! Ja sam EchoMed AI. Kako vam mogu pomoći u radu danas?",
+  "chat.greeting.patient": "Zdravo! Ja sam EchoMed AI. Kako vam mogu pomoći?",
+  "chat.placeholder": "Postavite pitanje...",
+  "chat.subtitle": "Vaš digitalni asistent",
+  "chat.errorConnect": "Izvinite, ne mogu da se povežem. Pokušajte ponovo.",
+  "chat.errorDefault": "Izvinite, došlo je do greške.",
+  "chat.rateLimited": "Previše zahteva, pokušajte ponovo za minut.",
+  "chat.creditsNeeded": "Potrebno je dopuniti kredite.",
 };
 
 export default sr;

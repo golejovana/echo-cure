@@ -184,10 +184,10 @@ export default function ExaminationDetail() {
           .update({ priority: "completed" } as any)
           .eq("examination_id", id);
       }
-      toast({ title: "PDF generisan", description: "Nalaz je generisan i status je ažuriran." });
+      toast({ title: t("form.pdfGenerated"), description: t("form.pdfGeneratedDesc") });
     } catch (e) {
       console.error("PDF error:", e);
-      toast({ title: "PDF greška", description: e instanceof Error ? e.message : "Neuspešno generisanje", variant: "destructive" });
+      toast({ title: t("form.pdfError"), description: e instanceof Error ? e.message : t("form.pdfErrorDesc"), variant: "destructive" });
     } finally {
       setPdfLoading(false);
     }
@@ -233,7 +233,7 @@ export default function ExaminationDetail() {
             <div>
               <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <HeartPulse size={22} strokeWidth={1.5} className="text-primary" />
-                Detaljna anamneza
+                {t("examDetail.detailedAnamnesis")}
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
                 {t("examDetail.examFrom")} {formatDate(exam.created_at)}
@@ -245,7 +245,7 @@ export default function ExaminationDetail() {
               className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground shadow-md hover:shadow-lg disabled:opacity-60 active:scale-[0.97] transition-all duration-200"
             >
               {pdfLoading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
-              {pdfLoading ? "Generisanje..." : "Generiši PDF"}
+              {pdfLoading ? t("form.generating") : t("examDetail.generatePdf")}
             </button>
           </div>
 
@@ -255,13 +255,13 @@ export default function ExaminationDetail() {
 
               {/* Patient info */}
               {(fd.patientName || fd.patientAge || fd.patientOccupation) && (
-                <Section icon={User} title="Podaci o pacijentu">
+                <Section icon={User} title={t("examDetail.patientData")}>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                    {fd.patientName && <Field label="Ime" value={fd.patientName} />}
-                    {fd.patientAge && <Field label="Starost" value={fd.patientAge} />}
-                    {fd.patientOccupation && <Field label="Zanimanje" value={fd.patientOccupation} />}
-                    {fd.patientSocialStatus && <Field label="Socijalni status" value={fd.patientSocialStatus} />}
-                    {exam.patient_email && <Field label="Email" value={exam.patient_email} />}
+                    {fd.patientName && <Field label={t("examDetail.nameLabel")} value={fd.patientName} />}
+                    {fd.patientAge && <Field label={t("examDetail.ageLabel")} value={fd.patientAge} />}
+                    {fd.patientOccupation && <Field label={t("examDetail.occupationLabel")} value={fd.patientOccupation} />}
+                    {fd.patientSocialStatus && <Field label={t("examDetail.socialStatusLabel")} value={fd.patientSocialStatus} />}
+                    {exam.patient_email && <Field label={t("examDetail.emailLabel")} value={exam.patient_email} />}
                   </div>
                 </Section>
               )}
@@ -287,7 +287,7 @@ export default function ExaminationDetail() {
 
               {/* Clinical timeline */}
               {!isEmpty(exam.clinical_timeline) && (
-                <Section icon={Clock} title="Klinički tok bolesti">
+                <Section icon={Clock} title={t("examDetail.clinicalTimeline")}>
                   <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">{exam.clinical_timeline}</p>
                 </Section>
               )}
@@ -308,7 +308,7 @@ export default function ExaminationDetail() {
 
               {/* Social history */}
               {SOCIAL_FIELDS.some(f => !isEmpty(fd[f.key])) && (
-                <Section icon={Home} title="Socijalno-epidemiološka anamneza">
+                <Section icon={Home} title={t("examDetail.socialHistory")}>
                   <div className="space-y-2 text-sm">
                     {SOCIAL_FIELDS.map(f => !isEmpty(fd[f.key]) && (
                       <p key={f.key}>
@@ -341,7 +341,7 @@ export default function ExaminationDetail() {
 
               {/* Status Praesens (Objective findings) */}
               {OBJECTIVE_FIELDS.some(f => !isEmpty(fd[f.key])) && (
-                <Section icon={Thermometer} title="STATUS PRAESENS — Objektivni nalaz">
+                <Section icon={Thermometer} title={t("examDetail.statusPraesens")}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
                     {OBJECTIVE_FIELDS.map(f => !isEmpty(fd[f.key]) && (
                       <div key={f.key} className="bg-muted/20 rounded-xl px-3.5 py-2.5">

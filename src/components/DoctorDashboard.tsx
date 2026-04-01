@@ -47,50 +47,6 @@ const item = {
   show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
 };
 
-const STATUS_STYLES: Record<string, string> = {
-  completed: "bg-accent/12 text-accent border-accent/20",
-  waiting: "bg-primary/10 text-primary border-primary/20",
-  priority: "bg-destructive/10 text-destructive border-destructive/20",
-};
-const STATUS_LABELS: Record<string, string> = {
-  completed: "Završeno",
-  waiting: "Čeka",
-  priority: "Prioritet",
-};
-
-const STAT_CONFIGS = [
-  {
-    key: "patients",
-    label: "Pacijenata danas",
-    icon: Users,
-    gradient: "from-blue-500/15 to-blue-500/5",
-    iconBg: "bg-blue-500/12",
-    iconColor: "text-blue-500",
-    borderAccent: "border-l-blue-500",
-    cardBorder: "border-blue-500/20",
-  },
-  {
-    key: "reports",
-    label: "Generisanih nalaza",
-    icon: FileText,
-    gradient: "from-emerald-500/15 to-emerald-500/5",
-    iconBg: "bg-emerald-500/12",
-    iconColor: "text-emerald-500",
-    borderAccent: "border-l-emerald-500",
-    cardBorder: "border-emerald-500/20",
-  },
-  {
-    key: "alerts",
-    label: "Upozorenja",
-    icon: AlertTriangle,
-    gradient: "from-amber-500/15 to-amber-500/5",
-    iconBg: "bg-amber-500/12",
-    iconColor: "text-amber-500",
-    borderAccent: "border-l-amber-500",
-    cardBorder: "border-amber-500/20",
-  },
-];
-
 const DEMO_APPOINTMENTS = [
   { name: "Marko Petrović", time: "09:00", reason: "Sumnja na upalu pluća", priority: "completed" },
   { name: "Jana Šumonja", time: "11:30", reason: "Kontrola nakon terapije", priority: "normal" },
@@ -98,7 +54,7 @@ const DEMO_APPOINTMENTS = [
 ];
 
 export default function DoctorDashboard() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const navigate = useNavigate();
   const [schedule, setSchedule] = useState<ScheduleRow[]>([]);
   const [stats, setStats] = useState({ patients: 0, reports: 0, alerts: 0 });
@@ -109,6 +65,53 @@ export default function DoctorDashboard() {
   const [submitting, setSubmitting] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
+
+  const STATUS_STYLES: Record<string, string> = {
+    completed: "bg-accent/12 text-accent border-accent/20",
+    waiting: "bg-primary/10 text-primary border-primary/20",
+    priority: "bg-destructive/10 text-destructive border-destructive/20",
+  };
+
+  const statusLabel = (status: string) => {
+    if (status === "completed") return t("dashboard.statusCompleted");
+    if (status === "priority") return t("dashboard.statusPriority");
+    return t("dashboard.statusWaiting");
+  };
+
+  const STAT_CONFIGS = [
+    {
+      key: "patients",
+      label: t("dashboard.patientsToday"),
+      icon: Users,
+      gradient: "from-blue-500/15 to-blue-500/5",
+      iconBg: "bg-blue-500/12",
+      iconColor: "text-blue-500",
+      borderAccent: "border-l-blue-500",
+      cardBorder: "border-blue-500/20",
+    },
+    {
+      key: "reports",
+      label: t("dashboard.generatedReports"),
+      icon: FileText,
+      gradient: "from-emerald-500/15 to-emerald-500/5",
+      iconBg: "bg-emerald-500/12",
+      iconColor: "text-emerald-500",
+      borderAccent: "border-l-emerald-500",
+      cardBorder: "border-emerald-500/20",
+    },
+    {
+      key: "alerts",
+      label: t("dashboard.warnings"),
+      icon: AlertTriangle,
+      gradient: "from-amber-500/15 to-amber-500/5",
+      iconBg: "bg-amber-500/12",
+      iconColor: "text-amber-500",
+      borderAccent: "border-l-amber-500",
+      cardBorder: "border-amber-500/20",
+    },
+  ];
+
+  const dateLocale = language === "en" ? "en-US" : language === "fr" ? "fr-FR" : "sr-RS";
 
   const loadSchedule = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -129,10 +132,8 @@ export default function DoctorDashboard() {
     const examMap = new Map<string, any>();
     exams?.forEach((e: any) => examMap.set(e.id, e));
 
-    // If no appointments exist for today, seed demo data
     if (!appts || appts.length === 0) {
       await seedDemoAppointments(user.id);
-      // Reload after seeding
       const { data: seededAppts } = await supabase
         .from("appointments")
         .select("id, appointment_time, title, priority, examination_id")
@@ -167,15 +168,13 @@ export default function DoctorDashboard() {
         id: a.id,
         time: a.appointment_time || "—",
         patient: exam?.patient_name || a.title || "—",
-        reason: exam?.chief_complaints?.split(",")[0]?.trim() || a.title || "Pregled",
+        reason: exam?.chief_complaints?.split(",")[0]?.trim() || a.title || t("nav.examination"),
         status,
         examinationId: a.examination_id,
       };
     });
     setSchedule(rows);
 
-    // "Pacijenata danas" = total scheduled appointments
-    // "Generisanih nalaza" = only appointments with priority="completed" (PDF was generated)
     const completedCount = rows.filter(r => r.status === "completed").length;
     setStats({
       patients: rows.length,
@@ -239,7 +238,6 @@ export default function DoctorDashboard() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSubmitting(false); return; }
 
-    // Create examination record
     const { data: exam } = await supabase
       .from("examinations")
       .insert({
@@ -279,7 +277,7 @@ export default function DoctorDashboard() {
             </div>
             <div className="absolute inset-0 rounded-2xl bg-primary/5 animate-ping" />
           </div>
-          <p className="text-xs text-muted-foreground font-medium">Učitavanje...</p>
+          <p className="text-xs text-muted-foreground font-medium">{t("dashboard.loading")}</p>
         </div>
       </div>
     );
@@ -289,7 +287,6 @@ export default function DoctorDashboard() {
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-7xl mx-auto relative">
-      {/* Decorative background elements */}
       <div className="floating-dot w-32 h-32 bg-primary/30 -top-10 -right-10 blur-3xl" />
       <div className="floating-dot w-24 h-24 bg-accent/25 top-40 -left-8 blur-2xl" style={{ animationDelay: "2s" }} />
 
@@ -300,12 +297,12 @@ export default function DoctorDashboard() {
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center">
               <Sparkles size={14} className="text-primary-foreground" />
             </div>
-            <h2 className="text-xl font-bold text-foreground tracking-tight">Clinical Intelligence Hub</h2>
+            <h2 className="text-xl font-bold text-foreground tracking-tight">{t("dashboard.title")}</h2>
           </div>
-          <p className="text-sm text-muted-foreground ml-10">Pregled aktivnosti i kliničkih podataka</p>
+          <p className="text-sm text-muted-foreground ml-10">{t("dashboard.subtitle")}</p>
         </div>
         <div className="text-xs text-foreground font-bold bg-muted/50 px-3 py-1.5 rounded-full">
-          {new Date().toLocaleDateString("sr-RS", { weekday: "long", day: "numeric", month: "long" })}
+          {new Date().toLocaleDateString(dateLocale, { weekday: "long", day: "numeric", month: "long" })}
         </div>
       </motion.div>
 
@@ -334,7 +331,7 @@ export default function DoctorDashboard() {
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Daily Schedule — 60% */}
+        {/* Daily Schedule */}
         <motion.div variants={item} className="lg:col-span-3">
           <Card className="led-card border-border/30 overflow-hidden">
             <CardHeader className="pb-3 border-b border-border/20">
@@ -343,11 +340,11 @@ export default function DoctorDashboard() {
                   <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
                     <Clock size={15} strokeWidth={1.8} className="text-primary" />
                   </div>
-                  <CardTitle className="text-sm font-bold uppercase tracking-wider">Dnevni raspored</CardTitle>
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider">{t("dashboard.dailySchedule")}</CardTitle>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="text-[10px] font-semibold bg-primary/5 border-primary/15 text-primary">
-                    {schedule.length} zakazano
+                    {schedule.length} {t("dashboard.scheduled")}
                   </Badge>
                   <Button
                     size="sm"
@@ -355,7 +352,7 @@ export default function DoctorDashboard() {
                     className="h-7 px-2.5 text-xs gap-1 rounded-lg"
                   >
                     <Plus size={13} />
-                    Novo zakazivanje
+                    {t("dashboard.newAppointment")}
                   </Button>
                 </div>
               </div>
@@ -366,17 +363,17 @@ export default function DoctorDashboard() {
                   <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
                     <Activity size={24} className="text-muted-foreground/30" />
                   </div>
-                  <p className="text-sm text-muted-foreground font-medium">Nema zakazanih pacijenata za danas.</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Kliknite "Novo zakazivanje" da dodate pregled</p>
+                  <p className="text-sm text-muted-foreground font-medium">{t("dashboard.noPatients")}</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">{t("dashboard.clickToAdd")}</p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent border-border/20">
-                      <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Vreme</TableHead>
-                      <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Pacijent</TableHead>
-                      <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 hidden sm:table-cell">Razlog</TableHead>
-                      <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 text-right">Status</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">{t("dashboard.time")}</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">{t("dashboard.patient")}</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 hidden sm:table-cell">{t("dashboard.reason")}</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 text-right">{t("dashboard.status")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -393,7 +390,7 @@ export default function DoctorDashboard() {
                         </TableCell>
                         <TableCell className="text-right">
                           <Badge variant="outline" className={cn("text-[10px] font-bold border px-2.5 py-0.5", STATUS_STYLES[row.status])}>
-                            {STATUS_LABELS[row.status]}
+                            {statusLabel(row.status)}
                           </Badge>
                         </TableCell>
                       </TableRow>
@@ -405,7 +402,7 @@ export default function DoctorDashboard() {
           </Card>
         </motion.div>
 
-        {/* Quick Insights — 40% */}
+        {/* Quick Insights */}
         <motion.div variants={item} className="lg:col-span-2 space-y-4">
           {/* Top Diagnoses */}
           <Card className="led-card border-border/30 overflow-hidden">
@@ -414,12 +411,12 @@ export default function DoctorDashboard() {
                 <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center">
                   <TrendingUp size={15} strokeWidth={1.8} className="text-accent" />
                 </div>
-                <CardTitle className="text-sm font-bold uppercase tracking-wider">Top dijagnoze</CardTitle>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider">{t("dashboard.topDiagnoses")}</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-3 pt-1">
               {topDiagnoses.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">Nema podataka</p>
+                <p className="text-sm text-muted-foreground text-center py-6">{t("dashboard.noData")}</p>
               ) : (
                 topDiagnoses.map((d, i) => (
                   <div key={i} className="space-y-1.5">
@@ -441,14 +438,14 @@ export default function DoctorDashboard() {
             </CardContent>
           </Card>
 
-          {/* System Efficiency */}
+          {/* AI Efficiency */}
           <Card className="led-card border-border/30 overflow-hidden">
             <CardHeader className="pb-3 border-b border-border/20">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary/15 to-accent/10 flex items-center justify-center">
                   <Zap size={15} strokeWidth={1.8} className="text-primary" />
                 </div>
-                <CardTitle className="text-sm font-bold uppercase tracking-wider">AI efikasnost</CardTitle>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider">{t("dashboard.aiEfficiency")}</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 pt-1">
@@ -456,20 +453,20 @@ export default function DoctorDashboard() {
                 <span className="text-5xl font-extrabold gradient-text tracking-tight">
                   {stats.reports * 17}
                 </span>
-                <span className="text-sm text-muted-foreground font-medium">min uštede</span>
+                <span className="text-sm text-muted-foreground font-medium">{t("dashboard.minSaved")}</span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                AI asistent je ubrzao dokumentaciju za{" "}
-                <span className="font-bold text-accent">{stats.reports}</span> pregled{stats.reports !== 1 ? "a" : ""} danas, štedeći {stats.reports * 17} minuta.
+                {t("dashboard.aiEfficiencyDesc")}{" "}
+                <span className="font-bold text-accent">{stats.reports}</span> {t("dashboard.examsToday")} {stats.reports * 17} {t("dashboard.minutes")}
               </p>
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div className="rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/10 p-3 text-center">
                   <p className="text-xl font-extrabold text-foreground">{stats.reports}</p>
-                  <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">AI nalaza</p>
+                  <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">{t("dashboard.aiReports")}</p>
                 </div>
                 <div className="rounded-xl bg-gradient-to-br from-accent/8 to-accent/3 border border-accent/10 p-3 text-center">
                   <p className="text-xl font-extrabold text-foreground">{stats.alerts}</p>
-                  <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">Upozorenja</p>
+                  <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">{t("dashboard.warnings")}</p>
                 </div>
               </div>
             </CardContent>
@@ -481,39 +478,39 @@ export default function DoctorDashboard() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">Novo zakazivanje</DialogTitle>
+            <DialogTitle className="text-lg font-bold">{t("dashboard.dialogTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="apt-name">Ime pacijenta</Label>
+              <Label htmlFor="apt-name">{t("dashboard.patientName")}</Label>
               <Input
                 id="apt-name"
-                placeholder="npr. Marko Petrović"
+                placeholder={t("dashboard.patientNamePlaceholder")}
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="apt-time">Vreme</Label>
+              <Label htmlFor="apt-time">{t("dashboard.time")}</Label>
               <Input
                 id="apt-time"
                 type="time"
-                placeholder="npr. 10:30"
+                placeholder={t("dashboard.timePlaceholder")}
                 value={formData.time}
                 onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="apt-reason">Razlog</Label>
+              <Label htmlFor="apt-reason">{t("dashboard.reasonLabel")}</Label>
               <Input
                 id="apt-reason"
-                placeholder="npr. Kontrola pritiska"
+                placeholder={t("dashboard.reasonPlaceholder")}
                 value={formData.reason}
                 onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
               />
             </div>
             <div className="space-y-2">
-              <Label>Status</Label>
+              <Label>{t("dashboard.status")}</Label>
               <Select
                 value={formData.status}
                 onValueChange={(v) => setFormData(prev => ({ ...prev, status: v as any }))}
@@ -522,21 +519,21 @@ export default function DoctorDashboard() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="waiting">Čeka</SelectItem>
-                  <SelectItem value="completed">Završeno</SelectItem>
-                  <SelectItem value="priority">Prioritet</SelectItem>
+                  <SelectItem value="waiting">{t("dashboard.statusWaiting")}</SelectItem>
+                  <SelectItem value="completed">{t("dashboard.statusCompleted")}</SelectItem>
+                  <SelectItem value="priority">{t("dashboard.statusPriority")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Otkaži</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t("dashboard.cancel")}</Button>
             <Button
               onClick={handleAddAppointment}
               disabled={submitting || !formData.name.trim() || !formData.time.trim() || !formData.reason.trim()}
             >
               {submitting ? <Loader2 className="animate-spin mr-2" size={14} /> : <Plus size={14} className="mr-1" />}
-              Zakaži
+              {t("dashboard.schedule")}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -274,7 +274,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
   );
   const canSubmit = hasAnyData && requiredFieldsFilled;
   const disabledTooltip = !requiredFieldsFilled
-    ? "Molimo unesite osnovne podatke o pacijentu (Ime, JMBG, Adresa) da biste generisali nalaz."
+    ? t("form.requiredFieldsTooltip")
     : undefined;
 
   return (
@@ -345,7 +345,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
           <div className="glass-card p-5 space-y-3">
             <div className="flex items-center gap-2 mb-1">
               <ClipboardList size={16} strokeWidth={1.5} className="text-muted-foreground" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Dijalog — Transkript</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("form.diarizedTitle")}</h3>
             </div>
             <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
               {form._diarizedTranscript.split("\n").filter(Boolean).map((line: string, i: number) => {
@@ -507,7 +507,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
             <div className="space-y-1">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("form.institutionStamp")}</p>
               <div className="w-24 h-24 border border-dashed border-border/60 rounded-lg flex items-center justify-center">
-                <span className="text-[10px] text-muted-foreground/40 italic">Stamp</span>
+                <span className="text-[10px] text-muted-foreground/40 italic">{t("form.stampPlaceholder")}</span>
               </div>
             </div>
             <div className="text-right space-y-1">
@@ -549,10 +549,10 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
                       .eq("examination_id", exams[0].id);
                   }
                 }
-                toast({ title: "PDF generisan", description: "Nalaz je generisan i status pacijenta je ažuriran." });
+                toast({ title: t("form.pdfGenerated"), description: t("form.pdfGeneratedDesc") });
               } catch (e) {
                 console.error("PDF generation error:", e);
-                toast({ title: "PDF Error", description: e instanceof Error ? e.message : "Failed to generate PDF", variant: "destructive" });
+                toast({ title: t("form.pdfError"), description: e instanceof Error ? e.message : t("form.pdfErrorDesc"), variant: "destructive" });
               } finally {
                 setPdfLoading(false);
               }
@@ -561,7 +561,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
             className="w-full flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] transition-all duration-200"
           >
             {pdfLoading ? <Loader2 size={15} strokeWidth={1.8} className="animate-spin" /> : <Download size={15} strokeWidth={1.8} />}
-            {pdfLoading ? (lang === "sr" ? "Generisanje..." : "Generating...") : t("form.downloadPdf")}
+            {pdfLoading ? t("form.generating") : t("form.downloadPdf")}
           </button>
           {disabledTooltip && (
             <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 rounded-lg bg-popover text-popover-foreground text-xs text-center px-3 py-2 shadow-lg border border-border opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50">
