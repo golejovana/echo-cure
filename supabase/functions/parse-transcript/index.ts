@@ -27,7 +27,25 @@ serve(async (req) => {
 
   try {
     const { transcript, lang, diarize } = await req.json();
-    const outputLang = lang === "sr-RS" ? "Serbian" : "English";
+    // Detect the actual language of the transcript from its content
+    const sample = (transcript || "").slice(0, 200);
+    const cyrillicCount = (sample.match(/[\u0400-\u04FF]/g) || []).length;
+    const latinCount = (sample.match(/[a-zA-Z]/g) || []).length;
+    const frenchIndicators = /[\u00e0\u00e2\u00e7\u00e8\u00e9\u00ea\u00ee\u00f4\u00f9\u00fb\u00fc\u0153]|\b(le|la|les|un|une|des|du|est|sont|dans|avec|pour|qui|que|nous|vous|ils|elles|cette|mais)\b/gi;
+    const frenchCount = (sample.match(frenchIndicators) || []).length;
+
+    let detectedLang = "Serbian";
+    if (cyrillicCount > latinCount * 0.3) {
+      detectedLang = "Serbian";
+    } else if (frenchCount > 5) {
+      detectedLang = "French";
+    } else if (latinCount > cyrillicCount) {
+      detectedLang = "English";
+    }
+
+    // Use detected transcript language as output language (match the input)
+    const outputLang = detectedLang;
+
     if (!transcript?.trim()) {
       return new Response(JSON.stringify({ error: "No transcript provided" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -52,7 +70,7 @@ serve(async (req) => {
 
 Do NOT invent or hallucinate data. Only extract what is explicitly stated or clearly implied.
 
-OUTPUT LANGUAGE: "${outputLang}". You MUST write ALL field values in ${outputLang}. If the transcript is in a different language, translate the extracted data into ${outputLang}. Keep proper nouns (patient names, hospital names, place names) in their original form.
+CRITICAL LANGUAGE RULE: The input transcript is in ${outputLang}. You MUST write ALL extracted field values in ${outputLang} — the SAME language as the input transcript. Do NOT translate any content into a different language. If the transcript says "truck driver", output "truck driver" — NOT "Vozač kamiona". If the transcript says "essential hypertension", output "Essential hypertension" — NOT "Esencijalna hipertenzija". ICD-10 diagnosis descriptions must also be in ${outputLang} (e.g. "M51.1 - Lumbar disc herniation" if English, "M51.1 - Lumbalna diskus hernija" if Serbian). Keep proper nouns (patient names, hospital names, place names) in their original form.
 
 EXTRACTION RULES:
 
