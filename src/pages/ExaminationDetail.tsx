@@ -418,6 +418,28 @@ export default function ExaminationDetail() {
   }
 
   /* ======================== PATIENT VIEW ======================== */
+
+  // Collect all translatable dynamic content fields
+  const translatableFields = useMemo(() => {
+    const f: Record<string, string | null | undefined> = {
+      diagnosis: exam.diagnosis_codes,
+      chiefComplaints: exam.chief_complaints,
+      presentIllness: exam.present_illness,
+      allergies: fd.allergies,
+      chronicDiseases: fd.chronicDiseases,
+      medications: fd.medications,
+      simplified: simplified,
+    };
+    return f;
+  }, [exam.diagnosis_codes, exam.chief_complaints, exam.present_illness, fd.allergies, fd.chronicDiseases, fd.medications, simplified]);
+
+  const { translated: tr, loading: trLoading, errors: trErrors } = useExamContentTranslation(exam.id, translatableFields);
+
+  const tv = (key: string, original: string | null | undefined): string => {
+    if (!original) return "";
+    return tr[key] || original;
+  };
+
   return (
     <DashboardLayout role="patient">
       <motion.div
@@ -436,27 +458,45 @@ export default function ExaminationDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
             <Section icon={Activity} title={t("examDetail.diagnosis")}>
-              <p className="text-sm font-medium text-foreground">{exam.diagnosis_codes || t("examDetail.notSpecified")}</p>
+              <TranslatedContent loading={trLoading} failed={trErrors.has("diagnosis")}>
+                <p className="text-sm font-medium text-foreground">{tv("diagnosis", exam.diagnosis_codes) || t("examDetail.notSpecified")}</p>
+              </TranslatedContent>
             </Section>
 
             {!isEmpty(exam.chief_complaints) && (
               <Section icon={ClipboardList} title={t("examDetail.chiefComplaints")}>
-                <p className="text-sm text-foreground/80 leading-relaxed">{exam.chief_complaints}</p>
+                <TranslatedContent loading={trLoading} failed={trErrors.has("chiefComplaints")}>
+                  <p className="text-sm text-foreground/80 leading-relaxed">{tv("chiefComplaints", exam.chief_complaints)}</p>
+                </TranslatedContent>
               </Section>
             )}
 
             {!isEmpty(exam.present_illness) && (
               <Section icon={FileText} title={t("examDetail.presentIllness")}>
-                <p className="text-sm text-foreground/80 leading-relaxed">{exam.present_illness}</p>
+                <TranslatedContent loading={trLoading} failed={trErrors.has("presentIllness")}>
+                  <p className="text-sm text-foreground/80 leading-relaxed">{tv("presentIllness", exam.present_illness)}</p>
+                </TranslatedContent>
               </Section>
             )}
 
             {(fd.allergies || fd.chronicDiseases || fd.medications) && (
               <Section icon={Shield} title={t("examDetail.personalHistory")}>
                 <div className="space-y-2 text-sm text-foreground/80">
-                  {!isEmpty(fd.allergies) && <p><span className="font-medium text-foreground">{t("examDetail.allergies")}</span> {fd.allergies}</p>}
-                  {!isEmpty(fd.chronicDiseases) && <p><span className="font-medium text-foreground">{t("examDetail.chronicDiseases")}</span> {fd.chronicDiseases}</p>}
-                  {!isEmpty(fd.medications) && <p><span className="font-medium text-foreground">{t("examDetail.therapy")}</span> {fd.medications}</p>}
+                  {!isEmpty(fd.allergies) && (
+                    <TranslatedContent loading={trLoading} failed={trErrors.has("allergies")} inline>
+                      <p><span className="font-medium text-foreground">{t("examDetail.allergies")}</span> {tv("allergies", fd.allergies)}</p>
+                    </TranslatedContent>
+                  )}
+                  {!isEmpty(fd.chronicDiseases) && (
+                    <TranslatedContent loading={trLoading} failed={trErrors.has("chronicDiseases")} inline>
+                      <p><span className="font-medium text-foreground">{t("examDetail.chronicDiseases")}</span> {tv("chronicDiseases", fd.chronicDiseases)}</p>
+                    </TranslatedContent>
+                  )}
+                  {!isEmpty(fd.medications) && (
+                    <TranslatedContent loading={trLoading} failed={trErrors.has("medications")} inline>
+                      <p><span className="font-medium text-foreground">{t("examDetail.therapy")}</span> {tv("medications", fd.medications)}</p>
+                    </TranslatedContent>
+                  )}
                 </div>
               </Section>
             )}
@@ -469,7 +509,9 @@ export default function ExaminationDetail() {
               </div>
               {simplified ? (
                 <div className="bg-accent/5 border border-accent/20 rounded-2xl p-4">
-                  <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-line">{simplified}</p>
+                  <TranslatedContent loading={trLoading} failed={trErrors.has("simplified")}>
+                    <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-line">{tv("simplified", simplified)}</p>
+                  </TranslatedContent>
                 </div>
               ) : (
                 <button onClick={handleSimplify} disabled={simplifying}
