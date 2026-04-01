@@ -49,6 +49,7 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
 
   const recRef = useRef<any>(null);
   const manualStopRef = useRef(false);
+  const recordingStateRef = useRef<RecordingState>(recordingState);
   const segmentsRef = useRef<TranscriptSegment[]>([]);
 
   useEffect(() => {
