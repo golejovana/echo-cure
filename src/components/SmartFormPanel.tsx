@@ -274,7 +274,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
   );
   const canSubmit = hasAnyData && requiredFieldsFilled;
   const disabledTooltip = !requiredFieldsFilled
-    ? "Molimo unesite osnovne podatke o pacijentu (Ime, JMBG, Adresa) da biste generisali nalaz."
+    ? t("form.requiredFieldsTooltip")
     : undefined;
 
   return (
