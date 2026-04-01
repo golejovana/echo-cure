@@ -137,7 +137,7 @@ export default function HistoryPage() {
                   <tr key={row.id} className="border-b border-border/20 hover:bg-muted/20 transition-colors duration-150 group">
                     <td className="px-5 py-4 text-sm text-foreground font-medium">{row.date}</td>
                     <td className="px-5 py-4 text-sm text-foreground">{row.name}</td>
-                    <td className="px-5 py-4 text-sm text-foreground/80 max-w-xs truncate">{row.diagnosis}</td>
+                    <td className="px-5 py-4 text-sm text-foreground/80 max-w-xs truncate">{diagTranslations[row.diagnosis] || row.diagnosis}</td>
                     <td className="px-5 py-4">
                       <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full ${statusColor(row.status)}`}>{row.status}</span>
                     </td>
