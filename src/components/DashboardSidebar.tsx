@@ -112,7 +112,7 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
               </span>
             </div>
             <p className="text-[10px] text-muted-foreground leading-relaxed">
-              Klinička AI podrška aktivna
+              {t("nav.aiSupport")}
             </p>
           </div>
         )}

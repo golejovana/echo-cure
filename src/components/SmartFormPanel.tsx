@@ -561,7 +561,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
             className="w-full flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] transition-all duration-200"
           >
             {pdfLoading ? <Loader2 size={15} strokeWidth={1.8} className="animate-spin" /> : <Download size={15} strokeWidth={1.8} />}
-            {pdfLoading ? (lang === "sr" ? "Generisanje..." : "Generating...") : t("form.downloadPdf")}
+            {pdfLoading ? t("form.generating") : t("form.downloadPdf")}
           </button>
           {disabledTooltip && (
             <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 rounded-lg bg-popover text-popover-foreground text-xs text-center px-3 py-2 shadow-lg border border-border opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50">

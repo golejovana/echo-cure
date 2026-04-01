@@ -90,7 +90,7 @@ export default function TreatmentTimeline({ examDate, appointments }: TreatmentT
           </h3>
         </div>
         <p className="text-sm text-muted-foreground text-center py-4">
-          Nema planiranih aktivnosti za ovog pacijenta.
+          {t("timeline.noActivities")}
         </p>
       </div>
     );

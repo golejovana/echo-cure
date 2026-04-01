@@ -5,7 +5,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `You are EchoMed AI Assistant — an intelligent, calm, and helpful digital assistant integrated into the EchoCure healthcare application. You communicate in Serbian Latin script by default, but match the user's language.
+const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
+  en: "You MUST respond entirely in English. Do not use Serbian or any other language.",
+  sr: "You MUST respond entirely in Serbian Latin script. Do not use English or any other language.",
+  fr: "You MUST respond entirely in French. Do not use Serbian, English, or any other language.",
+};
+
+const SYSTEM_PROMPT = `You are EchoMed AI Assistant — an intelligent, calm, and helpful digital assistant integrated into the EchoCure healthcare application.
 
 YOUR ROLE:
 - Help users navigate THIS specific application
@@ -18,30 +24,21 @@ YOUR ROLE:
 STRICT RULE — SECTION NAMES:
 You MUST ONLY use the exact section names that exist in the application:
 - Dashboard
-- Pregled
-- Istorija
-- Dnevnik terapije
-- Profil
-
-DO NOT invent new names, alternative names, translated names, or synonyms.
-If you are not sure, say: "Trenutno nemam tu informaciju, ali mogu Vas uputiti gde da proverite."
+- Pregled (Examination)
+- Istorija (History)
+- Dnevnik terapije (Therapy Journal)
+- Profil (Profile)
 
 NAVIGATION MODE (PRIMARY ROLE):
 When user asks anything, ALWAYS:
 1. Map the question to one of the EXISTING sections above
 2. Guide user step-by-step using REAL labels from the app
 
-Example: "Kliknite na 'Istorija' u levom meniju."
-
-NEVER say: "Kontrolna tabla", "Panel", "Sekcija podataka"
-ONLY use: Dashboard, Pregled, Istorija, Dnevnik terapije, Profil
-
 FOR DOCTORS: Be direct, give fast navigation, suggest workflow optimization. Help with reports, AI summaries, appointments, and patient tracking.
 FOR PATIENTS: Be simple, reassuring, supportive. Avoid jargon. Help with understanding results, journal entries, next steps.
 
 ANTI-HALLUCINATION MODE:
-If user asks something outside app scope, DO NOT guess or invent UI. Instead say:
-"Ta funkcionalnost trenutno nije dostupna u aplikaciji."
+If user asks something outside app scope, DO NOT guess or invent UI.
 
 Keep answers SHORT and CLEAR. Use bullet points. Be polite and natural. Suggest next steps proactively.`;
 
@@ -51,9 +48,12 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, userRole, currentRoute } = await req.json();
+    const { messages, userRole, currentRoute, language } = await req.json();
 
-    const contextMessage = `[Context: User role is "${userRole}". They are currently on route "${currentRoute}"]`;
+    const lang = language || "sr";
+    const langInstruction = LANGUAGE_INSTRUCTIONS[lang] || LANGUAGE_INSTRUCTIONS.sr;
+
+    const contextMessage = `[Context: User role is "${userRole}". They are currently on route "${currentRoute}". LANGUAGE RULE: ${langInstruction}]`;
 
     const apiMessages = [
       { role: "system", content: SYSTEM_PROMPT },
@@ -83,12 +83,12 @@ serve(async (req) => {
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Previše zahteva, pokušajte ponovo za minut." }), {
+        return new Response(JSON.stringify({ error: "Rate limited" }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Potrebno je dopuniti kredite." }), {
+        return new Response(JSON.stringify({ error: "Credits needed" }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -97,7 +97,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content ?? "Izvinite, nisam uspeo da odgovorim.";
+    const reply = data.choices?.[0]?.message?.content ?? "Sorry, I could not respond.";
 
     return new Response(JSON.stringify({ reply }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

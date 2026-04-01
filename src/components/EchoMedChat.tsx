@@ -4,6 +4,7 @@ import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "@/i18n/LanguageContext";
 import ReactMarkdown from "react-markdown";
 
 interface Message {
@@ -16,6 +17,7 @@ interface EchoMedChatProps {
 }
 
 export default function EchoMedChat({ userRole }: EchoMedChatProps) {
+  const { t, language } = useTranslation();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -23,6 +25,11 @@ export default function EchoMedChat({ userRole }: EchoMedChatProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const location = useLocation();
+
+  // Reset messages when language changes so greeting updates
+  useEffect(() => {
+    setMessages([]);
+  }, [language]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -48,6 +55,7 @@ export default function EchoMedChat({ userRole }: EchoMedChatProps) {
           messages: updatedMessages,
           userRole,
           currentRoute: location.pathname,
+          language,
         },
       });
 
@@ -55,19 +63,19 @@ export default function EchoMedChat({ userRole }: EchoMedChatProps) {
 
       const assistantMsg: Message = {
         role: "assistant",
-        content: data.reply || "Izvinite, došlo je do greške.",
+        content: data.reply || t("chat.errorDefault"),
       };
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {
       console.error("Chat error:", err);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Izvinite, ne mogu da se povežem. Pokušajte ponovo." },
+        { role: "assistant", content: t("chat.errorConnect") },
       ]);
     } finally {
       setLoading(false);
     }
-  }, [input, loading, messages, userRole, location.pathname]);
+  }, [input, loading, messages, userRole, location.pathname, language, t]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -76,14 +84,10 @@ export default function EchoMedChat({ userRole }: EchoMedChatProps) {
     }
   };
 
-  const greeting =
-    userRole === "doctor"
-      ? "Zdravo! Ja sam EchoMed AI. Kako vam mogu pomoći u radu danas?"
-      : "Zdravo! Ja sam EchoMed AI. Kako vam mogu pomoći?";
+  const greeting = userRole === "doctor" ? t("chat.greeting.doctor") : t("chat.greeting.patient");
 
   return (
     <>
-      {/* Floating trigger button */}
       <AnimatePresence>
         {!open && (
           <motion.div
@@ -99,13 +103,11 @@ export default function EchoMedChat({ userRole }: EchoMedChatProps) {
             >
               <MessageCircle className="h-6 w-6" />
             </Button>
-            {/* Pulse ring */}
             <span className="absolute inset-0 rounded-full animate-ping bg-primary/20 pointer-events-none" />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Chat panel */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -115,23 +117,20 @@ export default function EchoMedChat({ userRole }: EchoMedChatProps) {
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[calc(100vh-4rem)] flex flex-col rounded-2xl border border-border/40 bg-card shadow-xl overflow-hidden"
           >
-            {/* Header */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30 bg-gradient-to-r from-primary/5 to-accent/5">
               <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
                 <Sparkles className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-foreground">EchoMed AI</h3>
-                <p className="text-[10px] text-muted-foreground">Vaš digitalni asistent</p>
+                <p className="text-[10px] text-muted-foreground">{t("chat.subtitle")}</p>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="h-8 w-8 text-muted-foreground hover:text-foreground">
                 <X className="h-4 w-4" />
               </Button>
             </div>
 
-            {/* Messages */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
-              {/* Greeting */}
               {messages.length === 0 && (
                 <div className="flex gap-2">
                   <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
@@ -185,7 +184,6 @@ export default function EchoMedChat({ userRole }: EchoMedChatProps) {
               )}
             </div>
 
-            {/* Input */}
             <div className="border-t border-border/30 p-3">
               <div className="flex items-end gap-2">
                 <textarea
@@ -193,7 +191,7 @@ export default function EchoMedChat({ userRole }: EchoMedChatProps) {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Postavite pitanje..."
+                  placeholder={t("chat.placeholder")}
                   rows={1}
                   className="flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-h-20 overflow-y-auto"
                 />
