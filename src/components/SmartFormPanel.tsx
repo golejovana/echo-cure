@@ -549,10 +549,10 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
                       .eq("examination_id", exams[0].id);
                   }
                 }
-                toast({ title: "PDF generisan", description: "Nalaz je generisan i status pacijenta je ažuriran." });
+                toast({ title: t("form.pdfGenerated"), description: t("form.pdfGeneratedDesc") });
               } catch (e) {
                 console.error("PDF generation error:", e);
-                toast({ title: "PDF Error", description: e instanceof Error ? e.message : "Failed to generate PDF", variant: "destructive" });
+                toast({ title: t("form.pdfError"), description: e instanceof Error ? e.message : t("form.pdfErrorDesc"), variant: "destructive" });
               } finally {
                 setPdfLoading(false);
               }
