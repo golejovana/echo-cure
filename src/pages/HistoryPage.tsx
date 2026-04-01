@@ -81,6 +81,8 @@ export default function HistoryPage() {
   }
 
   const isDoctor = role === "doctor";
+  const diagnosisTexts = rows.map((r) => r.diagnosis);
+  const diagTranslations = useTranslateText(diagnosisTexts);
   const filtered = rows.filter((row) =>
     `${row.name} ${row.diagnosis}`.toLowerCase().includes(search.toLowerCase())
   );
