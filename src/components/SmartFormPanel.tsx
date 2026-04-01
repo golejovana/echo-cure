@@ -300,9 +300,21 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
         {/* ===== HEADER ===== */}
         <div className="glass-card p-5 space-y-3">
           <div className="text-center space-y-0.5">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{t("form.country")}</p>
-            <p className="text-xs font-bold text-foreground">{t("form.hospital")}</p>
-            <p className="text-[11px] text-muted-foreground">{t("form.address")}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {institutionInfo.institution_country || t("form.country")}
+            </p>
+            {institutionInfo.institution_name ? (
+              <p className="text-xs font-bold text-foreground">{institutionInfo.institution_name}</p>
+            ) : (
+              <p className="text-xs italic text-muted-foreground/60">{t("form.hospital")}</p>
+            )}
+            {(institutionInfo.institution_address || institutionInfo.institution_city) ? (
+              <p className="text-[11px] text-muted-foreground">
+                {[institutionInfo.institution_address, institutionInfo.institution_city].filter(Boolean).join(", ")}
+              </p>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">{t("form.address")}</p>
+            )}
           </div>
           <div className="border-t border-border/50 pt-3 flex justify-between items-center">
             <span className="text-[11px] text-muted-foreground">{t("form.historyNo")} ___________</span>

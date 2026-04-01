@@ -121,6 +121,7 @@ export default function InstitutionBranding() {
     { key: "institution_name" as const, label: t("profile.institutionName"), icon: Building2, placeholder: "Univerzitetski Klinički Centar Srbije" },
     { key: "institution_address" as const, label: t("profile.institutionAddress"), icon: MapPin, placeholder: "Pasterova 2" },
     { key: "institution_city" as const, label: t("profile.institutionCity"), icon: MapPin, placeholder: "Savski venac, 11000 Beograd" },
+    { key: "institution_country" as const, label: t("profile.institutionCountry"), icon: MapPin, placeholder: "Republika Srbija" },
   ];
 
   const logoUrl = editing ? draft.institution_logo_url : data.institution_logo_url;
