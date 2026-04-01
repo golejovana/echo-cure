@@ -19,6 +19,7 @@ export default function InstitutionBranding() {
     institution_name: "",
     institution_address: "",
     institution_city: "",
+    institution_country: "",
     institution_logo_url: "",
   });
   const [editing, setEditing] = useState(false);
