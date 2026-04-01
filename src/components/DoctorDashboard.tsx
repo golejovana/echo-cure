@@ -286,6 +286,12 @@ export default function DoctorDashboard() {
 
   const maxDiag = topDiagnoses.length ? Math.max(...topDiagnoses.map(d => d.count)) : 1;
 
+  // Translate dynamic reason texts
+  const reasonTexts = schedule.map((r) => r.reason);
+  const diagTexts = topDiagnoses.map((d) => d.name);
+  const reasonTranslations = useTranslateText(reasonTexts);
+  const diagTranslations = useTranslateText(diagTexts);
+
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-7xl mx-auto relative">
       <div className="floating-dot w-32 h-32 bg-primary/30 -top-10 -right-10 blur-3xl" />
