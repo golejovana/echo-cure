@@ -308,7 +308,7 @@ export default function ExaminationDetail() {
 
               {/* Social history */}
               {SOCIAL_FIELDS.some(f => !isEmpty(fd[f.key])) && (
-                <Section icon={Home} title="Socijalno-epidemiološka anamneza">
+                <Section icon={Home} title={t("examDetail.socialHistory")}>
                   <div className="space-y-2 text-sm">
                     {SOCIAL_FIELDS.map(f => !isEmpty(fd[f.key]) && (
                       <p key={f.key}>
