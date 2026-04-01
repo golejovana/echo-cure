@@ -184,6 +184,7 @@ export type Database = {
           id: string
           institution_address: string | null
           institution_city: string | null
+          institution_country: string | null
           institution_logo_url: string | null
           institution_name: string | null
           role: Database["public"]["Enums"]["app_role"]
@@ -196,6 +197,7 @@ export type Database = {
           id?: string
           institution_address?: string | null
           institution_city?: string | null
+          institution_country?: string | null
           institution_logo_url?: string | null
           institution_name?: string | null
           role?: Database["public"]["Enums"]["app_role"]
@@ -208,6 +210,7 @@ export type Database = {
           id?: string
           institution_address?: string | null
           institution_city?: string | null
+          institution_country?: string | null
           institution_logo_url?: string | null
           institution_name?: string | null
           role?: Database["public"]["Enums"]["app_role"]
