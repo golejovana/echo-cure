@@ -428,7 +428,7 @@ export default function DoctorDashboard() {
                 topDiagnoses.map((d, i) => (
                   <div key={i} className="space-y-1.5">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-foreground font-semibold truncate pr-2">{d.name}</span>
+                      <span className="text-sm text-foreground font-semibold truncate pr-2">{diagTranslations[d.name] || d.name}</span>
                       <span className="text-xs text-muted-foreground font-bold shrink-0 bg-muted/50 px-2 py-0.5 rounded-full">{d.count}</span>
                     </div>
                     <div className="h-2 rounded-full bg-muted/60 overflow-hidden">
