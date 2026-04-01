@@ -185,6 +185,18 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
     setTranscript(val);
   };
 
+  // Sync STT language with global language context
+  useEffect(() => {
+    const newLang = LANG_MAP[language] || "sr-RS";
+    if (newLang !== lang) {
+      const wasRecording = isRecording;
+      if (wasRecording) stopRecognition();
+      setLang(newLang);
+      onLangChange?.(newLang);
+      if (wasRecording) setTimeout(() => startRecognition(), 250);
+    }
+  }, [language]);
+
   const toggleLang = () => {
     const wasRecording = isRecording;
     if (wasRecording) stopRecognition();
