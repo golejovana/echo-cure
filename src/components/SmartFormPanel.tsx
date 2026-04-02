@@ -84,6 +84,8 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
   const [form, setForm] = useState<FormData>({});
   const [filling, setFilling] = useState(false);
   const [sending, setSending] = useState(false);
+  const [recentlyFilled, setRecentlyFilled] = useState<Set<string>>(new Set());
+  const glowTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [objectiveOpen, setObjectiveOpen] = useState(false);
   const [medications, setMedications] = useState<Medication[]>([]);
