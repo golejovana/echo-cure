@@ -445,7 +445,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
                     <motion.div key={cat.id + "-content"} initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden">
                       <div className="px-5 pb-4 space-y-3 border-t border-border/50 pt-3">
                         {cat.fields.map((field) => (
-                          <FieldRow key={field.key} field={field} value={form[field.key] || ""} onChange={set} filling={filling} fromTranscript={t("form.fromTranscript")} />
+                          <FieldRow key={field.key} field={field} value={form[field.key] || ""} onChange={set} filling={filling} glowing={recentlyFilled.has(field.key)} fromTranscript={t("form.fromTranscript")} />
                         ))}
                       </div>
                     </motion.div>
