@@ -347,18 +347,22 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
               { key: "jmbg", labelKey: "form.patientJmbg" },
               { key: "patientAddress", labelKey: "form.patientAddress" },
             ].map((f) => (
-              <div key={f.key}>
+              <div key={f.key} className="relative">
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t(f.labelKey)}</label>
-                <input
-                  value={form[f.key] || ""}
-                  onChange={(e) => set(f.key, e.target.value)}
-                  placeholder={t("form.fromTranscript")}
-                  className={cn(
-                    "w-full bg-muted/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-200",
-                    form[f.key]?.startsWith("Nije pomenuto") && "text-muted-foreground/60 italic"
-                  )}
-                />
-                {filling && !form[f.key] && <Shimmer />}
+                {filling && !form[f.key] ? (
+                  <div className="w-full h-[38px] rounded-lg bg-muted/30 animate-pulse shimmer-field" />
+                ) : (
+                  <input
+                    value={form[f.key] || ""}
+                    onChange={(e) => set(f.key, e.target.value)}
+                    placeholder={t("form.fromTranscript")}
+                    className={cn(
+                      "w-full bg-muted/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-200",
+                      form[f.key]?.startsWith("Nije pomenuto") && "text-muted-foreground/60 italic",
+                      recentlyFilled.has(f.key) && "ring-1 ring-accent/50 shadow-[0_0_8px_hsl(160_55%_42%/0.25)]"
+                    )}
+                  />
+                )}
               </div>
             ))}
           </div>
