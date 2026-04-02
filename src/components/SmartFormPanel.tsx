@@ -414,16 +414,16 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
         </div>
 
         {/* ===== RADNE DIJAGNOZE / ICD-10 ===== */}
-        <SectionBlock icon={Activity} title={t("form.workingDiagnosis")} fieldKey="diagnosisCodes" value={form.diagnosisCodes || ""} onChange={set} filling={filling} rows={3} placeholder={t("form.diagnosisPlaceholder")} fromTranscript={t("form.fromTranscript")} />
+        <SectionBlock icon={Activity} title={t("form.workingDiagnosis")} fieldKey="diagnosisCodes" value={form.diagnosisCodes || ""} onChange={set} filling={filling} glowing={recentlyFilled.has("diagnosisCodes")} rows={3} placeholder={t("form.diagnosisPlaceholder")} fromTranscript={t("form.fromTranscript")} />
 
         {/* ===== GLAVNE TEGOBE ===== */}
-        <SectionBlock icon={ClipboardList} title={t("form.chiefComplaints")} fieldKey="chiefComplaints" value={form.chiefComplaints || ""} onChange={set} filling={filling} rows={3} fromTranscript={t("form.fromTranscript")} />
+        <SectionBlock icon={ClipboardList} title={t("form.chiefComplaints")} fieldKey="chiefComplaints" value={form.chiefComplaints || ""} onChange={set} filling={filling} glowing={recentlyFilled.has("chiefComplaints")} rows={3} fromTranscript={t("form.fromTranscript")} />
 
         {/* ===== SADAŠNJA BOLEST ===== */}
-        <SectionBlock icon={FileText} title={t("form.presentIllness")} fieldKey="presentIllness" value={form.presentIllness || ""} onChange={set} filling={filling} rows={5} placeholder={t("form.presentIllnessPlaceholder")} fromTranscript={t("form.fromTranscript")} />
+        <SectionBlock icon={FileText} title={t("form.presentIllness")} fieldKey="presentIllness" value={form.presentIllness || ""} onChange={set} filling={filling} glowing={recentlyFilled.has("presentIllness")} rows={5} placeholder={t("form.presentIllnessPlaceholder")} fromTranscript={t("form.fromTranscript")} />
 
         {/* ===== KLINIČKA HRONOLOGIJA ===== */}
-        <SectionBlock icon={Clock} title={t("form.clinicalTimeline")} fieldKey="clinicalTimeline" value={form.clinicalTimeline || ""} onChange={set} filling={filling} rows={3} placeholder={t("form.timelinePlaceholder")} fromTranscript={t("form.fromTranscript")} />
+        <SectionBlock icon={Clock} title={t("form.clinicalTimeline")} fieldKey="clinicalTimeline" value={form.clinicalTimeline || ""} onChange={set} filling={filling} glowing={recentlyFilled.has("clinicalTimeline")} rows={3} placeholder={t("form.timelinePlaceholder")} fromTranscript={t("form.fromTranscript")} />
 
         {/* ===== ANAMNEZA PO SISTEMIMA ===== */}
         <div className="space-y-2">
