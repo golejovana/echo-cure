@@ -176,6 +176,14 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
       allKeys.forEach((key, i) => {
         setTimeout(() => {
           setForm((prev) => ({ ...prev, [key]: fd[key] || t("form.notMentioned") }));
+          // Trigger green glow
+          setRecentlyFilled((prev) => new Set(prev).add(key));
+          const existing = glowTimers.current.get(key);
+          if (existing) clearTimeout(existing);
+          glowTimers.current.set(key, setTimeout(() => {
+            setRecentlyFilled((prev) => { const n = new Set(prev); n.delete(key); return n; });
+            glowTimers.current.delete(key);
+          }, 1000));
           if (i === allKeys.length - 1) setFilling(false);
         }, 50 + i * 40);
       });
