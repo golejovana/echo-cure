@@ -182,7 +182,7 @@
   }
 
   .stat-card:hover {
-    box-shadow: 0 14px 44px hsl(215 75% 48% / 0.11), 0 4px 14px hsl(215 75% 48% / 0.06);
+    box-shadow: 0 14px 44px hsl(239 84% 67% / 0.11), 0 4px 14px hsl(239 84% 67% / 0.06);
     transform: translateY(-2px);
   }
 
