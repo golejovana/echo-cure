@@ -674,3 +674,4 @@ function SectionBlock({ icon: Icon, title, fieldKey, value, onChange, filling, g
   );
 }
 
+export default SmartFormPanel;
