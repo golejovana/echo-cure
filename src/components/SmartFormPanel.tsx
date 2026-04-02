@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   Sparkles, Heart, Stethoscope, Droplets, Brain,
   ChevronDown, Send, Loader2, FileText, ClipboardList, Activity,
@@ -84,6 +84,8 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
   const [form, setForm] = useState<FormData>({});
   const [filling, setFilling] = useState(false);
   const [sending, setSending] = useState(false);
+  const [recentlyFilled, setRecentlyFilled] = useState<Set<string>>(new Set());
+  const glowTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [objectiveOpen, setObjectiveOpen] = useState(false);
   const [medications, setMedications] = useState<Medication[]>([]);
@@ -174,6 +176,14 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
       allKeys.forEach((key, i) => {
         setTimeout(() => {
           setForm((prev) => ({ ...prev, [key]: fd[key] || t("form.notMentioned") }));
+          // Trigger green glow
+          setRecentlyFilled((prev) => new Set(prev).add(key));
+          const existing = glowTimers.current.get(key);
+          if (existing) clearTimeout(existing);
+          glowTimers.current.set(key, setTimeout(() => {
+            setRecentlyFilled((prev) => { const n = new Set(prev); n.delete(key); return n; });
+            glowTimers.current.delete(key);
+          }, 1000));
           if (i === allKeys.length - 1) setFilling(false);
         }, 50 + i * 40);
       });
@@ -337,18 +347,22 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
               { key: "jmbg", labelKey: "form.patientJmbg" },
               { key: "patientAddress", labelKey: "form.patientAddress" },
             ].map((f) => (
-              <div key={f.key}>
+              <div key={f.key} className="relative">
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t(f.labelKey)}</label>
-                <input
-                  value={form[f.key] || ""}
-                  onChange={(e) => set(f.key, e.target.value)}
-                  placeholder={t("form.fromTranscript")}
-                  className={cn(
-                    "w-full bg-muted/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-200",
-                    form[f.key]?.startsWith("Nije pomenuto") && "text-muted-foreground/60 italic"
-                  )}
-                />
-                {filling && !form[f.key] && <Shimmer />}
+                {filling && !form[f.key] ? (
+                  <div className="w-full h-[38px] rounded-lg bg-muted/30 animate-pulse shimmer-field" />
+                ) : (
+                  <input
+                    value={form[f.key] || ""}
+                    onChange={(e) => set(f.key, e.target.value)}
+                    placeholder={t("form.fromTranscript")}
+                    className={cn(
+                      "w-full bg-muted/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-200",
+                      form[f.key]?.startsWith("Nije pomenuto") && "text-muted-foreground/60 italic",
+                      recentlyFilled.has(f.key) && "ring-1 ring-accent/50 shadow-[0_0_8px_hsl(160_55%_42%/0.25)]"
+                    )}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -400,16 +414,16 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
         </div>
 
         {/* ===== RADNE DIJAGNOZE / ICD-10 ===== */}
-        <SectionBlock icon={Activity} title={t("form.workingDiagnosis")} fieldKey="diagnosisCodes" value={form.diagnosisCodes || ""} onChange={set} filling={filling} rows={3} placeholder={t("form.diagnosisPlaceholder")} fromTranscript={t("form.fromTranscript")} />
+        <SectionBlock icon={Activity} title={t("form.workingDiagnosis")} fieldKey="diagnosisCodes" value={form.diagnosisCodes || ""} onChange={set} filling={filling} glowing={recentlyFilled.has("diagnosisCodes")} rows={3} placeholder={t("form.diagnosisPlaceholder")} fromTranscript={t("form.fromTranscript")} />
 
         {/* ===== GLAVNE TEGOBE ===== */}
-        <SectionBlock icon={ClipboardList} title={t("form.chiefComplaints")} fieldKey="chiefComplaints" value={form.chiefComplaints || ""} onChange={set} filling={filling} rows={3} fromTranscript={t("form.fromTranscript")} />
+        <SectionBlock icon={ClipboardList} title={t("form.chiefComplaints")} fieldKey="chiefComplaints" value={form.chiefComplaints || ""} onChange={set} filling={filling} glowing={recentlyFilled.has("chiefComplaints")} rows={3} fromTranscript={t("form.fromTranscript")} />
 
         {/* ===== SADAŠNJA BOLEST ===== */}
-        <SectionBlock icon={FileText} title={t("form.presentIllness")} fieldKey="presentIllness" value={form.presentIllness || ""} onChange={set} filling={filling} rows={5} placeholder={t("form.presentIllnessPlaceholder")} fromTranscript={t("form.fromTranscript")} />
+        <SectionBlock icon={FileText} title={t("form.presentIllness")} fieldKey="presentIllness" value={form.presentIllness || ""} onChange={set} filling={filling} glowing={recentlyFilled.has("presentIllness")} rows={5} placeholder={t("form.presentIllnessPlaceholder")} fromTranscript={t("form.fromTranscript")} />
 
         {/* ===== KLINIČKA HRONOLOGIJA ===== */}
-        <SectionBlock icon={Clock} title={t("form.clinicalTimeline")} fieldKey="clinicalTimeline" value={form.clinicalTimeline || ""} onChange={set} filling={filling} rows={3} placeholder={t("form.timelinePlaceholder")} fromTranscript={t("form.fromTranscript")} />
+        <SectionBlock icon={Clock} title={t("form.clinicalTimeline")} fieldKey="clinicalTimeline" value={form.clinicalTimeline || ""} onChange={set} filling={filling} glowing={recentlyFilled.has("clinicalTimeline")} rows={3} placeholder={t("form.timelinePlaceholder")} fromTranscript={t("form.fromTranscript")} />
 
         {/* ===== ANAMNEZA PO SISTEMIMA ===== */}
         <div className="space-y-2">
@@ -431,7 +445,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
                     <motion.div key={cat.id + "-content"} initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden">
                       <div className="px-5 pb-4 space-y-3 border-t border-border/50 pt-3">
                         {cat.fields.map((field) => (
-                          <FieldRow key={field.key} field={field} value={form[field.key] || ""} onChange={set} filling={filling} fromTranscript={t("form.fromTranscript")} />
+                          <FieldRow key={field.key} field={field} value={form[field.key] || ""} onChange={set} filling={filling} glowing={recentlyFilled.has(field.key)} fromTranscript={t("form.fromTranscript")} />
                         ))}
                       </div>
                     </motion.div>
@@ -455,13 +469,13 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
               { key: "surgeries", labelKey: "form.surgeries" },
               { key: "medications", labelKey: "form.medications" },
             ].map((f) => (
-              <FieldRow key={f.key} field={f} value={form[f.key] || ""} onChange={set} filling={filling} fromTranscript={t("form.fromTranscript")} />
+              <FieldRow key={f.key} field={f} value={form[f.key] || ""} onChange={set} filling={filling} glowing={recentlyFilled.has(f.key)} fromTranscript={t("form.fromTranscript")} />
             ))}
           </div>
         </div>
 
         {/* ===== PORODIČNA ANAMNEZA ===== */}
-        <SectionBlock icon={User} title={t("form.familyHistory")} fieldKey="familyHistory" value={form.familyHistory || ""} onChange={set} filling={filling} rows={2} placeholder={t("form.familyHistoryPlaceholder")} fromTranscript={t("form.fromTranscript")} />
+        <SectionBlock icon={User} title={t("form.familyHistory")} fieldKey="familyHistory" value={form.familyHistory || ""} onChange={set} filling={filling} glowing={recentlyFilled.has("familyHistory")} rows={2} placeholder={t("form.familyHistoryPlaceholder")} fromTranscript={t("form.fromTranscript")} />
 
         {/* ===== SOCIO-EPIDEMIOLOŠKA ANAMNEZA ===== */}
         <div className="glass-card p-5 space-y-3">
@@ -475,7 +489,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
               { key: "smokingAlcohol", labelKey: "form.smokingAlcohol" },
               { key: "epidemiological", labelKey: "form.epidemiological" },
             ].map((f) => (
-              <FieldRow key={f.key} field={f} value={form[f.key] || ""} onChange={set} filling={filling} fromTranscript={t("form.fromTranscript")} />
+              <FieldRow key={f.key} field={f} value={form[f.key] || ""} onChange={set} filling={filling} glowing={recentlyFilled.has(f.key)} fromTranscript={t("form.fromTranscript")} />
             ))}
           </div>
         </div>
@@ -497,7 +511,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
               <motion.div key="obj-content" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden">
                 <div className="px-5 pb-4 space-y-3 border-t border-border/50 pt-3">
                   {OBJECTIVE_FIELDS.map((field) => (
-                    <FieldRow key={field.key} field={field} value={form[field.key] || ""} onChange={set} filling={filling} fromTranscript={t("form.fromTranscript")} />
+                    <FieldRow key={field.key} field={field} value={form[field.key] || ""} onChange={set} filling={filling} glowing={recentlyFilled.has(field.key)} fromTranscript={t("form.fromTranscript")} />
                   ))}
                 </div>
               </motion.div>
@@ -604,30 +618,34 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
 };
 
 /* ---- small helpers ---- */
-function FieldRow({ field, value, onChange, filling, fromTranscript }: { field: { key: string; labelKey: string }; value: string; onChange: (k: string, v: string) => void; filling: boolean; fromTranscript: string }) {
+function FieldRow({ field, value, onChange, filling, glowing, fromTranscript }: { field: { key: string; labelKey: string }; value: string; onChange: (k: string, v: string) => void; filling: boolean; glowing?: boolean; fromTranscript: string }) {
   const { t } = useTranslation();
   const isFaded = value === "Nije pomenuto u transkriptu" || value === "Not mentioned in transcript" || value === "Non mentionné dans la transcription" || value === "Negativno / Negira" || value === "Negative / Denied" || value === "Nije pregledano" || value === "Not examined / Not mentioned";
   return (
     <motion.div initial={false} animate={value ? { scale: [1, 1.004, 1] } : {}} transition={{ duration: 0.3, ease: "easeOut" }}>
       <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t(field.labelKey)}</label>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(field.key, e.target.value)}
-        rows={2}
-        placeholder={fromTranscript}
-        className={cn(
-          "w-full bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-200",
-          isFaded && "text-muted-foreground/60 italic"
-        )}
-        style={{ overflowWrap: "break-word" }}
-      />
-      {filling && !value && <Shimmer />}
+      {filling && !value ? (
+        <div className="w-full h-[52px] rounded-xl bg-muted/30 animate-pulse shimmer-field" />
+      ) : (
+        <textarea
+          value={value}
+          onChange={(e) => onChange(field.key, e.target.value)}
+          rows={2}
+          placeholder={fromTranscript}
+          className={cn(
+            "w-full bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-500",
+            isFaded && "text-muted-foreground/60 italic",
+            glowing && "ring-1 ring-accent/50 shadow-[0_0_8px_hsl(160_55%_42%/0.25)]"
+          )}
+          style={{ overflowWrap: "break-word" }}
+        />
+      )}
     </motion.div>
   );
 }
 
-function SectionBlock({ icon: Icon, title, fieldKey, value, onChange, filling, rows = 2, placeholder, fromTranscript }: {
-  icon: React.ElementType; title: string; fieldKey: string; value: string; onChange: (k: string, v: string) => void; filling: boolean; rows?: number; placeholder?: string; fromTranscript: string;
+function SectionBlock({ icon: Icon, title, fieldKey, value, onChange, filling, glowing, rows = 2, placeholder, fromTranscript }: {
+  icon: React.ElementType; title: string; fieldKey: string; value: string; onChange: (k: string, v: string) => void; filling: boolean; glowing?: boolean; rows?: number; placeholder?: string; fromTranscript: string;
 }) {
   const isFaded = value?.startsWith("Nije pomenuto") || value?.startsWith("Not mentioned") || value?.startsWith("Non mentionné");
   return (
@@ -636,25 +654,23 @@ function SectionBlock({ icon: Icon, title, fieldKey, value, onChange, filling, r
         <Icon size={16} strokeWidth={1.5} className="text-muted-foreground" />
         <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{title}</h3>
       </div>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(fieldKey, e.target.value)}
-        rows={rows}
-        placeholder={placeholder || fromTranscript}
-        className={cn(
-          "w-full bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-200",
-          isFaded && "text-muted-foreground/60 italic"
-        )}
-        style={{ overflowWrap: "break-word" }}
-      />
-      {filling && !value && <Shimmer />}
+      {filling && !value ? (
+        <div className={cn("w-full rounded-xl bg-muted/30 animate-pulse shimmer-field")} style={{ height: `${rows * 26}px` }} />
+      ) : (
+        <textarea
+          value={value}
+          onChange={(e) => onChange(fieldKey, e.target.value)}
+          rows={rows}
+          placeholder={placeholder || fromTranscript}
+          className={cn(
+            "w-full bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-500",
+            isFaded && "text-muted-foreground/60 italic",
+            glowing && "ring-1 ring-accent/50 shadow-[0_0_8px_hsl(160_55%_42%/0.25)]"
+          )}
+          style={{ overflowWrap: "break-word" }}
+        />
+      )}
     </div>
-  );
-}
-
-function Shimmer() {
-  return (
-    <div className="h-0.5 mt-1 rounded-full bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20" style={{ backgroundSize: "200% 100%", animation: "shimmer 1.2s linear infinite" }} />
   );
 }
 
