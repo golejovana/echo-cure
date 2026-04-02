@@ -618,30 +618,34 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
 };
 
 /* ---- small helpers ---- */
-function FieldRow({ field, value, onChange, filling, fromTranscript }: { field: { key: string; labelKey: string }; value: string; onChange: (k: string, v: string) => void; filling: boolean; fromTranscript: string }) {
+function FieldRow({ field, value, onChange, filling, glowing, fromTranscript }: { field: { key: string; labelKey: string }; value: string; onChange: (k: string, v: string) => void; filling: boolean; glowing?: boolean; fromTranscript: string }) {
   const { t } = useTranslation();
   const isFaded = value === "Nije pomenuto u transkriptu" || value === "Not mentioned in transcript" || value === "Non mentionné dans la transcription" || value === "Negativno / Negira" || value === "Negative / Denied" || value === "Nije pregledano" || value === "Not examined / Not mentioned";
   return (
     <motion.div initial={false} animate={value ? { scale: [1, 1.004, 1] } : {}} transition={{ duration: 0.3, ease: "easeOut" }}>
       <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t(field.labelKey)}</label>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(field.key, e.target.value)}
-        rows={2}
-        placeholder={fromTranscript}
-        className={cn(
-          "w-full bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-200",
-          isFaded && "text-muted-foreground/60 italic"
-        )}
-        style={{ overflowWrap: "break-word" }}
-      />
-      {filling && !value && <Shimmer />}
+      {filling && !value ? (
+        <div className="w-full h-[52px] rounded-xl bg-muted/30 animate-pulse shimmer-field" />
+      ) : (
+        <textarea
+          value={value}
+          onChange={(e) => onChange(field.key, e.target.value)}
+          rows={2}
+          placeholder={fromTranscript}
+          className={cn(
+            "w-full bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-500",
+            isFaded && "text-muted-foreground/60 italic",
+            glowing && "ring-1 ring-accent/50 shadow-[0_0_8px_hsl(160_55%_42%/0.25)]"
+          )}
+          style={{ overflowWrap: "break-word" }}
+        />
+      )}
     </motion.div>
   );
 }
 
-function SectionBlock({ icon: Icon, title, fieldKey, value, onChange, filling, rows = 2, placeholder, fromTranscript }: {
-  icon: React.ElementType; title: string; fieldKey: string; value: string; onChange: (k: string, v: string) => void; filling: boolean; rows?: number; placeholder?: string; fromTranscript: string;
+function SectionBlock({ icon: Icon, title, fieldKey, value, onChange, filling, glowing, rows = 2, placeholder, fromTranscript }: {
+  icon: React.ElementType; title: string; fieldKey: string; value: string; onChange: (k: string, v: string) => void; filling: boolean; glowing?: boolean; rows?: number; placeholder?: string; fromTranscript: string;
 }) {
   const isFaded = value?.startsWith("Nije pomenuto") || value?.startsWith("Not mentioned") || value?.startsWith("Non mentionné");
   return (
@@ -650,26 +654,27 @@ function SectionBlock({ icon: Icon, title, fieldKey, value, onChange, filling, r
         <Icon size={16} strokeWidth={1.5} className="text-muted-foreground" />
         <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{title}</h3>
       </div>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(fieldKey, e.target.value)}
-        rows={rows}
-        placeholder={placeholder || fromTranscript}
-        className={cn(
-          "w-full bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-200",
-          isFaded && "text-muted-foreground/60 italic"
-        )}
-        style={{ overflowWrap: "break-word" }}
-      />
-      {filling && !value && <Shimmer />}
+      {filling && !value ? (
+        <div className={cn("w-full rounded-xl bg-muted/30 animate-pulse shimmer-field")} style={{ height: `${rows * 26}px` }} />
+      ) : (
+        <textarea
+          value={value}
+          onChange={(e) => onChange(fieldKey, e.target.value)}
+          rows={rows}
+          placeholder={placeholder || fromTranscript}
+          className={cn(
+            "w-full bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-500",
+            isFaded && "text-muted-foreground/60 italic",
+            glowing && "ring-1 ring-accent/50 shadow-[0_0_8px_hsl(160_55%_42%/0.25)]"
+          )}
+          style={{ overflowWrap: "break-word" }}
+        />
+      )}
     </div>
   );
 }
 
-function Shimmer() {
-  return (
-    <div className="h-0.5 mt-1 rounded-full bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20" style={{ backgroundSize: "200% 100%", animation: "shimmer 1.2s linear infinite" }} />
-  );
+export default SmartFormPanel;
 }
 
 export default SmartFormPanel;
