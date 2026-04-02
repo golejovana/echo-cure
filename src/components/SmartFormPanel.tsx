@@ -489,7 +489,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
               { key: "smokingAlcohol", labelKey: "form.smokingAlcohol" },
               { key: "epidemiological", labelKey: "form.epidemiological" },
             ].map((f) => (
-              <FieldRow key={f.key} field={f} value={form[f.key] || ""} onChange={set} filling={filling} fromTranscript={t("form.fromTranscript")} />
+              <FieldRow key={f.key} field={f} value={form[f.key] || ""} onChange={set} filling={filling} glowing={recentlyFilled.has(f.key)} fromTranscript={t("form.fromTranscript")} />
             ))}
           </div>
         </div>
