@@ -475,7 +475,7 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
         </div>
 
         {/* ===== PORODIČNA ANAMNEZA ===== */}
-        <SectionBlock icon={User} title={t("form.familyHistory")} fieldKey="familyHistory" value={form.familyHistory || ""} onChange={set} filling={filling} rows={2} placeholder={t("form.familyHistoryPlaceholder")} fromTranscript={t("form.fromTranscript")} />
+        <SectionBlock icon={User} title={t("form.familyHistory")} fieldKey="familyHistory" value={form.familyHistory || ""} onChange={set} filling={filling} glowing={recentlyFilled.has("familyHistory")} rows={2} placeholder={t("form.familyHistoryPlaceholder")} fromTranscript={t("form.fromTranscript")} />
 
         {/* ===== SOCIO-EPIDEMIOLOŠKA ANAMNEZA ===== */}
         <div className="glass-card p-5 space-y-3">
