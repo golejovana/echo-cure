@@ -187,6 +187,7 @@ export type Database = {
           institution_country: string | null
           institution_logo_url: string | null
           institution_name: string | null
+          push_subscription: Json | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
           user_id: string
@@ -200,6 +201,7 @@ export type Database = {
           institution_country?: string | null
           institution_logo_url?: string | null
           institution_name?: string | null
+          push_subscription?: Json | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id: string
@@ -213,6 +215,7 @@ export type Database = {
           institution_country?: string | null
           institution_logo_url?: string | null
           institution_name?: string | null
+          push_subscription?: Json | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id?: string
