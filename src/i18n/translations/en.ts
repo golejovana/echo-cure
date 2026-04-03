@@ -83,6 +83,8 @@ const en: Record<string, string | string[]> = {
   "dashboard.statusCompleted": "Completed",
   "dashboard.statusWaiting": "Waiting",
   "dashboard.statusPriority": "Priority",
+  "dashboard.statusScheduled": "Scheduled",
+  "dashboard.statusCancelled": "Cancelled",
   "dashboard.topDiagnoses": "Top Diagnoses",
   "dashboard.noData": "No data",
   "dashboard.aiEfficiency": "AI Efficiency",

@@ -83,6 +83,8 @@ const sr: Record<string, string | string[]> = {
   "dashboard.statusCompleted": "Završeno",
   "dashboard.statusWaiting": "Čeka",
   "dashboard.statusPriority": "Prioritet",
+  "dashboard.statusScheduled": "Zakazano",
+  "dashboard.statusCancelled": "Otkazano",
   "dashboard.topDiagnoses": "Top dijagnoze",
   "dashboard.noData": "Nema podataka",
   "dashboard.aiEfficiency": "AI efikasnost",
