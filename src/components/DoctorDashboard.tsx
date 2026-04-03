@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Users, FileText, AlertTriangle, Clock,
-  Loader2, TrendingUp, Zap, Activity, Sparkles, ArrowUpRight, Plus, X,
+  Loader2, TrendingUp, Zap, Activity, Sparkles, ArrowUpRight, Plus, X, Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslateText } from "@/hooks/useTranslateText";
