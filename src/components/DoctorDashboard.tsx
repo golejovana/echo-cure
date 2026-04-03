@@ -71,13 +71,26 @@ export default function DoctorDashboard() {
     completed: "bg-accent/12 text-accent border-accent/20",
     waiting: "bg-primary/10 text-primary border-primary/20",
     priority: "bg-destructive/10 text-destructive border-destructive/20",
+    scheduled: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+    cancelled: "bg-muted text-muted-foreground border-border/30 line-through",
   };
 
   const statusLabel = (status: string) => {
     if (status === "completed") return t("dashboard.statusCompleted");
     if (status === "priority") return t("dashboard.statusPriority");
+    if (status === "scheduled") return t("dashboard.statusScheduled");
+    if (status === "cancelled") return t("dashboard.statusCancelled");
     return t("dashboard.statusWaiting");
   };
+
+  const STATUS_OPTIONS: { value: ScheduleRow["status"]; dbPriority: string }[] = [
+    { value: "scheduled", dbPriority: "scheduled" },
+    { value: "waiting", dbPriority: "normal" },
+    { value: "completed", dbPriority: "completed" },
+    { value: "cancelled", dbPriority: "cancelled" },
+  ];
+
+  const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
 
   const STAT_CONFIGS = [
     {
