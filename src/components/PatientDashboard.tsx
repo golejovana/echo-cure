@@ -49,6 +49,7 @@ export default function PatientDashboard() {
   const { t, tArray } = useTranslation();
   const navigate = useNavigate();
   const { appointments: sharedAppointments, loading: aptsLoading } = useAppointments();
+  usePushSubscription();
   const [examinations, setExaminations] = useState<Examination[]>([]);
   const [dbAppointments, setDbAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
