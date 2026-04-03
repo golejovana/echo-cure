@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Users, FileText, AlertTriangle, Clock,
-  Loader2, TrendingUp, Zap, Activity, Sparkles, ArrowUpRight, Plus, X,
+  Loader2, TrendingUp, Zap, Activity, Sparkles, ArrowUpRight, Plus, X, Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslateText } from "@/hooks/useTranslateText";
@@ -30,7 +30,7 @@ interface ScheduleRow {
   time: string;
   patient: string;
   reason: string;
-  status: "completed" | "waiting" | "priority";
+  status: "completed" | "waiting" | "priority" | "scheduled" | "cancelled";
   examinationId: string;
 }
 
@@ -71,13 +71,26 @@ export default function DoctorDashboard() {
     completed: "bg-accent/12 text-accent border-accent/20",
     waiting: "bg-primary/10 text-primary border-primary/20",
     priority: "bg-destructive/10 text-destructive border-destructive/20",
+    scheduled: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+    cancelled: "bg-muted text-muted-foreground border-border/30 line-through",
   };
 
   const statusLabel = (status: string) => {
     if (status === "completed") return t("dashboard.statusCompleted");
     if (status === "priority") return t("dashboard.statusPriority");
+    if (status === "scheduled") return t("dashboard.statusScheduled");
+    if (status === "cancelled") return t("dashboard.statusCancelled");
     return t("dashboard.statusWaiting");
   };
+
+  const STATUS_OPTIONS: { value: ScheduleRow["status"]; dbPriority: string }[] = [
+    { value: "scheduled", dbPriority: "scheduled" },
+    { value: "waiting", dbPriority: "normal" },
+    { value: "completed", dbPriority: "completed" },
+    { value: "cancelled", dbPriority: "cancelled" },
+  ];
+
+  const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
 
   const STAT_CONFIGS = [
     {
@@ -164,6 +177,8 @@ export default function DoctorDashboard() {
       const pri = a.priority;
       const status: ScheduleRow["status"] =
         pri === "completed" ? "completed" :
+        pri === "scheduled" ? "scheduled" :
+        pri === "cancelled" ? "cancelled" :
         pri === "high" || pri === "urgent" ? "priority" : "waiting";
       return {
         id: a.id,
@@ -267,6 +282,25 @@ export default function DoctorDashboard() {
     setSubmitting(false);
     await loadSchedule();
   };
+
+  const handleStatusChange = async (appointmentId: string, newStatus: ScheduleRow["status"]) => {
+    const dbPriority = STATUS_OPTIONS.find((o) => o.value === newStatus)?.dbPriority || "normal";
+    await supabase.from("appointments").update({ priority: dbPriority }).eq("id", appointmentId);
+    setSchedule((prev) =>
+      prev.map((r) => (r.id === appointmentId ? { ...r, status: newStatus } : r))
+    );
+    setEditingStatusId(null);
+    // Recalculate stats
+    setStats((prev) => {
+      const updated = schedule.map((r) => (r.id === appointmentId ? { ...r, status: newStatus } : r));
+      return {
+        patients: updated.length,
+        reports: updated.filter((r) => r.status === "completed").length,
+        alerts: updated.filter((r) => r.status === "priority").length,
+      };
+    });
+  };
+
   // Translate dynamic reason texts (hooks must be before any early return)
   const reasonTexts = schedule.map((r) => r.reason);
   const diagTexts = topDiagnoses.map((d) => d.name);
@@ -387,7 +421,7 @@ export default function DoctorDashboard() {
                       <TableRow
                         key={row.id}
                         className="cursor-pointer group hover:bg-primary/3 transition-colors duration-200 border-border/15"
-                        onClick={() => navigate(`/examination/${row.examinationId}`)}
+                        onClick={() => navigate(`/examination?examId=${row.examinationId}`)}
                       >
                         <TableCell className="font-bold text-foreground whitespace-nowrap text-sm">{row.time}</TableCell>
                         <TableCell className="text-foreground font-medium">{row.patient}</TableCell>
@@ -395,9 +429,40 @@ export default function DoctorDashboard() {
                           {(() => { const r = reasonTranslations[row.reason] || row.reason; return r.length > 60 ? r.slice(0, 60) + "…" : r; })()}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Badge variant="outline" className={cn("text-[10px] font-bold border px-2.5 py-0.5", STATUS_STYLES[row.status])}>
-                            {statusLabel(row.status)}
-                          </Badge>
+                          <div className="flex items-center justify-end gap-1 relative">
+                            <Badge variant="outline" className={cn("text-[10px] font-bold border px-2.5 py-0.5", STATUS_STYLES[row.status])}>
+                              {statusLabel(row.status)}
+                            </Badge>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingStatusId(editingStatusId === row.id ? null : row.id);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 sm:opacity-100 sm:group-hover:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-muted"
+                              title="Edit status"
+                            >
+                              <Pencil size={14} className="text-muted-foreground" />
+                            </button>
+                            {editingStatusId === row.id && (
+                              <div className="absolute top-full right-0 mt-1 z-50 min-w-[140px] rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95">
+                                {STATUS_OPTIONS.map((opt) => (
+                                  <button
+                                    key={opt.value}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleStatusChange(row.id, opt.value);
+                                    }}
+                                    className={cn(
+                                      "w-full text-left px-3 py-1.5 text-xs rounded-sm hover:bg-accent hover:text-accent-foreground transition-colors",
+                                      row.status === opt.value && "font-bold bg-accent/50"
+                                    )}
+                                  >
+                                    {statusLabel(opt.value)}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

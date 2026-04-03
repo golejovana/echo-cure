@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -12,6 +12,8 @@ export default function Examination() {
   const [lang, setLang] = useState<Lang>("sr-RS");
   const [role, setRole] = useState<"doctor" | "patient">("doctor");
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const examId = searchParams.get("examId") || undefined;
 
   useEffect(() => {
     const check = async () => {
@@ -41,7 +43,7 @@ export default function Examination() {
           <ListenerPanel onTranscriptUpdate={handleTranscriptUpdate} onLangChange={setLang} />
         </div>
         <div className="glass-card-elevated p-6 overflow-hidden flex flex-col">
-          <SmartFormPanel transcript={transcript} lang={lang} />
+          <SmartFormPanel transcript={transcript} lang={lang} examId={examId} />
         </div>
       </motion.div>
     </DashboardLayout>

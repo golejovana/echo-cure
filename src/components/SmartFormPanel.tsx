@@ -70,7 +70,7 @@ const OBJECTIVE_FIELDS: CategoryField[] = [
 ];
 
 type FormData = Record<string, string>;
-interface SmartFormPanelProps { transcript: string; lang: string }
+interface SmartFormPanelProps { transcript: string; lang: string; examId?: string }
 
 const today = () => {
   const d = new Date();
@@ -78,7 +78,7 @@ const today = () => {
 };
 
 /* ================================================================ */
-const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
+const SmartFormPanel = ({ transcript, lang, examId }: SmartFormPanelProps) => {
   const { t } = useTranslation();
   const { addLocalAppointments, clearLocalAppointments, refreshFromDb } = useAppointments();
   const [form, setForm] = useState<FormData>({});
@@ -123,6 +123,41 @@ const SmartFormPanel = ({ transcript, lang }: SmartFormPanelProps) => {
     };
     loadInstitution();
   }, []);
+
+  // Pre-load existing examination data when examId is provided
+  useEffect(() => {
+    if (!examId) return;
+    const loadExam = async () => {
+      const { data: exam } = await supabase
+        .from("examinations")
+        .select("*")
+        .eq("id", examId)
+        .single();
+      if (!exam) return;
+
+      const fd = (exam.form_data as Record<string, any>) || {};
+      const preFilledForm: FormData = {};
+      // Copy all string values from form_data
+      Object.entries(fd).forEach(([k, v]) => {
+        if (typeof v === "string") preFilledForm[k] = v;
+      });
+      if (exam.patient_name) preFilledForm.patientName = exam.patient_name;
+      if (exam.chief_complaints) preFilledForm.chiefComplaints = exam.chief_complaints;
+      if (exam.present_illness) preFilledForm.presentIllness = exam.present_illness;
+      if (exam.clinical_timeline) preFilledForm.clinicalTimeline = exam.clinical_timeline;
+      if (exam.diagnosis_codes) preFilledForm.diagnosisCodes = exam.diagnosis_codes;
+
+      setForm(preFilledForm);
+      setOpenSections(SYSTEM_CATEGORIES.map((c) => c.id));
+      setObjectiveOpen(true);
+
+      // Load medications from form_data
+      if (fd._medications && Array.isArray(fd._medications)) {
+        setMedications(fd._medications);
+      }
+    };
+    loadExam();
+  }, [examId]);
 
   // Sync planned appointments to shared context as doctor adds them
   useEffect(() => {
