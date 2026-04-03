@@ -30,7 +30,7 @@ interface ScheduleRow {
   time: string;
   patient: string;
   reason: string;
-  status: "completed" | "waiting" | "priority";
+  status: "completed" | "waiting" | "priority" | "scheduled" | "cancelled";
   examinationId: string;
 }
 
