@@ -79,7 +79,7 @@ const today = () => {
 
 /* ================================================================ */
 const SmartFormPanel = ({ transcript, lang, examId }: SmartFormPanelProps) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { addLocalAppointments, clearLocalAppointments, refreshFromDb } = useAppointments();
   const [form, setForm] = useState<FormData>({});
   const [filling, setFilling] = useState(false);
