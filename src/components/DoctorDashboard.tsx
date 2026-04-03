@@ -421,7 +421,7 @@ export default function DoctorDashboard() {
                       <TableRow
                         key={row.id}
                         className="cursor-pointer group hover:bg-primary/3 transition-colors duration-200 border-border/15"
-                        onClick={() => navigate(`/examination/${row.examinationId}`)}
+                        onClick={() => navigate(`/examination?examId=${row.examinationId}`)}
                       >
                         <TableCell className="font-bold text-foreground whitespace-nowrap text-sm">{row.time}</TableCell>
                         <TableCell className="text-foreground font-medium">{row.patient}</TableCell>
@@ -429,9 +429,40 @@ export default function DoctorDashboard() {
                           {(() => { const r = reasonTranslations[row.reason] || row.reason; return r.length > 60 ? r.slice(0, 60) + "…" : r; })()}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Badge variant="outline" className={cn("text-[10px] font-bold border px-2.5 py-0.5", STATUS_STYLES[row.status])}>
-                            {statusLabel(row.status)}
-                          </Badge>
+                          <div className="flex items-center justify-end gap-1 relative">
+                            <Badge variant="outline" className={cn("text-[10px] font-bold border px-2.5 py-0.5", STATUS_STYLES[row.status])}>
+                              {statusLabel(row.status)}
+                            </Badge>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingStatusId(editingStatusId === row.id ? null : row.id);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 sm:opacity-100 sm:group-hover:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-muted"
+                              title="Edit status"
+                            >
+                              <Pencil size={14} className="text-muted-foreground" />
+                            </button>
+                            {editingStatusId === row.id && (
+                              <div className="absolute top-full right-0 mt-1 z-50 min-w-[140px] rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95">
+                                {STATUS_OPTIONS.map((opt) => (
+                                  <button
+                                    key={opt.value}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleStatusChange(row.id, opt.value);
+                                    }}
+                                    className={cn(
+                                      "w-full text-left px-3 py-1.5 text-xs rounded-sm hover:bg-accent hover:text-accent-foreground transition-colors",
+                                      row.status === opt.value && "font-bold bg-accent/50"
+                                    )}
+                                  >
+                                    {statusLabel(opt.value)}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
