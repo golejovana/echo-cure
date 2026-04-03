@@ -282,6 +282,25 @@ export default function DoctorDashboard() {
     setSubmitting(false);
     await loadSchedule();
   };
+
+  const handleStatusChange = async (appointmentId: string, newStatus: ScheduleRow["status"]) => {
+    const dbPriority = STATUS_OPTIONS.find((o) => o.value === newStatus)?.dbPriority || "normal";
+    await supabase.from("appointments").update({ priority: dbPriority }).eq("id", appointmentId);
+    setSchedule((prev) =>
+      prev.map((r) => (r.id === appointmentId ? { ...r, status: newStatus } : r))
+    );
+    setEditingStatusId(null);
+    // Recalculate stats
+    setStats((prev) => {
+      const updated = schedule.map((r) => (r.id === appointmentId ? { ...r, status: newStatus } : r));
+      return {
+        patients: updated.length,
+        reports: updated.filter((r) => r.status === "completed").length,
+        alerts: updated.filter((r) => r.status === "priority").length,
+      };
+    });
+  };
+
   // Translate dynamic reason texts (hooks must be before any early return)
   const reasonTexts = schedule.map((r) => r.reason);
   const diagTexts = topDiagnoses.map((d) => d.name);
