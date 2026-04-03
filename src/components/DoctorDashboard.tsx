@@ -203,7 +203,7 @@ export default function DoctorDashboard() {
     });
 
     const diagMap = new Map<string, number>();
-    const EXCLUDED_DIAG = ["unspecified", "nije određeno iz transkripta", "nije odredjeno iz transkripta", "nije pomenuto"];
+    const EXCLUDED_DIAG = ["unspecified", "nespecifiran", "nespecificiran", "nije određeno iz transkripta", "nije odredjeno iz transkripta", "nije pomenuto", "nije specificirano"];
     exams.forEach((e: any) => {
       if (e.diagnosis_codes) {
         e.diagnosis_codes.split(",").forEach((d: string) => {
