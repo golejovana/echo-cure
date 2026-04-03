@@ -14,6 +14,7 @@ import { useTranslation } from "@/i18n/LanguageContext";
 import { useAppointments } from "@/contexts/AppointmentsContext";
 import TreatmentTimeline from "@/components/TreatmentTimeline";
 import DrugTracker from "@/components/DrugTracker";
+import { usePushSubscription } from "@/hooks/usePushSubscription";
 
 interface Examination {
   id: string;
@@ -48,6 +49,7 @@ export default function PatientDashboard() {
   const { t, tArray } = useTranslation();
   const navigate = useNavigate();
   const { appointments: sharedAppointments, loading: aptsLoading } = useAppointments();
+  usePushSubscription();
   const [examinations, setExaminations] = useState<Examination[]>([]);
   const [dbAppointments, setDbAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
