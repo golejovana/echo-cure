@@ -14,6 +14,7 @@ import { useTranslation } from "@/i18n/LanguageContext";
 import { useAppointments } from "@/contexts/AppointmentsContext";
 import TreatmentTimeline from "@/components/TreatmentTimeline";
 import DrugTracker from "@/components/DrugTracker";
+import { usePushSubscription } from "@/hooks/usePushSubscription";
 
 interface Examination {
   id: string;
