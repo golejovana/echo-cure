@@ -12,6 +12,8 @@ export default function Examination() {
   const [lang, setLang] = useState<Lang>("sr-RS");
   const [role, setRole] = useState<"doctor" | "patient">("doctor");
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const examId = searchParams.get("examId") || undefined;
 
   useEffect(() => {
     const check = async () => {
