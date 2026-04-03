@@ -177,6 +177,8 @@ export default function DoctorDashboard() {
       const pri = a.priority;
       const status: ScheduleRow["status"] =
         pri === "completed" ? "completed" :
+        pri === "scheduled" ? "scheduled" :
+        pri === "cancelled" ? "cancelled" :
         pri === "high" || pri === "urgent" ? "priority" : "waiting";
       return {
         id: a.id,
