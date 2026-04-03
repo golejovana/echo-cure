@@ -186,7 +186,9 @@ const SmartFormPanel = ({ transcript, lang, examId }: SmartFormPanelProps) => {
     setFilling(true);
     setForm({});
     try {
-      const { data, error } = await supabase.functions.invoke("parse-transcript", { body: { transcript, lang, diarize: true } });
+      const langMap: Record<string, string> = { sr: "Serbian", en: "English", fr: "French" };
+      const outputLanguage = langMap[language] || "Serbian";
+      const { data, error } = await supabase.functions.invoke("parse-transcript", { body: { transcript, lang, diarize: true, outputLanguage } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const fd = data.formData as FormData;

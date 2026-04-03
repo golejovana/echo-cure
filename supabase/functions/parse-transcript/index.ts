@@ -26,25 +26,23 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { transcript, lang, diarize } = await req.json();
-    // Detect the actual language of the transcript from its content
-    const sample = (transcript || "").slice(0, 200);
-    const cyrillicCount = (sample.match(/[\u0400-\u04FF]/g) || []).length;
-    const latinCount = (sample.match(/[a-zA-Z]/g) || []).length;
-    const frenchIndicators = /[\u00e0\u00e2\u00e7\u00e8\u00e9\u00ea\u00ee\u00f4\u00f9\u00fb\u00fc\u0153]|\b(le|la|les|un|une|des|du|est|sont|dans|avec|pour|qui|que|nous|vous|ils|elles|cette|mais)\b/gi;
-    const frenchCount = (sample.match(frenchIndicators) || []).length;
+    const { transcript, lang, diarize, outputLanguage } = await req.json();
 
-    let detectedLang = "Serbian";
-    if (cyrillicCount > latinCount * 0.3) {
-      detectedLang = "Serbian";
-    } else if (frenchCount > 5) {
-      detectedLang = "French";
-    } else if (latinCount > cyrillicCount) {
-      detectedLang = "English";
+    // Use explicitly passed UI language as PRIMARY signal; fall back to detection only if not provided
+    let outputLang = "Serbian";
+    if (outputLanguage && ["Serbian", "English", "French"].includes(outputLanguage)) {
+      outputLang = outputLanguage;
+    } else {
+      // Fallback: character-based detection
+      const sample = (transcript || "").slice(0, 200);
+      const cyrillicCount = (sample.match(/[\u0400-\u04FF]/g) || []).length;
+      const latinCount = (sample.match(/[a-zA-Z]/g) || []).length;
+      const frenchIndicators = /[\u00e0\u00e2\u00e7\u00e8\u00e9\u00ea\u00ee\u00f4\u00f9\u00fb\u00fc\u0153]|\b(le|la|les|un|une|des|du|est|sont|dans|avec|pour|qui|que|nous|vous|ils|elles|cette|mais)\b/gi;
+      const frenchCount = (sample.match(frenchIndicators) || []).length;
+      if (cyrillicCount > latinCount * 0.3) outputLang = "Serbian";
+      else if (frenchCount > 5) outputLang = "French";
+      else if (latinCount > cyrillicCount) outputLang = "English";
     }
-
-    // Use detected transcript language as output language (match the input)
-    const outputLang = detectedLang;
 
     if (!transcript?.trim()) {
       return new Response(JSON.stringify({ error: "No transcript provided" }), {
