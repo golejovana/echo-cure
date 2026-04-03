@@ -49,9 +49,13 @@ const item = {
 };
 
 const DEMO_APPOINTMENTS = [
-  { name: "Marko Petrović", time: "09:00", reason: "Sumnja na upalu pluća", priority: "completed" },
-  { name: "Jana Šumonja", time: "11:30", reason: "Kontrola nakon terapije", priority: "normal" },
-  { name: "Milan Jovanović", time: "14:00", reason: "Glavobolja i vrtoglavica", priority: "completed" },
+  { name: "Marko Petrović", time: "08:30", reason: "Sumnja na upalu pluća", priority: "completed" },
+  { name: "Jana Šumonja", time: "09:15", reason: "Kontrola nakon terapije", priority: "completed" },
+  { name: "Milan Jovanović", time: "10:00", reason: "Glavobolja i vrtoglavica", priority: "completed" },
+  { name: "Ana Nikolić", time: "11:00", reason: "Bolovi u grudima", priority: "completed" },
+  { name: "Stefan Đorđević", time: "12:30", reason: "Kontrolni pregled — hipertenzija", priority: "completed" },
+  { name: "Ivana Popović", time: "14:00", reason: "Alergijska reakcija na koži", priority: "waiting" },
+  { name: "Nikola Marić", time: "15:30", reason: "Bol u lumbalnom delu", priority: "scheduled" },
 ];
 
 export default function DoctorDashboard() {
@@ -199,7 +203,7 @@ export default function DoctorDashboard() {
     });
 
     const diagMap = new Map<string, number>();
-    const EXCLUDED_DIAG = ["unspecified", "nije određeno iz transkripta", "nije odredjeno iz transkripta", "nije pomenuto"];
+    const EXCLUDED_DIAG = ["unspecified", "nespecifiran", "nespecificiran", "nije određeno iz transkripta", "nije odredjeno iz transkripta", "nije pomenuto", "nije specificirano"];
     exams.forEach((e: any) => {
       if (e.diagnosis_codes) {
         e.diagnosis_codes.split(",").forEach((d: string) => {
