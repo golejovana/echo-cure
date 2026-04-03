@@ -43,7 +43,7 @@ export default function Examination() {
           <ListenerPanel onTranscriptUpdate={handleTranscriptUpdate} onLangChange={setLang} />
         </div>
         <div className="glass-card-elevated p-6 overflow-hidden flex flex-col">
-          <SmartFormPanel transcript={transcript} lang={lang} />
+          <SmartFormPanel transcript={transcript} lang={lang} examId={examId} />
         </div>
       </motion.div>
     </DashboardLayout>
