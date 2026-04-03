@@ -229,7 +229,7 @@ const SmartFormPanel = ({ transcript, lang, examId }: SmartFormPanelProps) => {
       toast({ title: t("form.extractError"), description: e instanceof Error ? e.message : t("form.extractErrorDesc"), variant: "destructive" });
       setFilling(false);
     }
-  }, [transcript, filling, lang, t]);
+  }, [transcript, filling, lang, t, language]);
 
   /* ---- send to patient ---- */
   const handleSendToPatient = useCallback(async () => {
