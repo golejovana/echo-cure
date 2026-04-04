@@ -72,6 +72,11 @@ const OBJECTIVE_FIELDS: CategoryField[] = [
 type FormData = Record<string, string>;
 interface SmartFormPanelProps { transcript: string; lang: string; examId?: string }
 
+export interface SmartFormPanelHandle {
+  autoFill: () => Promise<void>;
+  setField: (key: string, value: string) => void;
+}
+
 const today = () => {
   const d = new Date();
   return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}.`;
