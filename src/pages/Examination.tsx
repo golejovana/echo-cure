@@ -96,7 +96,7 @@ export default function Examination() {
         className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 h-[calc(100vh-120px)]"
       >
         <div className="glass-card-elevated p-6 overflow-hidden flex flex-col">
-          <ListenerPanel onTranscriptUpdate={handleTranscriptUpdate} onLangChange={setLang} onDemoClick={handleDemo} />
+          <ListenerPanel ref={listenerRef} onTranscriptUpdate={handleTranscriptUpdate} onLangChange={setLang} onDemoClick={handleDemo} />
         </div>
         <div className="glass-card-elevated p-6 overflow-hidden flex flex-col">
           <SmartFormPanel ref={formRef} transcript={transcript} lang={lang} examId={examId} />
