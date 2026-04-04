@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useImperativeHandle, forwardRef } from "react";
 import { Mic, MicOff, Pause, Play, Globe, RotateCcw, PenLine, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,10 @@ interface ListenerPanelProps {
   onTranscriptUpdate: (text: string) => void;
   onLangChange?: (lang: Lang) => void;
   onDemoClick?: () => void;
+}
+
+export interface ListenerPanelHandle {
+  injectSegments: (lines: string[]) => void;
 }
 
 const LANG_MAP: Record<string, Lang> = {
@@ -35,7 +39,7 @@ type RecordingState = "idle" | "recording" | "paused" | "processing";
 
 let segmentCounter = 0;
 
-const ListenerPanel = ({ onTranscriptUpdate, onLangChange, onDemoClick }: ListenerPanelProps) => {
+const ListenerPanel = forwardRef<ListenerPanelHandle, ListenerPanelProps>(({ onTranscriptUpdate, onLangChange, onDemoClick }, ref) => {
   const { t, language } = useTranslation();
   const sttLang = LANG_MAP[language] || "sr-RS";
 
@@ -83,6 +87,20 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange, onDemoClick }: Listen
     };
     setSegments((prev) => [...prev, seg]);
   }, []);
+
+  useImperativeHandle(ref, () => ({
+    injectSegments: (lines: string[]) => {
+      setSegments([]);
+      segmentCounter = 0;
+      const newSegs = lines.filter((l) => l.trim()).map((line) => ({
+        id: `seg-${++segmentCounter}`,
+        text: line.trim(),
+        confidence: 1.0,
+        timestamp: Date.now(),
+      }));
+      setSegments(newSegs);
+    },
+  }), []);
 
   const cleanupWithAI = useCallback(async (segments: TranscriptSegment[]) => {
     const fullText = segments.map((s) => s.text).join("\n");
@@ -466,6 +484,7 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange, onDemoClick }: Listen
       </div>
     </div>
   );
-};
+});
+ListenerPanel.displayName = "ListenerPanel";
 
 export default ListenerPanel;

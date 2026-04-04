@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import DashboardLayout from "@/components/DashboardLayout";
 import ListenerPanel from "@/components/ListenerPanel";
-import type { Lang } from "@/components/ListenerPanel";
+import type { Lang, ListenerPanelHandle } from "@/components/ListenerPanel";
 import SmartFormPanel, { type SmartFormPanelHandle } from "@/components/SmartFormPanel";
 
 const DEMO_TRANSCRIPT = `Doktor: Dobro jutro, izvolite. Kako se zovete?
@@ -46,6 +46,7 @@ export default function Examination() {
   const [searchParams] = useSearchParams();
   const examId = searchParams.get("examId") || undefined;
   const formRef = useRef<SmartFormPanelHandle>(null);
+  const listenerRef = useRef<ListenerPanelHandle>(null);
 
   useEffect(() => {
     const check = async () => {
@@ -64,7 +65,12 @@ export default function Examination() {
   }, []);
 
   const handleDemo = useCallback(async () => {
-    // 1. Fill the transcript
+    // 1. Inject lines into the ListenerPanel as visible segments
+    const lines = DEMO_TRANSCRIPT.split("\n");
+    listenerRef.current?.injectSegments(lines);
+
+    // setTranscript will be triggered by onTranscriptUpdate from segments
+    // But we also set it directly to ensure SmartFormPanel has it
     setTranscript(DEMO_TRANSCRIPT);
 
     // 2. Wait 500ms then trigger extraction
@@ -90,7 +96,7 @@ export default function Examination() {
         className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 h-[calc(100vh-120px)]"
       >
         <div className="glass-card-elevated p-6 overflow-hidden flex flex-col">
-          <ListenerPanel onTranscriptUpdate={handleTranscriptUpdate} onLangChange={setLang} onDemoClick={handleDemo} />
+          <ListenerPanel ref={listenerRef} onTranscriptUpdate={handleTranscriptUpdate} onLangChange={setLang} onDemoClick={handleDemo} />
         </div>
         <div className="glass-card-elevated p-6 overflow-hidden flex flex-col">
           <SmartFormPanel ref={formRef} transcript={transcript} lang={lang} examId={examId} />
