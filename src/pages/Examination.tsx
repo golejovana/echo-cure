@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import DashboardLayout from "@/components/DashboardLayout";
 import ListenerPanel from "@/components/ListenerPanel";
-import type { Lang } from "@/components/ListenerPanel";
+import type { Lang, ListenerPanelHandle } from "@/components/ListenerPanel";
 import SmartFormPanel, { type SmartFormPanelHandle } from "@/components/SmartFormPanel";
 
 const DEMO_TRANSCRIPT = `Doktor: Dobro jutro, izvolite. Kako se zovete?
