@@ -77,11 +77,17 @@ export default function Examination() {
     await new Promise((r) => setTimeout(r, 500));
     if (formRef.current) {
       await formRef.current.autoFill();
-      // 3. After extraction, fill manual fields
+      // 3. After extraction, fill manual fields + appointments
       setTimeout(() => {
         formRef.current?.setField("jmbg", "1505985710023");
         formRef.current?.setField("patientAddress", "Ulica Kneza Miloša 24, Beograd");
         formRef.current?.setField("patientSocialStatus", "Neoženjen, živi sam, srednji prihodi");
+        formRef.current?.setAppointments([
+          { title: "Nivo Karbamazepina u krvi", date: new Date(2026, 3, 5), time: "", priority: "normal" },
+          { title: "MRI mozga", date: new Date(2026, 3, 6), time: "", priority: "normal" },
+          { title: "EEG", date: new Date(2026, 3, 8), time: "", priority: "normal" },
+          { title: "Neurološka kontrola", date: new Date(2026, 3, 10), time: "", priority: "normal" },
+        ]);
         toast("Demo mode — podaci su učitani");
       }, 300);
     }

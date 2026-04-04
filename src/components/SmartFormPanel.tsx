@@ -75,6 +75,7 @@ interface SmartFormPanelProps { transcript: string; lang: string; examId?: strin
 export interface SmartFormPanelHandle {
   autoFill: () => Promise<void>;
   setField: (key: string, value: string) => void;
+  setAppointments: (apts: PlannedAppointment[]) => void;
 }
 
 const today = () => {
@@ -239,6 +240,7 @@ const SmartFormPanel = forwardRef<SmartFormPanelHandle, SmartFormPanelProps>(({ 
   useImperativeHandle(ref, () => ({
     autoFill: handleAutoFill,
     setField: (key: string, value: string) => set(key, value),
+    setAppointments: (apts: PlannedAppointment[]) => setPlannedAppointments(apts),
   }), [handleAutoFill]);
 
   /* ---- send to patient ---- */
