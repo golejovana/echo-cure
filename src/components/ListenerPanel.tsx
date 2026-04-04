@@ -15,6 +15,10 @@ interface ListenerPanelProps {
   onDemoClick?: () => void;
 }
 
+export interface ListenerPanelHandle {
+  injectSegments: (lines: string[]) => void;
+}
+
 const LANG_MAP: Record<string, Lang> = {
   sr: "sr-RS",
   en: "en-US",
