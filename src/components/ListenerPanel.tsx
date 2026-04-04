@@ -426,6 +426,7 @@ const ListenerPanel = forwardRef<ListenerPanelHandle, ListenerPanelProps>(({ onT
         segments={segments}
         interimText={interimText}
         onEditSegment={handleEditSegment}
+        onReplaceAllSegments={handleReplaceAllSegments}
       />
 
       {/* Manual Note Input */}
