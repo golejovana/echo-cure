@@ -75,6 +75,7 @@ interface SmartFormPanelProps { transcript: string; lang: string; examId?: strin
 export interface SmartFormPanelHandle {
   autoFill: () => Promise<void>;
   setField: (key: string, value: string) => void;
+  setAppointments: (apts: PlannedAppointment[]) => void;
 }
 
 const today = () => {
