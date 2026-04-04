@@ -35,7 +35,7 @@ type RecordingState = "idle" | "recording" | "paused" | "processing";
 
 let segmentCounter = 0;
 
-const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps) => {
+const ListenerPanel = ({ onTranscriptUpdate, onLangChange, onDemoClick }: ListenerPanelProps) => {
   const { t, language } = useTranslation();
   const sttLang = LANG_MAP[language] || "sr-RS";
 
