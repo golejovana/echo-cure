@@ -83,7 +83,7 @@ const today = () => {
 };
 
 /* ================================================================ */
-const SmartFormPanel = ({ transcript, lang, examId }: SmartFormPanelProps) => {
+const SmartFormPanel = forwardRef<SmartFormPanelHandle, SmartFormPanelProps>(({ transcript, lang, examId }, ref) => {
   const { t, language } = useTranslation();
   const { addLocalAppointments, clearLocalAppointments, refreshFromDb } = useAppointments();
   const [form, setForm] = useState<FormData>({});
