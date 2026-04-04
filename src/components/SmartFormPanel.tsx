@@ -236,6 +236,11 @@ const SmartFormPanel = forwardRef<SmartFormPanelHandle, SmartFormPanelProps>(({ 
     }
   }, [transcript, filling, lang, t, language]);
 
+  useImperativeHandle(ref, () => ({
+    autoFill: handleAutoFill,
+    setField: (key: string, value: string) => set(key, value),
+  }), [handleAutoFill]);
+
   /* ---- send to patient ---- */
   const handleSendToPatient = useCallback(async () => {
     const patientEmail = window.prompt(t("form.sendPrompt"));
