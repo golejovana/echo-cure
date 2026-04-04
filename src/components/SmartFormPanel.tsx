@@ -240,6 +240,7 @@ const SmartFormPanel = forwardRef<SmartFormPanelHandle, SmartFormPanelProps>(({ 
   useImperativeHandle(ref, () => ({
     autoFill: handleAutoFill,
     setField: (key: string, value: string) => set(key, value),
+    setAppointments: (apts: PlannedAppointment[]) => setPlannedAppointments(apts),
   }), [handleAutoFill]);
 
   /* ---- send to patient ---- */
