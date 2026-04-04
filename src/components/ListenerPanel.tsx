@@ -12,6 +12,7 @@ export type Lang = "en-US" | "sr-RS" | "fr-FR";
 interface ListenerPanelProps {
   onTranscriptUpdate: (text: string) => void;
   onLangChange?: (lang: Lang) => void;
+  onDemoClick?: () => void;
 }
 
 const LANG_MAP: Record<string, Lang> = {
@@ -34,7 +35,7 @@ type RecordingState = "idle" | "recording" | "paused" | "processing";
 
 let segmentCounter = 0;
 
-const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps) => {
+const ListenerPanel = ({ onTranscriptUpdate, onLangChange, onDemoClick }: ListenerPanelProps) => {
   const { t, language } = useTranslation();
   const sttLang = LANG_MAP[language] || "sr-RS";
 
@@ -451,6 +452,17 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange }: ListenerPanelProps)
           <PenLine size={13} />
           {t("listener.insertNote")}
         </button>
+        {onDemoClick && (
+          <>
+            <span className="w-px h-4 bg-border" />
+            <button
+              onClick={onDemoClick}
+              className="flex items-center gap-1.5 text-xs font-medium text-violet-500 border border-violet-400/50 hover:bg-violet-500/10 px-2.5 py-1 rounded-md transition-colors"
+            >
+              🎬 DEMO
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import {
   Sparkles, Heart, Stethoscope, Droplets, Brain,
   ChevronDown, Send, Loader2, FileText, ClipboardList, Activity,
@@ -72,13 +72,18 @@ const OBJECTIVE_FIELDS: CategoryField[] = [
 type FormData = Record<string, string>;
 interface SmartFormPanelProps { transcript: string; lang: string; examId?: string }
 
+export interface SmartFormPanelHandle {
+  autoFill: () => Promise<void>;
+  setField: (key: string, value: string) => void;
+}
+
 const today = () => {
   const d = new Date();
   return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}.`;
 };
 
 /* ================================================================ */
-const SmartFormPanel = ({ transcript, lang, examId }: SmartFormPanelProps) => {
+const SmartFormPanel = forwardRef<SmartFormPanelHandle, SmartFormPanelProps>(({ transcript, lang, examId }, ref) => {
   const { t, language } = useTranslation();
   const { addLocalAppointments, clearLocalAppointments, refreshFromDb } = useAppointments();
   const [form, setForm] = useState<FormData>({});
@@ -230,6 +235,11 @@ const SmartFormPanel = ({ transcript, lang, examId }: SmartFormPanelProps) => {
       setFilling(false);
     }
   }, [transcript, filling, lang, t, language]);
+
+  useImperativeHandle(ref, () => ({
+    autoFill: handleAutoFill,
+    setField: (key: string, value: string) => set(key, value),
+  }), [handleAutoFill]);
 
   /* ---- send to patient ---- */
   const handleSendToPatient = useCallback(async () => {
@@ -652,7 +662,8 @@ const SmartFormPanel = ({ transcript, lang, examId }: SmartFormPanelProps) => {
       </div>
     </div>
   );
-};
+});
+SmartFormPanel.displayName = "SmartFormPanel";
 
 /* ---- small helpers ---- */
 function FieldRow({ field, value, onChange, filling, glowing, fromTranscript }: { field: { key: string; labelKey: string }; value: string; onChange: (k: string, v: string) => void; filling: boolean; glowing?: boolean; fromTranscript: string }) {
