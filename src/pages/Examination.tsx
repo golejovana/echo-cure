@@ -65,7 +65,12 @@ export default function Examination() {
   }, []);
 
   const handleDemo = useCallback(async () => {
-    // 1. Fill the transcript
+    // 1. Inject lines into the ListenerPanel as visible segments
+    const lines = DEMO_TRANSCRIPT.split("\n");
+    listenerRef.current?.injectSegments(lines);
+
+    // setTranscript will be triggered by onTranscriptUpdate from segments
+    // But we also set it directly to ensure SmartFormPanel has it
     setTranscript(DEMO_TRANSCRIPT);
 
     // 2. Wait 500ms then trigger extraction
