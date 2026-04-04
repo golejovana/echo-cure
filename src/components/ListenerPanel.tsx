@@ -484,6 +484,7 @@ const ListenerPanel = forwardRef<ListenerPanelHandle, ListenerPanelProps>(({ onT
       </div>
     </div>
   );
-};
+});
+ListenerPanel.displayName = "ListenerPanel";
 
 export default ListenerPanel;
