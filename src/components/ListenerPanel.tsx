@@ -452,6 +452,17 @@ const ListenerPanel = ({ onTranscriptUpdate, onLangChange, onDemoClick }: Listen
           <PenLine size={13} />
           {t("listener.insertNote")}
         </button>
+        {onDemoClick && (
+          <>
+            <span className="w-px h-4 bg-border" />
+            <button
+              onClick={onDemoClick}
+              className="flex items-center gap-1.5 text-xs font-medium text-violet-500 border border-violet-400/50 hover:bg-violet-500/10 px-2.5 py-1 rounded-md transition-colors"
+            >
+              🎬 DEMO
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
