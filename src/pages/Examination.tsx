@@ -46,6 +46,7 @@ export default function Examination() {
   const [searchParams] = useSearchParams();
   const examId = searchParams.get("examId") || undefined;
   const formRef = useRef<SmartFormPanelHandle>(null);
+  const listenerRef = useRef<ListenerPanelHandle>(null);
 
   useEffect(() => {
     const check = async () => {
