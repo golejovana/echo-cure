@@ -12,6 +12,7 @@ export type Lang = "en-US" | "sr-RS" | "fr-FR";
 interface ListenerPanelProps {
   onTranscriptUpdate: (text: string) => void;
   onLangChange?: (lang: Lang) => void;
+  onDemoClick?: () => void;
 }
 
 const LANG_MAP: Record<string, Lang> = {
