@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 
 export interface TranscriptSegment {
   id: string;
@@ -12,63 +11,53 @@ interface TranscriptDisplayProps {
   segments: TranscriptSegment[];
   interimText: string;
   onEditSegment: (id: string, newText: string) => void;
+  onReplaceAllSegments?: (lines: string[]) => void;
 }
 
-const HIGHLIGHT_DURATION = 2000;
+const TranscriptDisplay = ({ segments, interimText, onEditSegment, onReplaceAllSegments }: TranscriptDisplayProps) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [localText, setLocalText] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
 
-const TranscriptDisplay = ({ segments, interimText, onEditSegment }: TranscriptDisplayProps) => {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [recentIds, setRecentIds] = useState<Set<string>>(new Set());
-
-  // Auto-scroll
+  // Sync segments → localText when not focused
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (!isFocused) {
+      const combined = segments.map((s) => s.text).join("\n");
+      const suffix = interimText ? `\n... ${interimText}` : "";
+      setLocalText(combined + suffix);
     }
-  }, [segments, interimText]);
+  }, [segments, interimText, isFocused]);
 
-  // Track recently added segments for highlight
+  // Auto-scroll when not focused
   useEffect(() => {
-    if (segments.length === 0) return;
-    const latest = segments[segments.length - 1];
-    if (Date.now() - latest.timestamp < 500) {
-      setRecentIds((prev) => new Set(prev).add(latest.id));
-      const timer = setTimeout(() => {
-        setRecentIds((prev) => {
-          const next = new Set(prev);
-          next.delete(latest.id);
-          return next;
-        });
-      }, HIGHLIGHT_DURATION);
-      return () => clearTimeout(timer);
+    if (!isFocused && textareaRef.current) {
+      textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
     }
-  }, [segments]);
+  }, [segments, interimText, isFocused]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setLocalText(e.target.value);
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    if (onReplaceAllSegments) {
+      const lines = localText.split("\n").filter((l) => l.trim());
+      onReplaceAllSegments(lines);
+    }
+  };
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto pr-1">
-      <div className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap">
-        {segments.map((seg) => (
-          <span
-            key={seg.id}
-            className={`transition-colors duration-1000 ${
-              recentIds.has(seg.id) ? "bg-blue-100/60 dark:bg-blue-900/30" : ""
-            }`}
-          >
-            {seg.text.split(" ").map((word, wi) => (
-              <span
-                key={wi}
-                className={seg.confidence < 0.7 ? "underline decoration-orange-400 decoration-wavy underline-offset-2" : ""}
-              >
-                {word}{" "}
-              </span>
-            ))}
-            {"\n"}
-          </span>
-        ))}
-        {interimText && (
-          <span className="text-muted-foreground/60 italic">... {interimText}</span>
-        )}
-      </div>
+    <div className="flex-1 overflow-hidden">
+      <textarea
+        ref={textareaRef}
+        value={localText}
+        onChange={handleChange}
+        onFocus={() => setIsFocused(true)}
+        onBlur={handleBlur}
+        className="w-full h-full min-h-[120px] text-sm leading-relaxed text-foreground/85 bg-transparent border border-border/40 rounded-md px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
+        placeholder="Transkript će se pojaviti ovde..."
+      />
     </div>
   );
 };

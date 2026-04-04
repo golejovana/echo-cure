@@ -274,6 +274,17 @@ const ListenerPanel = forwardRef<ListenerPanelHandle, ListenerPanelProps>(({ onT
     setSegments((prev) => prev.map((s) => (s.id === id ? { ...s, text: newText } : s)));
   }, []);
 
+  const handleReplaceAllSegments = useCallback((lines: string[]) => {
+    segmentCounter = 0;
+    const newSegs = lines.map((line) => ({
+      id: `seg-${++segmentCounter}`,
+      text: line.trim(),
+      confidence: 1.0,
+      timestamp: Date.now(),
+    }));
+    setSegments(newSegs);
+  }, []);
+
   // Sync STT lang with global language
   useEffect(() => {
     const newLang = LANG_MAP[language] || "sr-RS";
