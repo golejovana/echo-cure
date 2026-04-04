@@ -657,7 +657,8 @@ const SmartFormPanel = forwardRef<SmartFormPanelHandle, SmartFormPanelProps>(({ 
       </div>
     </div>
   );
-};
+});
+SmartFormPanel.displayName = "SmartFormPanel";
 
 /* ---- small helpers ---- */
 function FieldRow({ field, value, onChange, filling, glowing, fromTranscript }: { field: { key: string; labelKey: string }; value: string; onChange: (k: string, v: string) => void; filling: boolean; glowing?: boolean; fromTranscript: string }) {
