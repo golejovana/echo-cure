@@ -88,6 +88,20 @@ const ListenerPanel = forwardRef<ListenerPanelHandle, ListenerPanelProps>(({ onT
     setSegments((prev) => [...prev, seg]);
   }, []);
 
+  useImperativeHandle(ref, () => ({
+    injectSegments: (lines: string[]) => {
+      setSegments([]);
+      segmentCounter = 0;
+      const newSegs = lines.filter((l) => l.trim()).map((line) => ({
+        id: `seg-${++segmentCounter}`,
+        text: line.trim(),
+        confidence: 1.0,
+        timestamp: Date.now(),
+      }));
+      setSegments(newSegs);
+    },
+  }), []);
+
   const cleanupWithAI = useCallback(async (segments: TranscriptSegment[]) => {
     const fullText = segments.map((s) => s.text).join("\n");
     if (!fullText.trim()) return;
