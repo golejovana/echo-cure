@@ -175,6 +175,29 @@ export default function DoctorDashboard() {
     setLoading(false);
   }, [today]);
 
+  // Calculate typing time saved per exam based on actual content length.
+  // Doctor typing speed ≈ 40 wpm ≈ 200 chars/min. We sum every text field in the
+  // examination (chief complaints, present illness, clinical timeline, diagnoses,
+  // and every string value inside form_data) and divide by 200.
+  const estimateMinutesForExam = (exam: any): number => {
+    if (!exam) return 0;
+    let chars = 0;
+    const addText = (v: any) => {
+      if (typeof v === "string") chars += v.trim().length;
+      else if (Array.isArray(v)) v.forEach(addText);
+      else if (v && typeof v === "object") Object.values(v).forEach(addText);
+    };
+    addText(exam.chief_complaints);
+    addText(exam.present_illness);
+    addText(exam.clinical_timeline);
+    addText(exam.diagnosis_codes);
+    addText(exam.form_data);
+    // Add a small fixed overhead per exam for clicks/dropdowns/navigation (≈2 min)
+    const CHARS_PER_MIN = 200;
+    const NAV_OVERHEAD_MIN = 2;
+    return Math.round(chars / CHARS_PER_MIN + NAV_OVERHEAD_MIN);
+  };
+
   const buildRows = (appts: any[], examMap: Map<string, any>, exams: any[]) => {
     const rows: ScheduleRow[] = appts.map((a: any) => {
       const exam = examMap.get(a.examination_id);
@@ -195,11 +218,17 @@ export default function DoctorDashboard() {
     });
     setSchedule(rows);
 
+    // Sum minutes only for COMPLETED exams in today's schedule
+    const minutesSaved = rows
+      .filter((r) => r.status === "completed")
+      .reduce((sum, r) => sum + estimateMinutesForExam(examMap.get(r.examinationId)), 0);
+
     const completedCount = rows.filter(r => r.status === "completed").length;
     setStats({
       patients: rows.length,
       reports: completedCount,
       alerts: rows.filter(r => r.status === "priority").length,
+      minutesSaved,
     });
 
     const diagMap = new Map<string, number>();
