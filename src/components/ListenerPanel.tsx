@@ -56,6 +56,9 @@ const ListenerPanel = forwardRef<ListenerPanelHandle, ListenerPanelProps>(({ onT
   const manualStopRef = useRef(false);
   const recordingStateRef = useRef<RecordingState>(recordingState);
   const segmentsRef = useRef<TranscriptSegment[]>([]);
+  const lastActivityRef = useRef<number>(Date.now());
+  const watchdogRef = useRef<number | null>(null);
+  const cycleRef = useRef<number | null>(null);
 
   useEffect(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -163,6 +166,7 @@ const ListenerPanel = forwardRef<ListenerPanelHandle, ListenerPanelProps>(({ onT
     rec.maxAlternatives = 1;
 
     rec.onresult = (e: SpeechRecognitionEvent) => {
+      lastActivityRef.current = Date.now();
       let interim = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const result = e.results[i];
@@ -186,10 +190,24 @@ const ListenerPanel = forwardRef<ListenerPanelHandle, ListenerPanelProps>(({ onT
       // Don't call rec.stop() here — let onend handle restart naturally
     };
 
+    rec.onstart = () => {
+      lastActivityRef.current = Date.now();
+    };
+
+    rec.onspeechstart = () => {
+      lastActivityRef.current = Date.now();
+    };
+
+    rec.onaudiostart = () => {
+      lastActivityRef.current = Date.now();
+    };
+
     rec.onend = () => {
       if (!manualStopRef.current && recordingStateRef.current === "recording") {
         setTimeout(() => {
-          if (!manualStopRef.current) startRecognition();
+          if (!manualStopRef.current && recordingStateRef.current === "recording") {
+            startRecognition();
+          }
         }, RECONNECT_DELAY);
       }
     };
@@ -198,6 +216,7 @@ const ListenerPanel = forwardRef<ListenerPanelHandle, ListenerPanelProps>(({ onT
     try {
       rec.start();
       manualStopRef.current = false;
+      lastActivityRef.current = Date.now();
       setRecordingState("recording");
     } catch {
       setTimeout(() => {
@@ -205,6 +224,57 @@ const ListenerPanel = forwardRef<ListenerPanelHandle, ListenerPanelProps>(({ onT
       }, RECONNECT_DELAY);
     }
   }, [lang, pushSegment]);
+
+  // Watchdog: detect silent shutdowns (Chrome sometimes stops without firing onend)
+  // and preventively cycle the recognizer every ~45s to avoid implicit timeouts.
+  useEffect(() => {
+    if (recordingState !== "recording") {
+      if (watchdogRef.current) {
+        clearInterval(watchdogRef.current);
+        watchdogRef.current = null;
+      }
+      if (cycleRef.current) {
+        clearInterval(cycleRef.current);
+        cycleRef.current = null;
+      }
+      return;
+    }
+
+    // Watchdog: if no activity for 8s while "recording", force restart
+    watchdogRef.current = window.setInterval(() => {
+      if (manualStopRef.current || recordingStateRef.current !== "recording") return;
+      const idle = Date.now() - lastActivityRef.current;
+      if (idle > 8000) {
+        lastActivityRef.current = Date.now();
+        // Hard restart — recognizer likely died silently
+        if (recRef.current) {
+          recRef.current.onend = null;
+          try { recRef.current.stop(); } catch {}
+          recRef.current = null;
+        }
+        startRecognition();
+      }
+    }, 2000);
+
+    // Preventive cycle every 45s — avoids Chrome's hidden long-session timeout
+    cycleRef.current = window.setInterval(() => {
+      if (manualStopRef.current || recordingStateRef.current !== "recording") return;
+      lastActivityRef.current = Date.now();
+      if (recRef.current) {
+        recRef.current.onend = null;
+        try { recRef.current.stop(); } catch {}
+        recRef.current = null;
+      }
+      startRecognition();
+    }, 45000);
+
+    return () => {
+      if (watchdogRef.current) clearInterval(watchdogRef.current);
+      if (cycleRef.current) clearInterval(cycleRef.current);
+      watchdogRef.current = null;
+      cycleRef.current = null;
+    };
+  }, [recordingState, startRecognition]);
 
   const stopRecognition = useCallback(() => {
     manualStopRef.current = true;
