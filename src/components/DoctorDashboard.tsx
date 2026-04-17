@@ -62,7 +62,7 @@ export default function DoctorDashboard() {
   const { t, language } = useTranslation();
   const navigate = useNavigate();
   const [schedule, setSchedule] = useState<ScheduleRow[]>([]);
-  const [stats, setStats] = useState({ patients: 0, reports: 0, alerts: 0 });
+  const [stats, setStats] = useState({ patients: 0, reports: 0, alerts: 0, minutesSaved: 0 });
   const [topDiagnoses, setTopDiagnoses] = useState<DiagCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
