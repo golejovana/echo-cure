@@ -143,7 +143,7 @@ export default function DoctorDashboard() {
 
     const { data: exams } = await supabase
       .from("examinations")
-      .select("id, patient_name, patient_email, diagnosis_codes, created_at, chief_complaints")
+      .select("id, patient_name, patient_email, diagnosis_codes, created_at, chief_complaints, present_illness, clinical_timeline, form_data")
       .order("created_at", { ascending: false })
       .limit(50);
 
@@ -160,7 +160,7 @@ export default function DoctorDashboard() {
 
       const { data: seededExams } = await supabase
         .from("examinations")
-        .select("id, patient_name, patient_email, diagnosis_codes, created_at, chief_complaints")
+        .select("id, patient_name, patient_email, diagnosis_codes, created_at, chief_complaints, present_illness, clinical_timeline, form_data")
         .order("created_at", { ascending: false })
         .limit(50);
 
