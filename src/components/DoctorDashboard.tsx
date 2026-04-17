@@ -62,7 +62,7 @@ export default function DoctorDashboard() {
   const { t, language } = useTranslation();
   const navigate = useNavigate();
   const [schedule, setSchedule] = useState<ScheduleRow[]>([]);
-  const [stats, setStats] = useState({ patients: 0, reports: 0, alerts: 0 });
+  const [stats, setStats] = useState({ patients: 0, reports: 0, alerts: 0, minutesSaved: 0 });
   const [topDiagnoses, setTopDiagnoses] = useState<DiagCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -143,7 +143,7 @@ export default function DoctorDashboard() {
 
     const { data: exams } = await supabase
       .from("examinations")
-      .select("id, patient_name, patient_email, diagnosis_codes, created_at, chief_complaints")
+      .select("id, patient_name, patient_email, diagnosis_codes, created_at, chief_complaints, present_illness, clinical_timeline, form_data")
       .order("created_at", { ascending: false })
       .limit(50);
 
@@ -160,7 +160,7 @@ export default function DoctorDashboard() {
 
       const { data: seededExams } = await supabase
         .from("examinations")
-        .select("id, patient_name, patient_email, diagnosis_codes, created_at, chief_complaints")
+        .select("id, patient_name, patient_email, diagnosis_codes, created_at, chief_complaints, present_illness, clinical_timeline, form_data")
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -174,6 +174,29 @@ export default function DoctorDashboard() {
 
     setLoading(false);
   }, [today]);
+
+  // Calculate typing time saved per exam based on actual content length.
+  // Doctor typing speed ≈ 40 wpm ≈ 200 chars/min. We sum every text field in the
+  // examination (chief complaints, present illness, clinical timeline, diagnoses,
+  // and every string value inside form_data) and divide by 200.
+  const estimateMinutesForExam = (exam: any): number => {
+    if (!exam) return 0;
+    let chars = 0;
+    const addText = (v: any) => {
+      if (typeof v === "string") chars += v.trim().length;
+      else if (Array.isArray(v)) v.forEach(addText);
+      else if (v && typeof v === "object") Object.values(v).forEach(addText);
+    };
+    addText(exam.chief_complaints);
+    addText(exam.present_illness);
+    addText(exam.clinical_timeline);
+    addText(exam.diagnosis_codes);
+    addText(exam.form_data);
+    // Add a small fixed overhead per exam for clicks/dropdowns/navigation (≈2 min)
+    const CHARS_PER_MIN = 200;
+    const NAV_OVERHEAD_MIN = 2;
+    return Math.round(chars / CHARS_PER_MIN + NAV_OVERHEAD_MIN);
+  };
 
   const buildRows = (appts: any[], examMap: Map<string, any>, exams: any[]) => {
     const rows: ScheduleRow[] = appts.map((a: any) => {
@@ -195,11 +218,17 @@ export default function DoctorDashboard() {
     });
     setSchedule(rows);
 
+    // Sum minutes only for COMPLETED exams in today's schedule
+    const minutesSaved = rows
+      .filter((r) => r.status === "completed")
+      .reduce((sum, r) => sum + estimateMinutesForExam(examMap.get(r.examinationId)), 0);
+
     const completedCount = rows.filter(r => r.status === "completed").length;
     setStats({
       patients: rows.length,
       reports: completedCount,
       alerts: rows.filter(r => r.status === "priority").length,
+      minutesSaved,
     });
 
     const diagMap = new Map<string, number>();
@@ -290,19 +319,9 @@ export default function DoctorDashboard() {
   const handleStatusChange = async (appointmentId: string, newStatus: ScheduleRow["status"]) => {
     const dbPriority = STATUS_OPTIONS.find((o) => o.value === newStatus)?.dbPriority || "normal";
     await supabase.from("appointments").update({ priority: dbPriority }).eq("id", appointmentId);
-    setSchedule((prev) =>
-      prev.map((r) => (r.id === appointmentId ? { ...r, status: newStatus } : r))
-    );
     setEditingStatusId(null);
-    // Recalculate stats
-    setStats((prev) => {
-      const updated = schedule.map((r) => (r.id === appointmentId ? { ...r, status: newStatus } : r));
-      return {
-        patients: updated.length,
-        reports: updated.filter((r) => r.status === "completed").length,
-        alerts: updated.filter((r) => r.status === "priority").length,
-      };
-    });
+    // Reload to recompute minutesSaved based on actual exam content lengths
+    await loadSchedule();
   };
 
   // Translate dynamic reason texts (hooks must be before any early return)
@@ -524,30 +543,16 @@ export default function DoctorDashboard() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4 pt-1">
-              {(() => {
-                // Realistic estimate: a complete anamnesis form has 40+ structured fields
-                // (demographics, chief complaints, present illness, personal history,
-                // allergies, chronic diseases, therapy, clinical timeline,
-                // social-epidemiological history, status praesens, ICD-10 codes,
-                // follow-up appointments). Average doctor types ~40 wpm; manual form
-                // entry incl. clicks/dropdowns ≈ 20 min per complete exam.
-                const MIN_PER_EXAM = 20;
-                const minutesSaved = stats.reports * MIN_PER_EXAM;
-                return (
-                  <>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-5xl font-extrabold gradient-text tracking-tight">
-                        {minutesSaved}
-                      </span>
-                      <span className="text-sm text-muted-foreground font-medium">{t("dashboard.minSaved")}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {t("dashboard.aiEfficiencyDesc")}{" "}
-                      <span className="font-bold text-accent">{stats.reports}</span> {t("dashboard.examsToday")} {minutesSaved} {t("dashboard.minutes")}
-                    </p>
-                  </>
-                );
-              })()}
+              <div className="flex items-baseline gap-2">
+                <span className="text-5xl font-extrabold gradient-text tracking-tight">
+                  {stats.minutesSaved}
+                </span>
+                <span className="text-sm text-muted-foreground font-medium">{t("dashboard.minSaved")}</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {t("dashboard.aiEfficiencyDesc")}{" "}
+                <span className="font-bold text-accent">{stats.reports}</span> {t("dashboard.examsToday")} {stats.minutesSaved} {t("dashboard.minutes")}
+              </p>
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div className="rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/10 p-3 text-center">
                   <p className="text-xl font-extrabold text-foreground">{stats.reports}</p>
