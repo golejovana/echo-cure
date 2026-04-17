@@ -524,16 +524,30 @@ export default function DoctorDashboard() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4 pt-1">
-              <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-extrabold gradient-text tracking-tight">
-                  {stats.reports * 17}
-                </span>
-                <span className="text-sm text-muted-foreground font-medium">{t("dashboard.minSaved")}</span>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {t("dashboard.aiEfficiencyDesc")}{" "}
-                <span className="font-bold text-accent">{stats.reports}</span> {t("dashboard.examsToday")} {stats.reports * 17} {t("dashboard.minutes")}
-              </p>
+              {(() => {
+                // Realistic estimate: a complete anamnesis form has 40+ structured fields
+                // (demographics, chief complaints, present illness, personal history,
+                // allergies, chronic diseases, therapy, clinical timeline,
+                // social-epidemiological history, status praesens, ICD-10 codes,
+                // follow-up appointments). Average doctor types ~40 wpm; manual form
+                // entry incl. clicks/dropdowns ≈ 20 min per complete exam.
+                const MIN_PER_EXAM = 20;
+                const minutesSaved = stats.reports * MIN_PER_EXAM;
+                return (
+                  <>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-5xl font-extrabold gradient-text tracking-tight">
+                        {minutesSaved}
+                      </span>
+                      <span className="text-sm text-muted-foreground font-medium">{t("dashboard.minSaved")}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {t("dashboard.aiEfficiencyDesc")}{" "}
+                      <span className="font-bold text-accent">{stats.reports}</span> {t("dashboard.examsToday")} {minutesSaved} {t("dashboard.minutes")}
+                    </p>
+                  </>
+                );
+              })()}
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div className="rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/10 p-3 text-center">
                   <p className="text-xl font-extrabold text-foreground">{stats.reports}</p>
