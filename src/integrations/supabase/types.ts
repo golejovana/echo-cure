@@ -179,7 +179,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          birth_date: string | null
           created_at: string
+          doctor_id_number: string | null
           full_name: string | null
           id: string
           institution_address: string | null
@@ -187,13 +189,18 @@ export type Database = {
           institution_country: string | null
           institution_logo_url: string | null
           institution_name: string | null
+          jmbg: string | null
+          phone: string | null
           push_subscription: Json | null
           role: Database["public"]["Enums"]["app_role"]
+          specialization: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          birth_date?: string | null
           created_at?: string
+          doctor_id_number?: string | null
           full_name?: string | null
           id?: string
           institution_address?: string | null
@@ -201,13 +208,18 @@ export type Database = {
           institution_country?: string | null
           institution_logo_url?: string | null
           institution_name?: string | null
+          jmbg?: string | null
+          phone?: string | null
           push_subscription?: Json | null
           role?: Database["public"]["Enums"]["app_role"]
+          specialization?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          birth_date?: string | null
           created_at?: string
+          doctor_id_number?: string | null
           full_name?: string | null
           id?: string
           institution_address?: string | null
@@ -215,8 +227,11 @@ export type Database = {
           institution_country?: string | null
           institution_logo_url?: string | null
           institution_name?: string | null
+          jmbg?: string | null
+          phone?: string | null
           push_subscription?: Json | null
           role?: Database["public"]["Enums"]["app_role"]
+          specialization?: string | null
           updated_at?: string
           user_id?: string
         }

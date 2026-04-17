@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   User, Settings, Globe, Bell, LogOut,
-  Stethoscope, Building2, Hash, Camera, HeartPulse, Mail, Pencil, Check, X,
+  Stethoscope, Building2, Hash, Camera, HeartPulse, Mail, Pencil, Phone, Calendar, IdCard,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,15 +15,33 @@ import InstitutionBranding from "@/components/InstitutionBranding";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
+interface ProfileData {
+  full_name: string;
+  specialization: string;
+  doctor_id_number: string;
+  jmbg: string;
+  birth_date: string;
+  phone: string;
+}
+
+const EMPTY: ProfileData = {
+  full_name: "",
+  specialization: "",
+  doctor_id_number: "",
+  jmbg: "",
+  birth_date: "",
+  phone: "",
+};
+
 export default function ProfilePage() {
   const { t } = useTranslation();
   const [role, setRole] = useState<AppRole>("doctor");
   const [loading, setLoading] = useState(true);
-  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [notifications, setNotifications] = useState(true);
+  const [data, setData] = useState<ProfileData>(EMPTY);
+  const [draft, setDraft] = useState<ProfileData>(EMPTY);
   const [editing, setEditing] = useState(false);
-  const [editName, setEditName] = useState("");
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
@@ -32,40 +50,68 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setEmail(user.email || "");
-        const { data } = await supabase.from("profiles").select("role, full_name").eq("user_id", user.id).single();
-        if (data?.role) setRole(data.role);
-        if (data?.full_name) setFullName(data.full_name);
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, full_name, specialization, doctor_id_number, jmbg, birth_date, phone")
+          .eq("user_id", user.id)
+          .single();
+        if (profile) {
+          if (profile.role) setRole(profile.role);
+          const next: ProfileData = {
+            full_name: profile.full_name || "",
+            specialization: (profile as any).specialization || "",
+            doctor_id_number: (profile as any).doctor_id_number || "",
+            jmbg: (profile as any).jmbg || "",
+            birth_date: (profile as any).birth_date || "",
+            phone: (profile as any).phone || "",
+          };
+          setData(next);
+          setDraft(next);
+        }
       }
       setLoading(false);
     };
     fetch();
   }, []);
 
+  const startEdit = () => {
+    setDraft({ ...data });
+    setEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setDraft({ ...data });
+    setEditing(false);
+  };
+
   const handleSave = async () => {
-    if (!editName.trim()) return;
+    if (!draft.full_name.trim()) {
+      toast.error(t("profile.saveError"));
+      return;
+    }
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { error } = await supabase.from("profiles").update({ full_name: editName.trim() }).eq("user_id", user.id);
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: draft.full_name.trim(),
+          specialization: draft.specialization.trim() || null,
+          doctor_id_number: draft.doctor_id_number.trim() || null,
+          jmbg: draft.jmbg.trim() || null,
+          birth_date: draft.birth_date || null,
+          phone: draft.phone.trim() || null,
+        } as any)
+        .eq("user_id", user.id);
       if (error) {
         toast.error(t("profile.saveError"));
       } else {
-        setFullName(editName.trim());
+        setData({ ...draft });
         toast.success(t("profile.saveSuccess"));
         setEditing(false);
       }
     }
     setSaving(false);
-  };
-
-  const startEditing = () => {
-    setEditName(fullName);
-    setEditing(true);
-  };
-
-  const cancelEditing = () => {
-    setEditing(false);
-    setEditName("");
   };
 
   const handleLogout = async () => {
@@ -82,6 +128,31 @@ export default function ProfilePage() {
   }
 
   const isDoctor = role === "doctor";
+  const displayName = data.full_name || (isDoctor ? t("profile.doctorDefault") : t("profile.patientRole"));
+
+  // Field config per role
+  const doctorFields: Array<{ key: keyof ProfileData; label: string; icon: any; placeholder?: string; type?: string }> = [
+    { key: "full_name", label: t("profile.name"), icon: User, placeholder: "Dr. Marko Marković" },
+    { key: "specialization", label: t("profile.specialization"), icon: Stethoscope, placeholder: t("profile.internalMedicine") },
+    { key: "doctor_id_number", label: t("profile.doctorId"), icon: Hash, placeholder: "RS-2026-04521" },
+  ];
+
+  const patientFields: Array<{ key: keyof ProfileData; label: string; icon: any; placeholder?: string; type?: string }> = [
+    { key: "full_name", label: t("profile.name"), icon: User, placeholder: "Ime i prezime" },
+    { key: "jmbg", label: t("profile.jmbg"), icon: IdCard, placeholder: "1234567890123" },
+    { key: "birth_date", label: t("profile.birthDate"), icon: Calendar, type: "date" },
+    { key: "phone", label: t("profile.phone"), icon: Phone, placeholder: "+381 6x xxx xxxx" },
+  ];
+
+  const fields = isDoctor ? doctorFields : patientFields;
+  const sectionTitle = isDoctor ? t("profile.professionalData") : t("profile.personalData");
+  const sectionIconColor = isDoctor ? "text-primary" : "text-accent";
+
+  const formatDate = (iso: string) => {
+    if (!iso) return "—";
+    const [y, m, d] = iso.split("-");
+    return `${d}.${m}.${y}.`;
+  };
 
   return (
     <DashboardLayout role={role}>
@@ -102,32 +173,9 @@ export default function ProfilePage() {
               </button>
             </div>
             <div className="flex-1 min-w-0">
-              {editing ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="text-lg font-semibold text-foreground bg-muted/30 rounded-xl px-3 py-1.5 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/30 w-full"
-                    autoFocus
-                    onKeyDown={(e) => e.key === "Enter" && handleSave()}
-                  />
-                  <button onClick={handleSave} disabled={saving} className="w-8 h-8 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center transition-colors">
-                    <Check size={14} className="text-primary" />
-                  </button>
-                  <button onClick={cancelEditing} className="w-8 h-8 rounded-full bg-muted/50 hover:bg-muted flex items-center justify-center transition-colors">
-                    <X size={14} className="text-muted-foreground" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 group/name">
-                  <h2 className="text-lg font-semibold text-foreground truncate">
-                    {fullName || (isDoctor ? t("profile.doctorDefault") : t("profile.patientRole"))}
-                  </h2>
-                  <button onClick={startEditing} className="w-6 h-6 rounded-full hover:bg-muted/50 flex items-center justify-center opacity-0 group-hover/name:opacity-100 transition-opacity">
-                    <Pencil size={12} className="text-muted-foreground" />
-                  </button>
-                </div>
-              )}
+              <h2 className="text-lg font-semibold text-foreground truncate">
+                {displayName}
+              </h2>
               <p className="text-sm text-muted-foreground mt-0.5">
                 {isDoctor ? t("profile.specialist") : t("profile.patientRole")}
               </p>
@@ -139,109 +187,74 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Professional Info (Doctor only) */}
-        {isDoctor && (
-          <div className="led-card p-6 space-y-4">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <User size={16} strokeWidth={1.5} className="text-primary" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("profile.professionalData")}</h3>
-              </div>
-              {!editing && (
-                <button onClick={startEditing} className="text-xs text-primary/70 hover:text-primary flex items-center gap-1 transition-colors">
-                  <Pencil size={11} />
-                  {t("profile.edit")}
-                </button>
-              )}
+        {/* Personal / Professional Info */}
+        <div className="led-card p-6 space-y-4">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <User size={16} strokeWidth={1.5} className={sectionIconColor} />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{sectionTitle}</h3>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                { label: t("profile.name"), value: fullName || "—", icon: User, editable: true },
-                { label: t("profile.specialization"), value: t("profile.internalMedicine"), icon: Stethoscope },
-                { label: t("profile.doctorId"), value: "RS-2026-04521", icon: Hash },
-                { label: t("profile.institution"), value: t("profile.institutionValue"), icon: Building2 },
-              ].map((item) => (
-                <div key={item.label} className="space-y-1.5">
+            {!editing && (
+              <button onClick={startEdit} className="text-xs text-primary/70 hover:text-primary flex items-center gap-1 transition-colors">
+                <Pencil size={11} />
+                {t("profile.edit")}
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {fields.map((f) => {
+              const value = draft[f.key] || "";
+              const displayValue = f.type === "date" ? formatDate(data[f.key]) : (data[f.key] || "—");
+              return (
+                <div key={f.key} className="space-y-1.5">
                   <label className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    <item.icon size={11} />
-                    {item.label}
+                    <f.icon size={11} />
+                    {f.label}
                   </label>
-                  {editing && item.editable ? (
+                  {editing ? (
                     <input
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground w-full border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                      type={f.type || "text"}
+                      value={value}
+                      placeholder={f.placeholder}
+                      onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
+                      className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground w-full border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/40"
                     />
                   ) : (
-                    <div className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground">{item.value}</div>
+                    <div className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground">{displayValue}</div>
                   )}
                 </div>
-              ))}
-            </div>
-            {editing && (
-              <div className="flex justify-end gap-2 pt-2">
-                <button onClick={cancelEditing} className="px-4 py-2 text-xs font-medium rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground transition-colors">
-                  {t("profile.cancel")}
-                </button>
-                <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-xs font-medium rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
-                  {saving ? t("profile.saving") : t("profile.save")}
-                </button>
+              );
+            })}
+
+            {/* Institution shown read-only for doctor here (full edit in branding section) */}
+            {isDoctor && (
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Building2 size={11} />
+                  {t("profile.institution")}
+                </label>
+                <div className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-muted-foreground/70 italic">
+                  ↓ {t("profile.institutionBranding")}
+                </div>
               </div>
             )}
           </div>
-        )}
+
+          {editing && (
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={cancelEdit} className="px-4 py-2 text-xs font-medium rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground transition-colors">
+                {t("profile.cancel")}
+              </button>
+              <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-xs font-medium rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+                {saving ? t("profile.saving") : t("profile.save")}
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Institution Branding (Doctor only) */}
         {isDoctor && <InstitutionBranding />}
-        {!isDoctor && (
-          <div className="led-card p-6 space-y-4">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <User size={16} strokeWidth={1.5} className="text-accent" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("profile.personalData")}</h3>
-              </div>
-              {!editing && (
-                <button onClick={startEditing} className="text-xs text-primary/70 hover:text-primary flex items-center gap-1 transition-colors">
-                  <Pencil size={11} />
-                  {t("profile.edit")}
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                { label: t("profile.name"), value: fullName || "—", editable: true },
-                { label: t("profile.jmbg"), value: "••••••••••••" },
-                { label: t("profile.birthDate"), value: "01.01.1990." },
-                { label: t("profile.phone"), value: "+381 6x xxx xxxx" },
-              ].map((item) => (
-                <div key={item.label} className="space-y-1.5">
-                  <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{item.label}</label>
-                  {editing && item.editable ? (
-                    <input
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground w-full border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      onKeyDown={(e) => e.key === "Enter" && handleSave()}
-                    />
-                  ) : (
-                    <div className="bg-muted/30 rounded-xl px-3.5 py-2.5 text-sm text-foreground">{item.value}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-            {editing && (
-              <div className="flex justify-end gap-2 pt-2">
-                <button onClick={cancelEditing} className="px-4 py-2 text-xs font-medium rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground transition-colors">
-                  {t("profile.cancel")}
-                </button>
-                <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-xs font-medium rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
-                  {saving ? t("profile.saving") : t("profile.save")}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Settings */}
         <div className="led-card p-6 space-y-4">
